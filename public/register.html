@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Seat - Knowledge Nook Library</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .register-card {
+            max-width: 600px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" style="padding: 2rem 1rem;">
+        <div class="login-card register-card">
+            <h1>Apply for a Seat</h1>
+            <p>Submit your details to join Knowledge Nook Library</p>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="Name">Full Name</label>
+                    <input type="text" id="Name" required placeholder="John Doe">
+                </div>
+
+                <div class="form-group">
+                    <label for="Contact">Phone Number</label>
+                    <input type="text" id="Contact" required pattern="[0-9]{10}" maxlength="10"
+                        placeholder="10 digit mobile number" title="Please enter exactly 10 digits">
+                </div>
+
+                <div class="form-group">
+                    <label for="Address">Complete Address</label>
+                    <input type="text" id="Address" required placeholder="House No, Street, City, Pincode">
+                </div>
+
+                <div class="form-group">
+                    <label for="PreferredBatch">Preferred Batch</label>
+                    <select id="PreferredBatch" required>
+                        <option value="" disabled selected>Select Batch Time</option>
+                        <option value="Morning">Morning (6 AM - 2 PM)</option>
+                        <option value="Afternoon">Afternoon (2 PM - 10 PM)</option>
+                        <option value="Evening">Evening (4 PM - 12 AM)</option>
+                        <option value="Night">Night (10 PM - 6 AM)</option>
+                        <option value="Full Day">Full Day (24 Hrs)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="Remarks">Remarks (Optional)</label>
+                    <textarea id="Remarks" placeholder="E.g., Will visit library on Monday at 4 PM for registration"
+                        rows="3"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--card-border); border-radius: 8px; font-family: inherit; margin-top: 0.5rem;"></textarea>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Submit Application</button>
+                <p style="margin-top: 1rem;"><a href="/login.html" style="color: var(--primary-color);">Already have an
+                        account? Login here</a></p>
+            </form>
+            <div id="registerMsg" class="error-msg"></div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = document.getElementById('submitBtn');
+            const msg = document.getElementById('registerMsg');
+
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+            msg.textContent = '';
+            msg.style.color = 'var(--text-secondary)';
+
+            const payload = {
+                Name: document.getElementById('Name').value,
+                Contact: document.getElementById('Contact').value,
+                Address: document.getElementById('Address').value,
+                PreferredBatch: document.getElementById('PreferredBatch').value,
+                Remarks: document.getElementById('Remarks').value
+            };
+
+            try {
+                const data = await apiFetch('/students/interested', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                msg.style.color = 'var(--success-color)';
+                msg.textContent = data.message || 'Application submitted successfully! Redirecting...';
+                document.getElementById('registerForm').reset();
+
+                setTimeout(() => {
+                    window.location.href = '/index.html';
+                }, 3000);
+
+            } catch (error) {
+                msg.style.color = 'var(--error-color)';
+                msg.textContent = error.message;
+                btn.disabled = false;
+                btn.textContent = 'Submit Application';
+            }
+        });
+    </script>
+</body>
+
+</html>

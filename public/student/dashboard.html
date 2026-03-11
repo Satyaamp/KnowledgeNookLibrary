@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard</title>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <!-- Top Navbar -->
+    <nav class="top-navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fa-solid fa-bars hamburger-btn" onclick="toggleSidebar()"></i>
+                <i class="fa-solid fa-book-open-reader"></i> <span class="logo-text">Knowledge Nook Library</span>
+            </div>
+            <ul class="dashboard-nav-links">
+                <li><a href="#home"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
+                <li><a href="#profile"><i class="fa-solid fa-id-card"></i> Profile</a></li>
+                <li><a href="#fees"><i class="fa-solid fa-file-invoice-dollar"></i> Fees</a></li>
+                <li><a href="#issues"><i class="fa-solid fa-triangle-exclamation"></i> Issues</a></li>
+            </ul>
+            <div class="nav-actions">
+                <img id="navProfilePic" src="/img/default-avatar.png" alt="Profile" class="nav-profile-pic">
+                <button onclick="logout()" class="btn btn-logout"><i class="fa-solid fa-right-from-bracket"></i>
+                    Logout</button>
+            </div>
+        </div>
+    </nav>
+    <div id="mobile-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h2><i class="fa-solid fa-user-graduate"></i> Student Portal</h2>
+            <ul>
+                <li><a href="#home" onclick="closeSidebar()"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
+                <li><a href="#profile" onclick="closeSidebar()"><i class="fa-solid fa-id-card"></i> Profile</a></li>
+                <li><a href="#fees" onclick="closeSidebar()"><i class="fa-solid fa-file-invoice-dollar"></i> Fees</a>
+                </li>
+                <li><a href="#issues" onclick="closeSidebar()"><i class="fa-solid fa-triangle-exclamation"></i>
+                        Issues</a></li>
+            </ul>
+        </div>
+        <div class="main-content">
+            <div class="navbar" style="align-items: flex-end;">
+                <h1 style="margin: 0;">Welcome, <span id="studentName"></span></h1>
+                <div style="font-size: 0.9em; color: #6B7280; font-weight: 500; padding-bottom: 5px;">
+                    <span id="studentLibraryID" style="margin-right: 15px;"></span>
+                    <span id="studentJoinDate"></span>
+                </div>
+            </div>
+
+            <div id="passwordBanner"
+                style="display: none; background: #FEF3C7; border: 1px solid #FCD34D; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #F59E0B;">
+                <h4 style="color: #92400E; margin-bottom: 5px;"><i class="fa-solid fa-shield-halved"></i> Action
+                    Required: Update Password</h4>
+                <p style="color: #92400E; font-size: 0.9em; margin-bottom: 10px;">You are using a default or temporary
+                    password. Please update your password immediately to secure your account.</p>
+                <button onclick="promptChangePassword()" class="btn"
+                    style="padding: 0.4rem 1rem; font-size: 0.85em; background: #D97706; border: none;">Change
+                    Password</button>
+            </div>
+
+            <!-- Home / Announcements View -->
+            <div id="view-home" class="view-section">
+                <div class="card" id="announcementsSection">
+                    <h3>Announcements</h3>
+                    <div id="announcementsList">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="view-profile" class="view-section" style="display: none;">
+                <div class="card">
+                    <h3>My Profile</h3>
+                    <div id="profileContent">Loading profile...</div>
+                </div>
+            </div>
+
+            <!-- Fees View -->
+            <div id="view-fees" class="view-section" style="display: none;">
+                <div class="card">
+                    <h3>Fee Management</h3>
+                    <div class="grid-2 mt-2">
+                        <div>
+                            <h4>Upload Receipt</h4>
+                            <form id="feeForm" class="mt-1">
+                                <div class="form-group">
+                                    <label>Library ID</label>
+                                    <input type="text" id="feeLibraryID" readonly disabled
+                                        style="background: var(--bg-color); cursor: not-allowed; color: var(--text-secondary);">
+                                </div>
+                                <div class="form-group">
+                                    <label>Month / Description</label>
+                                    <input type="text" id="feeMonth" required placeholder="e.g. October 2026">
+                                </div>
+                                <div class="form-group">
+                                    <label>Amount Paid</label>
+                                    <input type="number" id="feeAmount" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Receipt Image</label>
+                                    <input type="file" id="feeReceipt" accept="image/*" required>
+                                </div>
+                                <button type="submit" class="btn" id="feeSubmitBtn">Upload Receipt</button>
+                            </form>
+                            <p id="feeMsg" class="mt-1 font-small"></p>
+                        </div>
+                        <div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <h4 style="margin: 0;">Payment History</h4>
+                                <div id="feesPagination"></div>
+                            </div>
+                            <div id="feesList" class="mt-1">Loading fees...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issues View -->
+            <div id="view-issues" class="view-section" style="display: none;">
+                <div class="card">
+                    <h3>Library Issues</h3>
+                    <div class="grid-2 mt-2">
+                        <div>
+                            <h4>Report Issue</h4>
+                            <form id="issueForm" class="mt-1">
+                                <div class="form-group">
+                                    <label>Library ID</label>
+                                    <input type="text" id="issueLibraryID" readonly disabled
+                                        style="background: var(--bg-color); cursor: not-allowed; color: var(--text-secondary);">
+                                </div>
+                                <div class="form-group">
+                                    <label>Issue Title</label>
+                                    <input type="text" id="issueTitle" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea id="issueDesc" rows="4" required></textarea>
+                                </div>
+                                <button type="submit" class="btn">Submit Issue</button>
+                            </form>
+                            <p id="issueMsg" class="mt-1 font-small"></p>
+                        </div>
+                        <div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <h4 style="margin: 0;">My Previous Issues</h4>
+                                <div id="issuesPagination"></div>
+                            </div>
+                            <div id="issuesList" class="mt-1">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div id="imagePreviewModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div style="position: relative; max-width: 90%; max-height: 90%; display: flex; flex-direction: column;">
+            <button onclick="closeImagePreview()"
+                style="position: absolute; top: -40px; right: -10px; background: none; border: none; color: white; font-size: 2.5rem; cursor: pointer;">&times;</button>
+            <img id="previewImageElement" src=""
+                style="max-width: 100%; max-height: calc(90vh - 40px); object-fit: contain; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close-btn" onclick="closePasswordModal()">&times;</span>
+            <h2>Change Password</h2>
+            <form id="passwordForm" onsubmit="submitChangePassword(event)" style="margin-top: 15px;">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="currentPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="newPassword" required minlength="6">
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Update Password</button>
+            </form>
+            <div id="passwordMsg" style="margin-top: 10px; text-align: center;"></div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <!-- <script src="https://checkout.razorpay.com/v1/checkout.js"></script> -->
+    <script src="/js/student.js"></script>
+</body>
+
+</html>

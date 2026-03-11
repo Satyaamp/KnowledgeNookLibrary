@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Nook Library - Peaceful Learning Environment</title>
+  <link rel="stylesheet" href="/css/landing.css">
+  <link rel="manifest" href="/manifest.json">
+  <!-- Google Fonts for typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+  <!-- 1. Navbar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <i class="fa-solid fa-book-open-reader"></i> Knowledge Nook Library
+      </div>
+
+      <ul class="nav-links">
+        <li><a href="#home">Home</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#facilities">Facilities</a></li>
+        <li><a href="#rules">Rules</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <!-- The user handles role context usually before login, but we'll point both to the general login and let them choose role -->
+        <a href="/login.html" class="btn-outline">Student Login</a>
+        <a href="/login.html" class="btn-primary">Admin Login</a>
+      </div>
+
+      <div class="hamburger">
+        <i class="fa-solid fa-bars"></i>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu">
+    <ul class="mobile-nav-links">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#facilities">Facilities</a></li>
+      <li><a href="#rules">Rules</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#contact">Contact</a></li>
+      <li><a href="/login.html">Student Login</a></li>
+      <li><a href="/login.html">Admin Login</a></li>
+    </ul>
+  </div>
+
+  <!-- 2. Hero Section -->
+  <header id="home" class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1>Welcome to Knowledge Nook Library</h1>
+      <p>A peaceful and productive study environment designed for focused learning.</p>
+
+      <div class="hero-features">
+        <span class="badge"><i class="fa-solid fa-wifi"></i> High Speed WiFi</span>
+        <span class="badge"><i class="fa-solid fa-chair"></i> Comfortable Seats</span>
+        <span class="badge"><i class="fa-solid fa-volume-xmark"></i> Silent Area</span>
+      </div>
+
+      <div class="hero-buttons">
+        <a href="/login.html" class="btn-primary lg">Student Login</a>
+        <a href="/register.html" class="btn-outline lg">Join Library</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 3. Library Highlights -->
+  <section id="about" class="highlights section">
+    <div class="section-container grid-4" id="stats-container">
+      <div class="stat-card">
+        <i class="fa-solid fa-users"></i>
+        <h3 id="stat-total-seats">120</h3>
+        <p>Total Seats</p>
+      </div>
+      <div class="stat-card highlight">
+        <i class="fa-solid fa-chair"></i>
+        <h3 id="stat-avail-seats">18</h3>
+        <p>Available Seats</p>
+      </div>
+      <div class="stat-card">
+        <i class="fa-regular fa-clock"></i>
+        <h3 id="stat-hours">24 Hours</h3>
+        <p>Open Daily</p>
+      </div>
+      <div class="stat-card">
+        <i class="fa-solid fa-wifi"></i>
+        <h3 id="stat-internet">5G / Fiber</h3>
+        <p>High Speed Internet</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Seat Availability Highlight -->
+  <section class="seat-availability section light-bg">
+    <div class="section-container text-center">
+      <h2>Current Seat Availability</h2>
+      <p>Grab your spot before it's gone!</p>
+      <div class="availability-status">
+        <div class="box">
+          <span class="label">Total Seats</span>
+          <span class="value" id="box-total">120</span>
+        </div>
+        <div class="box active">
+          <span class="label">Available Seats</span>
+          <span class="value" id="box-avail">18</span>
+        </div>
+      </div>
+      <a href="/register.html" class="btn-primary mt-2">Apply for Seat</a>
+    </div>
+  </section>
+
+  <!-- 4. Facilities Section -->
+  <section id="facilities" class="facilities section">
+    <div class="section-container">
+      <div class="amenities-section">
+        <h2>✨ Premium Facilities</h2>
+        <div class="amenities-window">
+          <div class="amenities-track">
+            <div class="amenity-card">
+              <span class="amenity-icon">📶</span>
+              <div>
+                <h3>High-Speed Wi-Fi</h3>
+                <p>Wi-Fi access for all devices</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">❄️</span>
+              <div>
+                <h3>Climate Control</h3>
+                <p>Fully air-conditioned</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">🛡️</span>
+              <div>
+                <h3>CCTV Security</h3>
+                <p>24/7 Surveillance</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">💡</span>
+              <div>
+                <h3>Desk Lights</h3>
+                <p>Individual study lights</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">💧</span>
+              <div>
+                <h3>RO Water</h3>
+                <p>Chilled, hot &amp; normal</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">📰</span>
+              <div>
+                <h3>Newspapers</h3>
+                <p>Daily English &amp; Hindi</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">🚽</span>
+              <div>
+                <h3>Separate Washroom</h3>
+                <p>Hygienic for Boys/Girls</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">🖨️</span>
+              <div>
+                <h3>Print-Out Facility</h3>
+                <p>On-site printing</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">🤝</span>
+              <div>
+                <h3>Collaboration</h3>
+                <p>Discussion zones</p>
+              </div>
+            </div>
+
+            <!-- Duplicate for seamless looping -->
+            <div class="amenity-card">
+              <span class="amenity-icon">📶</span>
+              <div>
+                <h3>High-Speed Wi-Fi</h3>
+                <p>Wi-Fi access for all devices</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">❄️</span>
+              <div>
+                <h3>Climate Control</h3>
+                <p>Fully air-conditioned</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">🛡️</span>
+              <div>
+                <h3>CCTV Security</h3>
+                <p>24/7 Surveillance</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">💡</span>
+              <div>
+                <h3>Desk Lights</h3>
+                <p>Individual study lights</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">💧</span>
+              <div>
+                <h3>RO Water</h3>
+                <p>Chilled, hot &amp; normal</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">📰</span>
+              <div>
+                <h3>Newspapers</h3>
+                <p>Daily English &amp; Hindi</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">🚽</span>
+              <div>
+                <h3>Separate Washroom</h3>
+                <p>Hygienic for Boys/Girls</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">🖨️</span>
+              <div>
+                <h3>Print-Out Facility</h3>
+                <p>On-site printing</p>
+              </div>
+            </div>
+            <div class="amenity-card">
+              <span class="amenity-icon">🤝</span>
+              <div>
+                <h3>Collaboration</h3>
+                <p>Discussion zones</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Latest Announcements Section -->
+  <section id="announcements" class="announcements section light-bg">
+    <div class="section-container">
+      <div class="section-header">
+        <h2>Latest Announcements</h2>
+        <p>Stay updated with our recent notices</p>
+      </div>
+
+      <div class="grid-3" id="announcements-grid">
+        <!-- Placeholder Announcements -->
+        <div class="announcement-card">
+          <span class="date">Oct 24, 2026</span>
+          <h3>WiFi Maintenance</h3>
+          <p>WiFi will be unavailable from 3PM to 4PM today for scheduled core upgrades.</p>
+        </div>
+        <div class="announcement-card">
+          <span class="date">Oct 22, 2026</span>
+          <h3>Holiday Notice</h3>
+          <p>Library will remain closed on Diwali and the preceding Sunday. Plan accordingly.</p>
+        </div>
+        <div class="announcement-card">
+          <span class="date">Oct 15, 2026</span>
+          <h3>New Desktop Lamps</h3>
+          <p>All tables in Zone B have been upgraded with adjustable warm-light lamps.</p>
+        </div>
+      </div>
+
+      <div class="text-center mt-2">
+        <button class="btn-outline">View All Announcements</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Library Rules -->
+  <section id="rules" class="rules section">
+    <div class="section-container">
+      <div class="section-header">
+        <h2>Code of Conduct</h2>
+        <p>Applicable to all members, visitors, renewals, re-activations, and special or unavoidable activities</p>
+      </div>
+
+      <div class="conduct-grid">
+        <div class="conduct-item">
+          <h3>1. Purpose</h3>
+          <p>This Code of Conduct is established to maintain a safe, disciplined, respectful, and study-oriented
+            environment within Swadhyaya Sansthan and associated premises. Compliance with this Code is mandatory for
+            all members.</p>
+        </div>
+
+        <div class="conduct-item">
+          <h3>2. General Discipline</h3>
+          <ul>
+            <li>Members must maintain silence and decorum at all times.</li>
+            <li>Any form of disturbance, shouting, or disruptive behavior is strictly prohibited.</li>
+            <li>Members must follow instructions given by library staff or management.</li>
+          </ul>
+        </div>
+
+        <div class="conduct-item">
+          <h3>3. Behavior & Decency</h3>
+          <ul>
+            <li>Members must behave respectfully towards fellow users, staff, and management.</li>
+            <li>Harassment, intimidation, stalking, offensive conduct, or inappropriate physical behavior is strictly
+              prohibited.</li>
+            <li>Any behavior that creates discomfort or fear among other users will be treated as serious misconduct.
+            </li>
+          </ul>
+        </div>
+
+        <div class="conduct-item">
+          <h3>4. Use of Premises</h3>
+          <ul>
+            <li>Members must restrict their activities strictly to study-related purposes.</li>
+            <li>Misuse of library space, common areas, or building premises is prohibited.</li>
+            <li>Conduct outside the library but within the building that affects library discipline will be considered a
+              violation.</li>
+          </ul>
+        </div>
+
+        <div class="conduct-item">
+          <h3>5. Electronic Devices & Internet</h3>
+          <ul>
+            <li>Mobile phones, tablets, and laptops may be used only for study purposes.</li>
+            <li>Internet access is strictly for educational streaming.</li>
+            <li>Downloading, gaming, or high-data consumption activities are prohibited.</li>
+          </ul>
+        </div>
+
+        <div class="conduct-item">
+          <h3>6. Dress & Personal Conduct</h3>
+          <ul>
+            <li>Members must dress modestly and appropriately for a study environment.</li>
+            <li>Any attire or behavior deemed inappropriate for an academic setting may invite disciplinary action.</li>
+          </ul>
+        </div>
+
+        <div class="conduct-item">
+          <h3>7. Safety, Property & CCTV</h3>
+          <ul>
+            <li>Members must handle library property with care.</li>
+            <li>Damage to property may result in penalties or termination.</li>
+            <li>CCTV surveillance is in operation for safety and discipline and may be used internally for verification.
+            </li>
+          </ul>
+        </div>
+
+        <div class="conduct-item">
+          <h3>8. Prohibited Activities</h3>
+          <p>The following are strictly prohibited:</p>
+          <ul>
+            <li>Harassment or inappropriate interaction</li>
+            <li>Fighting, threats, or abusive language</li>
+            <li>Substance use or possession (alcohol, drugs, etc.)</li>
+            <li>Any illegal or unethical activity</li>
+          </ul>
+        </div>
+
+        <div class="conduct-item full-width highlight-box">
+          <h3>9. Disciplinary Action</h3>
+          <p>Any violation of this Code may result in: Verbal or written warning | Suspension of membership | Immediate
+            termination without refund | Permanent denial of future enrollment. Repeated or serious violations will
+            attract zero-tolerance action.</p>
+        </div>
+
+        <div class="conduct-item full-width">
+          <h3>10. Acceptance</h3>
+          <ul>
+            <li>This Code of Conduct is binding on all members.</li>
+            <li>Ignorance of rules shall not be accepted as an excuse.</li>
+            <li>Continued use of the library implies acceptance of this Code.</li>
+            <li>Management reserves the right to interpret, enforce, and amend this Code of Conduct as required.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Gallery Section -->
+  <section id="gallery" class="gallery section light-bg">
+    <div class="section-container">
+      <div class="section-header">
+        <h2>Experience Knowledge Nook Library</h2>
+        <p>A glimpse into our focused environment</p>
+      </div>
+
+      <div class="gallery-grid">
+        <img
+          src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+          alt="Study Desk" loading="lazy">
+        <img
+          src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+          alt="University Library" loading="lazy" class="tall">
+        <img
+          src="https://images.unsplash.com/photo-1532012197267-da84d127e765?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+          alt="Book Shelf" loading="lazy">
+        <img
+          src="https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+          alt="Student Studying" loading="lazy">
+        <img
+          src="https://images.unsplash.com/photo-1568667256549-094345857637?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+          alt="Clean Space" loading="lazy" class="wide">
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Contact Section -->
+  <section id="contact" class="contact section">
+    <div class="section-container">
+      <div class="split-layout">
+        <div class="contact-info">
+          <h2>Get in Touch</h2>
+          <p class="subtitle">Ready to join?</p>
+
+          <div class="contact-card">
+            <div class="contact-item">
+              <i class="fa-solid fa-location-dot"></i>
+              <div>
+                <strong>Knowledge Nook Library</strong>
+                <p>BMP 16, Prakash Colony, Maulana Azad Nagar, Khagaul, Patna, Bihar 801505</p>
+              </div>
+            </div>
+            <div class="contact-item">
+              <i class="fa-solid fa-phone"></i>
+              <div>
+                <strong>Call Us</strong>
+                <p>+91 7903547986</p>
+              </div>
+            </div>
+            <div class="contact-item">
+              <i class="fa-solid fa-envelope"></i>
+              <div>
+                <strong>Email Address</strong>
+                <p>knowledgenooklibrary@gmail.com</p>
+              </div>
+            </div>
+            <div class="contact-item">
+              <i class="fa-regular fa-clock"></i>
+              <div>
+                <strong>Opening Hours</strong>
+                <p>Open 24 hours</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-map">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d7451467.27465501!2d73.48613541284567!3d24.227373424033225!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39ed5702dbaafced%3A0x1c743a750c49f75e!2sKnowledge%20Nook%20library!5e0!3m2!1sen!2sin!4v1773163918577!5m2!1sen!2sin"
+            width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="logo">
+          <i class="fa-solid fa-book-open-reader"></i> Knowledge Nook Library
+        </div>
+        <p>Providing the most peaceful and productive environment for ambitious minds.</p>
+      </div>
+
+      <div class="footer-links">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="#home">Home</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#facilities">Facilities</a></li>
+          <li><a href="#rules">Rules</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links">
+        <h3>Members</h3>
+        <ul>
+          <li><a href="/login.html">Student Login</a></li>
+          <li><a href="/login.html">Admin Login</a></li>
+          <li><a href="/register.html">Apply for Seat</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 Knowledge Nook Library. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="/js/landing.js"></script>
+</body>
+
+</html>
