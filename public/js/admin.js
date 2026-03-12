@@ -58,7 +58,7 @@ function renderStudents() {
                 <i class="fa-solid fa-id-badge"></i> ID: ${student.LibraryID || 'Not Assigned'} | <i class="fa-solid fa-envelope"></i> ${student.Email || 'N/A'} | <i class="fa-solid fa-phone"></i> ${student.Contact}
             </div>
             <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 15px;">
-                <i class="fa-solid fa-chair"></i> Seat: ${student.SeatNo || 'Unassigned'} | Batch: ${student.CurrentBatch || 'Unassigned'}
+                <i class="fa-solid fa-chair"></i> Seat: ${student.SeatNo || 'Unassigned'} | Plan: ${student.planDuration || 'N/A'} (${student.batchType || 'N/A'} - ₹${student.amount || 0})
             </div>
             ${student.AccountStatus !== 'Active' ? `
             <div style="display: flex; gap: 10px;">
@@ -116,7 +116,7 @@ async function loadInterestedStudents() {
                         </div>
                     </div>
                     <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 8px;">
-                        <i class="fa-solid fa-phone"></i> ${student.Contact} | <i class="fa-solid fa-clock"></i> Pref: ${student.PreferredBatch}
+                        <i class="fa-solid fa-phone"></i> ${student.Contact} | <i class="fa-solid fa-clock"></i> Plan: ${student.planDuration} (${student.batchType} - ₹${student.amount})
                     </div>
                     <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 8px;">
                         <i class="fa-solid fa-map-marker-alt"></i> ${student.Address}
@@ -186,7 +186,9 @@ async function submitConvertStudent(e) {
         LibraryID: document.getElementById('convertLibraryID').value,
         Email: document.getElementById('convertEmail').value || undefined,
         SeatNo: document.getElementById('convertSeatNo').value,
-        CurrentBatch: document.getElementById('convertBatch').value,
+        planDuration: document.getElementById('convertPlanDuration').value,
+        batchType: document.getElementById('convertBatchType').value,
+        amount: document.getElementById('convertAmount').value,
         JoiningDate: document.getElementById('convertDate').value
     };
 
@@ -296,13 +298,32 @@ function viewStudent(id) {
                 <option value="Suspended" ${student.AccountStatus === 'Suspended' ? 'selected' : ''}>Suspended</option>
             </select>
         </div>
+        </div>
         <div class="form-group">
             <label>Seat Number</label>
             <input type="text" id="modalSeatNo" value="${student.SeatNo || ''}" placeholder="E.g., S-101">
         </div>
         <div class="form-group">
-            <label>Batch</label>
-            <input type="text" id="modalBatch" value="${student.CurrentBatch || ''}" placeholder="E.g., Morning">
+            <label>Plan Duration</label>
+            <select id="modalPlanDuration" onchange="calculateModalFee()">
+                <option value="Monthly" ${student.planDuration === 'Monthly' ? 'selected' : ''}>Monthly</option>
+                <option value="Quarterly" ${student.planDuration === 'Quarterly' ? 'selected' : ''}>Quarterly</option>
+                <option value="Half-Yearly" ${student.planDuration === 'Half-Yearly' ? 'selected' : ''}>Half-Yearly</option>
+                <option value="Yearly" ${student.planDuration === 'Yearly' ? 'selected' : ''}>Yearly</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Batch Type</label>
+            <select id="modalBatchType" onchange="calculateModalFee()">
+                <option value="Basic" ${student.batchType === 'Basic' ? 'selected' : ''}>Basic</option>
+                <option value="Fundamental" ${student.batchType === 'Fundamental' ? 'selected' : ''}>Fundamental</option>
+                <option value="Standard" ${student.batchType === 'Standard' ? 'selected' : ''}>Standard</option>
+                <option value="Officer's" ${student.batchType === "Officer's" ? 'selected' : ''}>Officer's</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Calculated Amount (₹)</label>
+            <input type="number" id="modalAmount" value="${student.amount || ''}" placeholder="E.g., 1000">
         </div>
     `;
 
@@ -312,6 +333,18 @@ function viewStudent(id) {
 
 function closeStudentModal() {
     document.getElementById('studentModal').style.display = 'none';
+}
+
+function calculateModalFee() {
+    const duration = document.getElementById('modalPlanDuration').value;
+    const batch = document.getElementById('modalBatchType').value;
+    const amountField = document.getElementById('modalAmount');
+    
+    if (duration && batch && pricingGrid[duration] && pricingGrid[duration][batch]) {
+        amountField.value = pricingGrid[duration][batch];
+    } else {
+        amountField.value = '';
+    }
 }
 
 async function submitStudentUpdate(e) {
@@ -338,7 +371,9 @@ async function submitStudentUpdate(e) {
             Pincode: document.getElementById('modalPincode').value,
             AccountStatus: document.getElementById('modalStatus').value,
             SeatNo: document.getElementById('modalSeatNo').value,
-            CurrentBatch: document.getElementById('modalBatch').value
+            planDuration: document.getElementById('modalPlanDuration').value,
+            batchType: document.getElementById('modalBatchType').value,
+            amount: document.getElementById('modalAmount').value
         };
 
         await apiFetch('/admin/students/' + id, {

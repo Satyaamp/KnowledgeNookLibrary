@@ -49,16 +49,32 @@
                     <input type="text" id="Address" required placeholder="House No, Street, City, Pincode">
                 </div>
 
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label for="planDuration">Plan Duration</label>
+                        <select id="planDuration" required onchange="calculateFee()">
+                            <option value="" disabled selected>Select Plan</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Quarterly">Quarterly</option>
+                            <option value="Half-Yearly">Half-Yearly</option>
+                            <option value="Yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="batchType">Batch Type</label>
+                        <select id="batchType" required onchange="calculateFee()">
+                            <option value="" disabled selected>Select Batch</option>
+                            <option value="Basic">Basic</option>
+                            <option value="Fundamental">Fundamental</option>
+                            <option value="Standard">Standard</option>
+                            <option value="Officer's">Officer's</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="form-group">
-                    <label for="PreferredBatch">Preferred Batch</label>
-                    <select id="PreferredBatch" required>
-                        <option value="" disabled selected>Select Batch Time</option>
-                        <option value="Morning">Morning (6 AM - 2 PM)</option>
-                        <option value="Afternoon">Afternoon (2 PM - 10 PM)</option>
-                        <option value="Evening">Evening (4 PM - 12 AM)</option>
-                        <option value="Night">Night (10 PM - 6 AM)</option>
-                        <option value="Full Day">Full Day (24 Hrs)</option>
-                    </select>
+                    <label for="amount">Calculated Amount (₹)</label>
+                    <input type="number" id="amount" required readonly disabled style="background: var(--bg-color); cursor: not-allowed; color: var(--primary-color); font-weight: bold; font-size: 1.1em;" placeholder="0">
                 </div>
 
                 <div class="form-group">
@@ -78,6 +94,25 @@
 
     <script src="/js/api.js"></script>
     <script>
+        const pricingGrid = {
+            "Monthly": { "Basic": 500, "Fundamental": 600, "Standard": 1000, "Officer's": 1400 },
+            "Quarterly": { "Basic": 1197, "Fundamental": 1497, "Standard": 2500, "Officer's": 3590 },
+            "Half-Yearly": { "Basic": 2300, "Fundamental": 2800, "Standard": 4800, "Officer's": 6900 },
+            "Yearly": { "Basic": 4600, "Fundamental": 5600, "Standard": 9348, "Officer's": 13464 }
+        };
+
+        function calculateFee() {
+            const duration = document.getElementById('planDuration').value;
+            const batch = document.getElementById('batchType').value;
+            const amountField = document.getElementById('amount');
+            
+            if (duration && batch && pricingGrid[duration] && pricingGrid[duration][batch]) {
+                amountField.value = pricingGrid[duration][batch];
+            } else {
+                amountField.value = '';
+            }
+        }
+
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -93,7 +128,9 @@
                 Name: document.getElementById('Name').value,
                 Contact: document.getElementById('Contact').value,
                 Address: document.getElementById('Address').value,
-                PreferredBatch: document.getElementById('PreferredBatch').value,
+                planDuration: document.getElementById('planDuration').value,
+                batchType: document.getElementById('batchType').value,
+                amount: document.getElementById('amount').value,
                 Remarks: document.getElementById('Remarks').value
             };
 
@@ -109,6 +146,7 @@
                 msg.style.color = 'var(--success-color)';
                 msg.textContent = data.message || 'Application submitted successfully! Redirecting...';
                 document.getElementById('registerForm').reset();
+                calculateFee();
 
                 setTimeout(() => {
                     window.location.href = '/index.html';

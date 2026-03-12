@@ -19,7 +19,9 @@ const studentSchema = new mongoose.Schema({
     ProfilePictureURL: { type: String },
     AadharProofURL: { type: String },
     SeatNo: { type: String },
-    CurrentBatch: { type: String },
+    planDuration: { type: String, enum: ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'] },
+    batchType: { type: String, enum: ['Basic', 'Fundamental', 'Standard', "Officer's"] },
+    amount: { type: Number },
     JoiningDate: { type: Date, default: Date.now },
     AccountStatus: { type: String, enum: ['Pending', 'Active', 'Suspended'], default: 'Active' },
     LibraryID: { type: String, unique: true, sparse: true } // Unique Admin-assigned ID

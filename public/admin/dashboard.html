@@ -207,15 +207,31 @@
                     <label>Seat Number</label>
                     <input type="text" id="convertSeatNo" placeholder="E.g. S12">
                 </div>
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label for="convertPlanDuration">Plan Duration</label>
+                        <select id="convertPlanDuration" required onchange="calculateConvertFee()">
+                            <option value="" disabled selected>Select Plan</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Quarterly">Quarterly</option>
+                            <option value="Half-Yearly">Half-Yearly</option>
+                            <option value="Yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="convertBatchType">Batch Type</label>
+                        <select id="convertBatchType" required onchange="calculateConvertFee()">
+                            <option value="" disabled selected>Select Batch</option>
+                            <option value="Basic">Basic</option>
+                            <option value="Fundamental">Fundamental</option>
+                            <option value="Standard">Standard</option>
+                            <option value="Officer's">Officer's</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="form-group">
-                    <label>Assigned Batch</label>
-                    <select id="convertBatch">
-                        <option value="Morning">Morning</option>
-                        <option value="Afternoon">Afternoon</option>
-                        <option value="Evening">Evening</option>
-                        <option value="Night">Night</option>
-                        <option value="Full Day">Full Day</option>
-                    </select>
+                    <label for="convertAmount">Calculated Amount (₹)</label>
+                    <input type="number" id="convertAmount" required readonly disabled style="background: var(--bg-color); cursor: not-allowed; color: var(--primary-color); font-weight: bold;" placeholder="0">
                 </div>
                 <div class="form-group">
                     <label>Joining Date</label>
@@ -236,6 +252,25 @@
     </div>
     <script src="/js/api.js"></script>
     <script>
+        const pricingGrid = {
+            "Monthly": { "Basic": 500, "Fundamental": 600, "Standard": 1000, "Officer's": 1400 },
+            "Quarterly": { "Basic": 1197, "Fundamental": 1497, "Standard": 2500, "Officer's": 3590 },
+            "Half-Yearly": { "Basic": 2300, "Fundamental": 2800, "Standard": 4800, "Officer's": 6900 },
+            "Yearly": { "Basic": 4600, "Fundamental": 5600, "Standard": 9348, "Officer's": 13464 }
+        };
+
+        function calculateConvertFee() {
+            const duration = document.getElementById('convertPlanDuration').value;
+            const batch = document.getElementById('convertBatchType').value;
+            const amountField = document.getElementById('convertAmount');
+            
+            if (duration && batch && pricingGrid[duration] && pricingGrid[duration][batch]) {
+                amountField.value = pricingGrid[duration][batch];
+            } else {
+                amountField.value = '';
+            }
+        }
+
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
             const overlay = document.getElementById('mobile-overlay');

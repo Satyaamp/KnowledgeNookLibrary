@@ -73,7 +73,9 @@ const updateStudent = async (req, res) => {
             student.Pincode = req.body.Pincode || student.Pincode;
             student.AccountStatus = req.body.AccountStatus || student.AccountStatus;
             student.SeatNo = req.body.SeatNo !== undefined ? req.body.SeatNo : student.SeatNo;
-            student.CurrentBatch = req.body.CurrentBatch !== undefined ? req.body.CurrentBatch : student.CurrentBatch;
+            student.planDuration = req.body.planDuration !== undefined ? req.body.planDuration : student.planDuration;
+            student.batchType = req.body.batchType !== undefined ? req.body.batchType : student.batchType;
+            student.amount = req.body.amount !== undefined ? req.body.amount : student.amount;
             student.LibraryID = req.body.LibraryID !== undefined ? req.body.LibraryID : student.LibraryID;
 
             const updatedStudent = await student.save();
@@ -238,7 +240,7 @@ const rejectInterestedStudent = async (req, res) => {
 // @access  Private/Admin
 const convertInterestedStudent = async (req, res) => {
     try {
-        const { SeatNo, CurrentBatch, JoiningDate, Email, LibraryID } = req.body;
+        const { SeatNo, planDuration, batchType, amount, JoiningDate, Email, LibraryID } = req.body;
         const interested = await InterestedStudent.findById(req.params.id);
 
         if (!interested) {
@@ -262,7 +264,9 @@ const convertInterestedStudent = async (req, res) => {
             Contact: interested.Contact,
             FullAddress: interested.Address,
             SeatNo: SeatNo || '',
-            CurrentBatch: CurrentBatch || interested.PreferredBatch,
+            planDuration: planDuration || interested.planDuration,
+            batchType: batchType || interested.batchType,
+            amount: amount || interested.amount,
             JoiningDate: JoiningDate || Date.now(),
             Password: hashedPassword,
             Email: Email || undefined, // Allow sparse unique index

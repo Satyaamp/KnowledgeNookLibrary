@@ -52,13 +52,15 @@ const requestProfileUpdate = async (req, res) => {
 // @access  Public
 const submitInterested = async (req, res) => {
     try {
-        const { Name, Contact, Address, PreferredBatch, Remarks } = req.body;
+        const { Name, Contact, Address, planDuration, batchType, amount, Remarks } = req.body;
 
         const interested = await InterestedStudent.create({
             Name,
             Contact,
             Address,
-            PreferredBatch,
+            planDuration,
+            batchType,
+            amount,
             Remarks
         });
 

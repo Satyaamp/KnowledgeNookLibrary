@@ -13,9 +13,19 @@ const interestedStudentSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please add an address']
     },
-    PreferredBatch: {
+    planDuration: {
         type: String,
-        required: [true, 'Please specify a preferred batch']
+        enum: ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'],
+        required: [true, 'Please specify plan duration']
+    },
+    batchType: {
+        type: String,
+        enum: ['Basic', 'Fundamental', 'Standard', "Officer's"],
+        required: [true, 'Please specify batch type']
+    },
+    amount: {
+        type: Number,
+        required: [true, 'Amount is required']
     },
     Remarks: {
         type: String

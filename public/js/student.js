@@ -39,6 +39,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (issueIdField) issueIdField.value = profile.LibraryID;
         }
 
+        // Update Plan in header
+        const planText = profile.planDuration ? `${profile.planDuration} (${profile.batchType || 'N/A'} - ₹${profile.amount || 0})` : 'N/A';
+        document.getElementById('studentPlan').innerHTML = `<i class="fa-solid fa-clock" style="margin-right: 5px;"></i> Plan: ${planText} &nbsp;|&nbsp;`;
+
         // Update joining date in header
         if (profile.JoiningDate) {
             document.getElementById('studentJoinDate').innerHTML = `
@@ -143,6 +147,10 @@ async function loadProfile() {
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.85em; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Library Seat No</div>
                     <div style="font-size: 1.1em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.SeatNo}</div>
+                </div>
+                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                    <div style="font-size: 0.85em; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Current Plan</div>
+                    <div style="font-size: 1.1em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.planDuration ? `${data.planDuration} (${data.batchType || 'N/A'} - ₹${data.amount || 0})` : 'N/A'}</div>
                 </div>
             </div>
         `;
