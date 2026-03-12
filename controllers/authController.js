@@ -142,6 +142,7 @@ const registerStudent = async (req, res) => {
             AadharNumber,
             ProfilePictureURL: profileResult.secure_url,
             AadharProofURL: aadharResult.secure_url,
+            AadharStatus: 'Pending',
             SeatNo: 'Pending', // Seat defaults to pending upon application
             CurrentBatch: 'Pending',
             AccountStatus: 'Pending' // Admin must review and make 'Active'

@@ -9,6 +9,7 @@ const rejectedStudentSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    
     Reason: {
         type: String,
         required: true

@@ -11,6 +11,10 @@ const createIssue = async (req, res) => {
 
         const student = await Student.findById(req.user.id);
 
+        if (student.AccountStatus === 'Inactive') {
+            return res.status(403).json({ message: 'Account is inactive. You cannot perform this action.' });
+        }
+
         const issue = await Issue.create({
             StudentId: req.user.id,
             LibraryID: student ? student.LibraryID : undefined,
@@ -81,6 +85,13 @@ const deleteIssue = async (req, res) => {
         // Check if user is admin or the student who created it
         if (req.user.role !== 'admin' && req.user.id !== issue.StudentId._id.toString()) {
             return res.status(403).json({ message: 'Not authorized to delete this issue' });
+        }
+
+        if (req.user.role === 'student') {
+            const student = await Student.findById(req.user.id);
+            if (student && student.AccountStatus === 'Inactive') {
+                return res.status(403).json({ message: 'Account is inactive. You cannot perform this action.' });
+            }
         }
 
         if (issue.Status !== 'Resolved') {

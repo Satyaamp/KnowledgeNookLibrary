@@ -18,12 +18,14 @@ const studentSchema = new mongoose.Schema({
     AadharNumber: { type: String },
     ProfilePictureURL: { type: String },
     AadharProofURL: { type: String },
+    AadharStatus: { type: String, enum: ['Not Uploaded', 'Pending', 'Verified', 'Rejected'], default: 'Not Uploaded' },
+    AadharRejectionReason: { type: String },
     SeatNo: { type: String },
     planDuration: { type: String, enum: ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'] },
     batchType: { type: String, enum: ['Basic', 'Fundamental', 'Standard', "Officer's"] },
     amount: { type: Number },
     JoiningDate: { type: Date, default: Date.now },
-    AccountStatus: { type: String, enum: ['Pending', 'Active', 'Suspended'], default: 'Active' },
+    AccountStatus: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Active' },
     LibraryID: { type: String, unique: true, sparse: true } // Unique Admin-assigned ID
 }, { timestamps: true });
 

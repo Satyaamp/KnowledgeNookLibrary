@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { addStudent, getStudents, updateStudent, getProfileRequests, approveProfileRequest, rejectProfileRequest, getDashboardStats, getInterestedStudents, markInterestedStudentReviewed, rejectInterestedStudent, convertInterestedStudent } = require('../controllers/adminController');
+const { addStudent, getStudents, updateStudent, getProfileRequests, approveProfileRequest, rejectProfileRequest, getDashboardStats, getInterestedStudents, markInterestedStudentReviewed, rejectInterestedStudent, convertInterestedStudent, updateProfileRequestStatus, verifyAadhar } = require('../controllers/adminController');
 const { authGuard } = require('../middleware/authGuard');
 const { adminGuard } = require('../middleware/adminGuard');
 
@@ -17,6 +17,9 @@ router.route('/students')
 router.route('/students/:id')
     .put(updateStudent);
 
+router.route('/students/:id/verify-aadhar')
+    .put(verifyAadhar);
+
 router.route('/profile-requests')
     .get(getProfileRequests);
 
@@ -25,6 +28,9 @@ router.route('/profile-requests/:id/approve')
 
 router.route('/profile-requests/:id/reject')
     .put(rejectProfileRequest);
+
+router.route('/profile-requests/:id/status')
+    .put(updateProfileRequestStatus);
 
 router.route('/interested-students')
     .get(getInterestedStudents);

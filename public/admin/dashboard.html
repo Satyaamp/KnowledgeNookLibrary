@@ -75,6 +75,12 @@
                         </div>
                         <div
                             style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                            <div style="font-size: 2.5em; font-weight: bold; color: #059669;"
+                                id="stat-active-students">-</div>
+                            <div style="color: var(--text-secondary); margin-top: 5px;">Active Students</div>
+                        </div>
+                        <div
+                            style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;" onclick="showPendingApprovals()" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                             <div style="font-size: 2.5em; font-weight: bold; color: #92400E;"
                                 id="stat-pending-students">-</div>
                             <div style="color: var(--text-secondary); margin-top: 5px;">Pending Approvals</div>
@@ -97,6 +103,36 @@
                                 id="stat-pending-requests">-</div>
                             <div style="color: var(--text-secondary); margin-top: 5px;">Profile Requests</div>
                         </div>
+                        <div
+                            style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                            <div style="font-size: 2.5em; font-weight: bold; color: #4F46E5;"
+                                id="stat-total-revenue">-</div>
+                            <div style="color: var(--text-secondary); margin-top: 5px;">Total Revenue</div>
+                        </div>
+                        <div
+                            style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                            <div style="font-size: 2.5em; font-weight: bold; color: #DB2777;"
+                                id="stat-pending-leads">-</div>
+                            <div style="color: var(--text-secondary); margin-top: 5px;">New Leads</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">Student Distribution (Batch & Plan)</h3>
+                    <div id="distribution-stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <!-- Distribution stats will be populated here -->
+                        <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                            Loading distribution data...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">Demographics (Active Students)</h3>
+                    <div id="gender-stats-container" style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <!-- Gender stats will be populated here -->
+                        <div style="text-align: center; padding: 20px; color: var(--text-secondary); width: 100%;">Loading demographics...</div>
                     </div>
                 </div>
             </div>
@@ -105,6 +141,15 @@
             <div id="view-students" class="view-section" style="display: none;">
                 <div class="card">
                     <h3>Manage Students</h3>
+                    <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="studentSearch" placeholder="Search by Name, Library ID, Contact, or Aadhar..." onkeyup="filterStudents()" style="padding: 10px; flex: 1; min-width: 200px;">
+                        <select id="filterStudentStatus" onchange="filterStudents()" style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg);">
+                            <option value="">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
                     <div id="studentsList">Loading...</div>
                     <div id="studentsPagination"
                         style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
@@ -123,7 +168,11 @@
             <div id="view-fees" class="view-section" style="display: none;">
                 <div class="card">
                     <h3>Verify Fees</h3>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <input type="text" id="feeSearch" placeholder="Search by Student Name, ID, Month, Batch, or Status..." onkeyup="filterFees()" style="padding: 10px;">
+                    </div>
                     <div id="feesList">Loading...</div>
+                    <div id="feesPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                 </div>
             </div>
 
@@ -161,7 +210,11 @@
             <div id="view-issues" class="view-section" style="display: none;">
                 <div class="card">
                     <h3>Manage Issues</h3>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <input type="text" id="issueSearch" placeholder="Search by Title, Description, Student Name, or Status..." onkeyup="filterIssues()" style="padding: 10px;">
+                    </div>
                     <div id="issuesList">Loading...</div>
+                    <div id="issuesPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                 </div>
             </div>
         </div>

@@ -13,6 +13,10 @@ const feeSchema = new mongoose.Schema({
         type: String, // e.g., "October 2026"
         required: true,
     },
+    Batch: {
+        type: String, // Stored as a snapshot, e.g., "Standard"
+        required: false,
+    },
     Amount: {
         type: Number,
         required: true,

@@ -7,7 +7,7 @@ const cloudinary = require('../config/cloudinary');
 // @access  Private/Student
 const uploadFee = async (req, res) => {
     try {
-        const { Month, Amount } = req.body;
+        const { Month, Amount, Batch } = req.body;
 
         if (!req.file) {
             return res.status(400).json({ message: 'Please upload an image receipt' });
@@ -22,11 +22,16 @@ const uploadFee = async (req, res) => {
 
         const student = await Student.findById(req.user.id);
 
+        if (student.AccountStatus === 'Inactive') {
+            return res.status(403).json({ message: 'Account is inactive. You cannot perform this action.' });
+        }
+
         const fee = await Fee.create({
             StudentId: req.user.id,
             LibraryID: student ? student.LibraryID : undefined,
             Month,
             Amount,
+            Batch,
             ProofImageURL: result.secure_url,
             Status: 'Pending'
         });
@@ -54,7 +59,7 @@ const getMyFees = async (req, res) => {
 // @access  Private/Admin
 const getAllFees = async (req, res) => {
     try {
-        const fees = await Fee.find({}).sort({ createdAt: -1 }).populate('StudentId', 'LibraryID FullName SeatNo Contact');
+        const fees = await Fee.find({}).sort({ createdAt: -1 }).populate('StudentId', 'LibraryID FullName SeatNo Contact batchType planDuration');
         res.json(fees);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching all fees', error: error.message });

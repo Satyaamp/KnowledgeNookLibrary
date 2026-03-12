@@ -4,17 +4,70 @@ if (!localStorage.getItem('token') || localStorage.getItem('role') !== 'admin') 
 }
 
 let currentStudents = [];
+let filteredStudents = [];
 let currentStudentsPage = 1;
 const studentsPerPage = 10;
+let searchTimeout = null;
+
+let currentFees = [];
+let filteredFees = [];
+let currentFeesPage = 1;
+const feesPerPage = 10;
+
+let currentIssues = [];
+let filteredIssues = [];
+let currentIssuesPage = 1;
+const issuesPerPage = 10;
 
 async function loadDashboardStats() {
     try {
         const stats = await apiFetch('/admin/dashboard-stats');
         document.getElementById('stat-total-students').textContent = stats.totalStudents || 0;
+        document.getElementById('stat-active-students').textContent = stats.activeStudents || 0;
         document.getElementById('stat-pending-students').textContent = stats.pendingStudents || 0;
         document.getElementById('stat-pending-fees').textContent = stats.pendingFees || 0;
         document.getElementById('stat-open-issues').textContent = stats.openIssues || 0;
         document.getElementById('stat-pending-requests').textContent = stats.pendingProfileRequests || 0;
+        document.getElementById('stat-pending-leads').textContent = stats.pendingLeads || 0;
+        
+        // Format revenue as currency
+        document.getElementById('stat-total-revenue').textContent = '₹' + (stats.totalRevenue || 0).toLocaleString('en-IN');
+
+        // Distribution Stats (Batch & Plan)
+        const distContainer = document.getElementById('distribution-stats-container');
+        if (stats.distribution && stats.distribution.length > 0) {
+            distContainer.innerHTML = stats.distribution.map(d => `
+                <div style="border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; background: #fff;">
+                    <div style="background: var(--bg-color); padding: 12px 15px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="color: var(--primary-color); font-size: 1.05em;">${d.batch}</strong>
+                        <span style="font-size: 0.8em; background: #E0E7FF; color: #3730A3; padding: 2px 8px; border-radius: 10px; font-weight: 600;">Total: ${d.total}</span>
+                    </div>
+                    <div style="padding: 12px 15px;">
+                        ${d.plans.map(p => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #eee;">
+                                <span style="font-size: 0.9em; color: var(--text-secondary);">${p.name}</span>
+                                <span style="font-weight: 600; font-size: 0.95em; ${p.count > 0 ? 'color: #059669;' : 'color: #9CA3AF;'}">${p.count}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            distContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No distribution data available.</p>';
+        }
+
+        // Gender Stats
+        const genderContainer = document.getElementById('gender-stats-container');
+        if (stats.genderStats && stats.genderStats.length > 0) {
+            genderContainer.innerHTML = stats.genderStats.map(g => `
+                <div style="flex: 1; border: 1px solid var(--card-border); padding: 15px; border-radius: 8px; text-align: center; background: #fff; min-width: 120px;">
+                    <div style="font-size: 1.5em; font-weight: bold; color: var(--text-primary);">${g.count}</div>
+                    <div style="font-size: 0.9em; color: var(--text-secondary); margin-top: 5px;">${g._id || 'Not Specified'}</div>
+                </div>
+            `).join('');
+        } else {
+            genderContainer.innerHTML = '<p style="width: 100%; text-align: center; color: var(--text-secondary);">No gender data available.</p>';
+        }
     } catch (error) {
         console.error('Error loading dashboard stats:', error);
     }
@@ -27,7 +80,8 @@ async function loadStudents() {
         const data = await apiFetch('/admin/students');
         if (data && data.length > 0) {
             currentStudents = data;
-            renderStudents();
+            // Initialize filtered list with all students or apply existing search
+            filterStudents(true);
         } else {
             list.innerHTML = '<p>No students found.</p>';
             document.getElementById('studentsPagination').innerHTML = '';
@@ -37,20 +91,91 @@ async function loadStudents() {
     }
 }
 
+function filterStudents(immediate = false) {
+    const searchInput = document.getElementById('studentSearch');
+    const query = searchInput ? searchInput.value.toLowerCase() : '';
+    const statusFilter = document.getElementById('filterStudentStatus') ? document.getElementById('filterStudentStatus').value : '';
+
+    if (searchTimeout) clearTimeout(searchTimeout);
+
+    const executeFilter = () => {
+        filteredStudents = currentStudents.filter(student => {
+            const name = (student.FullName || student.FirstName + ' ' + (student.LastName || '')).toLowerCase();
+            const contact = (student.Contact || '').toLowerCase();
+            const email = (student.Email || '').toLowerCase();
+            const libId = (student.LibraryID || '').toLowerCase();
+            const aadhar = (student.AadharNumber || '').toLowerCase();
+            
+            const matchesQuery = name.includes(query) || contact.includes(query) || email.includes(query) || libId.includes(query) || aadhar.includes(query);
+            const matchesStatus = statusFilter === '' || student.AccountStatus === statusFilter;
+
+            return matchesQuery && matchesStatus;
+        });
+        currentStudentsPage = 1;
+        renderStudents();
+    };
+
+    if (immediate) executeFilter();
+    else searchTimeout = setTimeout(executeFilter, 300);
+}
+
+function showPendingApprovals() {
+    window.location.hash = '#students';
+    // Set the dropdown to Pending. When loadStudents() runs (triggered by hash change),
+    // it will call filterStudents(), which will read this value.
+    const dropdown = document.getElementById('filterStudentStatus');
+    if (dropdown) {
+        dropdown.value = 'Pending';
+        // If we were already on the students page, force a re-filter
+        if (currentStudents.length > 0) {
+            filterStudents(true);
+        }
+    }
+}
+
 function renderStudents() {
     const list = document.getElementById('studentsList');
     const startIndex = (currentStudentsPage - 1) * studentsPerPage;
     const endIndex = startIndex + studentsPerPage;
-    const paginatedStudents = currentStudents.slice(startIndex, endIndex);
+    const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
 
     list.innerHTML = paginatedStudents.map(student => `
         <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <strong>${student.FullName || student.FirstName + ' ' + (student.LastName || '')}</strong>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="${student.ProfilePictureURL || '/img/default-avatar.png'}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--card-border); ${student.ProfilePictureURL ? 'cursor: pointer;' : ''}" ${student.ProfilePictureURL ? `onclick="window.open('${student.ProfilePictureURL}', '_blank')"` : ''} title="View Profile Picture">
+                    <strong>${student.FullName || student.FirstName + ' ' + (student.LastName || '')}</strong>
+                </div>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: ${student.AccountStatus === 'Active' || student.AccountStatus === 'Approved' ? '#DEF7EC' : (student.AccountStatus === 'Pending' ? '#FEF3C7' : '#FDE8E8')}; color: ${student.AccountStatus === 'Active' || student.AccountStatus === 'Approved' ? '#03543F' : (student.AccountStatus === 'Pending' ? '#92400E' : '#9B1C1C')}">
-                        ${student.AccountStatus || 'Pending'}
-                    </span>
+                    <select onchange="updateStudentStatus('${student._id}', this.value)" style="padding: 5px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--bg-color); font-size: 0.85em; font-weight: 500; cursor: pointer;">
+                        <option value="Pending" ${student.AccountStatus === 'Pending' ? 'selected' : ''}>Pending</option>
+                        <option value="Active" ${student.AccountStatus === 'Active' ? 'selected' : ''}>Active</option>
+                        <option value="Inactive" ${student.AccountStatus === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                    </select>
+
+                    <!-- Aadhar Verification Controls -->
+                    <div style="display: flex; align-items: center; gap: 5px; margin-left: 10px; padding-left: 10px; border-left: 1px solid var(--card-border);">
+                        ${student.AadharProofURL ? 
+                            `<button onclick="window.open('${student.AadharProofURL}', '_blank')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #6B7280; color: #6B7280; border-radius: 4px; font-size: 0.85em;" title="View Aadhar"><i class="fa-solid fa-address-card"></i></button>` 
+                            : ''
+                        }
+                        
+                        ${(student.AadharStatus === 'Pending' || student.AadharStatus === 'Not Uploaded' && student.AadharProofURL) ? 
+                            `<button onclick="verifyAadhar('${student._id}', 'Verified')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #059669; color: #059669; border-radius: 4px; font-size: 0.85em;" title="Approve Aadhar"><i class="fa-solid fa-check"></i></button>
+                             <button onclick="rejectAadhar('${student._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #DC2626; color: #DC2626; border-radius: 4px; font-size: 0.85em;" title="Reject Aadhar"><i class="fa-solid fa-xmark"></i></button>` 
+                            : ''
+                        }
+
+                        ${student.AadharStatus === 'Verified' ? 
+                            `<span style="font-size: 0.8em; color: #059669; display: flex; align-items: center; gap: 4px;" title="Aadhar Verified"><i class="fa-solid fa-shield-check"></i> Verified</span>` : ''}
+                        
+                        ${student.AadharStatus === 'Rejected' ? 
+                            `<span style="font-size: 0.8em; color: #DC2626; display: flex; align-items: center; gap: 4px;" title="Rejected: ${student.AadharRejectionReason || 'Invalid'}"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>` : ''}
+                        
+                        ${(!student.AadharProofURL) ? 
+                            `<span style="font-size: 0.8em; color: #ef4444; display: flex; align-items: center; gap: 4px;" title="Proof not uploaded"><i class="fa-solid fa-circle-exclamation"></i> Upload Pending</span>` : ''}
+                    </div>
+
                     <button onclick="viewStudent('${student._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-eye"></i> View</button>
                 </div>
             </div>
@@ -60,11 +185,6 @@ function renderStudents() {
             <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 15px;">
                 <i class="fa-solid fa-chair"></i> Seat: ${student.SeatNo || 'Unassigned'} | Plan: ${student.planDuration || 'N/A'} (${student.batchType || 'N/A'} - ₹${student.amount || 0})
             </div>
-            ${student.AccountStatus !== 'Active' ? `
-            <div style="display: flex; gap: 10px;">
-                <button onclick="approveStudent('${student._id}')" class="btn" style="padding: 0.3rem 0.8rem; font-size: 0.85em;">Approve Account</button>
-            </div>
-            ` : ''}
         </div>
     `).join('');
 
@@ -73,7 +193,7 @@ function renderStudents() {
 
 function renderStudentsPagination() {
     const pagination = document.getElementById('studentsPagination');
-    const totalPages = Math.ceil(currentStudents.length / studentsPerPage);
+    const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
 
     if (totalPages <= 1) {
         pagination.innerHTML = '';
@@ -93,7 +213,7 @@ function renderStudentsPagination() {
 }
 
 function changeStudentsPage(page) {
-    if (page < 1 || page > Math.ceil(currentStudents.length / studentsPerPage)) return;
+    if (page < 1 || page > Math.ceil(filteredStudents.length / studentsPerPage)) return;
     currentStudentsPage = page;
     renderStudents();
 }
@@ -112,7 +232,7 @@ async function loadInterestedStudents() {
                             <span style="font-size: 0.85em; margin-left: 10px; padding: 3px 8px; border-radius: 12px; background: ${student.Status === 'Reviewed' ? '#DEF7EC' : '#FEF3C7'}; color: ${student.Status === 'Reviewed' ? '#03543F' : '#92400E'}">${student.Status}</span>
                         </div>
                         <div style="font-size: 0.85em; color: var(--text-light);">
-                            ${new Date(student.SubmittedDate).toLocaleDateString()}
+                            ${new Date(student.SubmittedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
                         </div>
                     </div>
                     <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 8px;">
@@ -217,6 +337,26 @@ async function submitConvertStudent(e) {
     }
 }
 
+async function updateStudentStatus(id, status) {
+    if (!confirm(`Are you sure you want to change this student's status to "${status}"?`)) {
+        // Re-render to revert the dropdown if user cancels.
+        renderStudents();
+        return;
+    }
+    try {
+        await apiFetch('/admin/students/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({ AccountStatus: status })
+        });
+        // Update local data to prevent it from reverting on next filter/sort.
+        const student = currentStudents.find(s => s._id === id);
+        if (student) student.AccountStatus = status;
+    } catch (error) {
+        alert('Error updating status: ' + error.message);
+        renderStudents(); // Re-render on error to show correct state
+    }
+}
+
 async function approveStudent(id) {
     if (!confirm('Are you sure you want to approve this student account?')) return;
     try {
@@ -227,6 +367,34 @@ async function approveStudent(id) {
         loadStudents();
     } catch (error) {
         alert('Error approving student: ' + error.message);
+    }
+}
+
+async function verifyAadhar(id, status) {
+    if (!confirm('Mark Aadhar as Verified?')) return;
+    try {
+        await apiFetch(`/admin/students/${id}/verify-aadhar`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: 'Verified' })
+        });
+        loadStudents();
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function rejectAadhar(id) {
+    const reason = prompt("Please enter the reason for rejecting the Aadhar proof:");
+    if (reason === null) return;
+
+    try {
+        await apiFetch(`/admin/students/${id}/verify-aadhar`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: 'Rejected', reason: reason || 'Invalid Document' })
+        });
+        loadStudents();
+    } catch (error) {
+        alert('Error: ' + error.message);
     }
 }
 
@@ -295,7 +463,7 @@ function viewStudent(id) {
             <select id="modalStatus">
                 <option value="Pending" ${student.AccountStatus === 'Pending' ? 'selected' : ''}>Pending</option>
                 <option value="Active" ${student.AccountStatus === 'Active' ? 'selected' : ''}>Active</option>
-                <option value="Suspended" ${student.AccountStatus === 'Suspended' ? 'selected' : ''}>Suspended</option>
+                <option value="Inactive" ${student.AccountStatus === 'Inactive' ? 'selected' : ''}>Inactive</option>
             </select>
         </div>
         </div>
@@ -398,7 +566,49 @@ async function loadFees() {
     try {
         const data = await apiFetch('/fees');
         if (data && data.length > 0) {
-            list.innerHTML = data.map(fee => `
+            currentFees = data;
+            filterFees(true);
+        } else {
+            list.innerHTML = '<p>No fee records found.</p>';
+            document.getElementById('feesPagination').innerHTML = '';
+        }
+    } catch (error) {
+        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+
+function filterFees(immediate = false) {
+    const searchInput = document.getElementById('feeSearch');
+    const query = searchInput ? searchInput.value.toLowerCase() : '';
+
+    if (searchTimeout) clearTimeout(searchTimeout);
+
+    const executeFilter = () => {
+        filteredFees = currentFees.filter(fee => {
+            const studentName = fee.StudentId ? (fee.StudentId.FullName || '').toLowerCase() : '';
+            const libId = fee.StudentId ? (fee.StudentId.LibraryID || '').toLowerCase() : '';
+            const month = (fee.Month || '').toLowerCase();
+            const status = (fee.Status || '').toLowerCase();
+            const batch = (fee.Batch || (fee.StudentId?.batchType || '')).toLowerCase();
+            const amount = String(fee.Amount || '');
+            
+            return studentName.includes(query) || libId.includes(query) || month.includes(query) || status.includes(query) || batch.includes(query) || amount.includes(query);
+        });
+        currentFeesPage = 1;
+        renderFees();
+    };
+
+    if (immediate) executeFilter();
+    else searchTimeout = setTimeout(executeFilter, 300);
+}
+
+function renderFees() {
+    const list = document.getElementById('feesList');
+    const startIndex = (currentFeesPage - 1) * feesPerPage;
+    const endIndex = startIndex + feesPerPage;
+    const paginatedFees = filteredFees.slice(startIndex, endIndex);
+
+    list.innerHTML = paginatedFees.map(fee => `
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <strong>${fee.StudentId ? `${fee.StudentId.FullName} (ID: ${fee.StudentId.LibraryID || 'N/A'})` : 'Unknown Student'}</strong>
@@ -407,7 +617,15 @@ async function loadFees() {
                         </span>
                     </div>
                     <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 5px;">
-                        Month: ${fee.Month} | Amount: ₹${fee.Amount}
+                    Month: ${fee.Month || 'N/A'} | 
+                    Batch: ${
+                        fee.Batch || 
+                        (fee.StudentId 
+                            ? `${fee.StudentId.planDuration || 'N/A'} (${fee.StudentId.batchType || 'N/A'})`
+                            : 'N/A'
+                        )
+                    } | 
+                    Amount: ₹${fee.Amount || 0}
                     </div>
                     <div style="margin-bottom: 15px;">
                         <a href="${fee.ProofImageURL}" target="_blank" style="font-size: 0.85em; color: var(--primary-color);">
@@ -436,12 +654,32 @@ async function loadFees() {
                     </div>
                 </div>
             `).join('');
-        } else {
-            list.innerHTML = '<p>No fee records found.</p>';
-        }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+
+    renderFeesPagination();
+}
+
+function renderFeesPagination() {
+    const pagination = document.getElementById('feesPagination');
+    const totalPages = Math.ceil(filteredFees.length / feesPerPage);
+
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
     }
+
+    let html = '';
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentFeesPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeFeesPage(${currentFeesPage - 1})"`}>Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentFeesPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeFeesPage(${i})">${i}</button>`;
+    }
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentFeesPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeFeesPage(${currentFeesPage + 1})"`}>Next</button>`;
+    pagination.innerHTML = html;
+}
+
+function changeFeesPage(page) {
+    if (page < 1 || page > Math.ceil(filteredFees.length / feesPerPage)) return;
+    currentFeesPage = page;
+    renderFees();
 }
 
 async function updateFeeStatus(id, newStatus) {
@@ -517,26 +755,57 @@ async function loadRequests() {
         if (data && data.length > 0) {
             list.innerHTML = data.map(req => `
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <strong>Request from: ${req.StudentId ? req.StudentId.FullName : 'Unknown'}</strong>
-                        <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: #FEF3C7; color: #92400E;">
-                            Pending Review
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                        <strong>Request from: ${req.StudentId ? `${req.StudentId.FullName} (ID: ${req.StudentId.LibraryID || 'N/A'})` : 'Unknown'}</strong>
+                        <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: ${req.Status === 'Under Review' ? '#DBEAFE' : '#FEF3C7'}; color: ${req.Status === 'Under Review' ? '#1E40AF' : '#92400E'};">
+                            ${req.Status}
                         </span>
                     </div>
-                    <div style="font-size: 0.9em; margin-bottom: 15px;">
-                        <pre style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px;">${JSON.stringify(req.ProposedData, null, 2)}</pre>
+                    
+                    <div style="background: rgba(0,0,0,0.02); padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--card-border);">
+                        <h5 style="margin-bottom:8px; color:var(--text-secondary);">Requested Changes:</h5>
+                        ${Object.entries(req.ProposedData).map(([key, val]) => `
+                            <div style="display:grid; grid-template-columns: 120px 1fr; gap:10px; font-size:0.9em; margin-bottom:4px;">
+                                <span style="font-weight:600; color:var(--text-primary);">${key}:</span>
+                                <span style="color:#555;">${val || '<em style="color:#999;">(empty)</em>'}</span>
+                            </div>
+                        `).join('')}
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="approveRequest('${req._id}')" class="btn" style="padding: 0.3rem 0.8rem; font-size: 0.85em;">Approve</button>
-                        <button onclick="rejectRequest('${req._id}')" class="btn-outline" style="padding: 0.3rem 0.8rem; font-size: 0.85em; color: #9B1C1C; border-color: #9B1C1C;">Reject</button>
+
+                    <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
+                        <label style="font-size:0.9em;">Action:</label>
+                        <select onchange="handleRequestAction('${req._id}', this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid var(--card-border); background:white;">
+                            <option value="" disabled selected>Select Action...</option>
+                            <option value="Under Review">Mark as Under Review</option>
+                            <option value="Approve" style="color: green; font-weight:bold;">Approve & Apply</option>
+                            <option value="Reject" style="color: red; font-weight:bold;">Reject</option>
+                        </select>
                     </div>
                 </div>
             `).join('');
         } else {
-            list.innerHTML = '<p>No pending profile requests.</p>';
+            list.innerHTML = '<p>No active profile requests.</p>';
         }
     } catch (error) {
         list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+
+async function handleRequestAction(id, action) {
+    if (!action) return;
+
+    if (action === 'Approve') {
+        await approveRequest(id);
+    } else if (action === 'Reject') {
+        await rejectRequest(id);
+    } else if (action === 'Under Review') {
+        try {
+            await apiFetch(`/admin/profile-requests/${id}/status`, {
+                method: 'PUT',
+                body: JSON.stringify({ Status: 'Under Review' })
+            });
+            loadRequests();
+        } catch (error) { alert(error.message); }
     }
 }
 
@@ -551,9 +820,16 @@ async function approveRequest(id) {
 }
 
 async function rejectRequest(id) {
-    if (!confirm('Reject this profile update?')) return;
+    const reason = prompt("Please provide a reason for rejecting this request (optional, will be shown to the student).");
+    if (reason === null) return; // User clicked cancel
+
     try {
-        await apiFetch('/admin/profile-requests/' + id + '/reject', { method: 'PUT' });
+        await apiFetch('/admin/profile-requests/' + id + '/reject', {
+            method: 'PUT',
+            body: JSON.stringify({
+                reason: reason || 'No reason provided.'
+            })
+        });
         loadRequests();
     } catch (error) {
         alert('Error: ' + error.message);
@@ -572,8 +848,8 @@ async function loadAnnouncements() {
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px;">
                         <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);">${ann.Title}</div>
                         <button onclick="deleteAnnouncement('${ann._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #ef4444; color: #ef4444; border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>
-                     </div>
-                    <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 10px;">Posted ${new Date(ann.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</div>
+                    </div>
+                    <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 10px;">Posted ${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</div>
                     <div style="white-space: pre-wrap;">${ann.Message}</div>
                 </div>
             `).join('');
@@ -630,13 +906,54 @@ async function loadIssues() {
     try {
         const data = await apiFetch('/issues');
         if (data && data.length > 0) {
-            list.innerHTML = data.map(issue => `
+            currentIssues = data;
+            filterIssues(true);
+        } else {
+            list.innerHTML = '<p>No issues reported.</p>';
+            document.getElementById('issuesPagination').innerHTML = '';
+        }
+    } catch (error) {
+        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+
+function filterIssues(immediate = false) {
+    const searchInput = document.getElementById('issueSearch');
+    const query = searchInput ? searchInput.value.toLowerCase() : '';
+
+    if (searchTimeout) clearTimeout(searchTimeout);
+
+    const executeFilter = () => {
+        filteredIssues = currentIssues.filter(issue => {
+            const title = (issue.IssueTitle || '').toLowerCase();
+            const desc = (issue.Description || '').toLowerCase();
+            const studentName = issue.StudentId ? (issue.StudentId.FullName || '').toLowerCase() : '';
+            const libId = issue.StudentId ? (issue.StudentId.LibraryID || '').toLowerCase() : '';
+            const status = (issue.Status || '').toLowerCase();
+            
+            return title.includes(query) || desc.includes(query) || studentName.includes(query) || libId.includes(query) || status.includes(query);
+        });
+        currentIssuesPage = 1;
+        renderIssues();
+    };
+
+    if (immediate) executeFilter();
+    else searchTimeout = setTimeout(executeFilter, 300);
+}
+
+function renderIssues() {
+    const list = document.getElementById('issuesList');
+    const startIndex = (currentIssuesPage - 1) * issuesPerPage;
+    const endIndex = startIndex + issuesPerPage;
+    const paginatedIssues = filteredIssues.slice(startIndex, endIndex);
+
+    list.innerHTML = paginatedIssues.map(issue => `
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 15px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <div>
                             <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);">${issue.IssueTitle}</div>
                             <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">Reported by: ${issue.StudentId ? `${issue.StudentId.FullName} (ID: ${issue.StudentId.LibraryID || 'N/A'})` : 'Unknown'} | Contact: ${issue.StudentId ? issue.StudentId.Contact : 'N/A'}</div>
-                            <div style="font-size: 0.85em; color: var(--text-secondary);">Date: ${new Date(issue.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</div>
+                            <div style="font-size: 0.85em; color: var(--text-secondary);">Date: ${new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</div>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: ${issue.Status === 'Resolved' ? '#DEF7EC' : (issue.Status === 'Pending' ? '#FDE8E8' : '#FEF3C7')}; color: ${issue.Status === 'Resolved' ? '#03543F' : (issue.Status === 'Pending' ? '#9B1C1C' : '#92400E')}">
@@ -657,12 +974,32 @@ async function loadIssues() {
                     </div>
                 </div>
             `).join('');
-        } else {
-            list.innerHTML = '<p>No issues reported.</p>';
-        }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+
+    renderIssuesPagination();
+}
+
+function renderIssuesPagination() {
+    const pagination = document.getElementById('issuesPagination');
+    const totalPages = Math.ceil(filteredIssues.length / issuesPerPage);
+
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
     }
+
+    let html = '';
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentIssuesPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeIssuesPage(${currentIssuesPage - 1})"`}>Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentIssuesPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeIssuesPage(${i})">${i}</button>`;
+    }
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentIssuesPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeIssuesPage(${currentIssuesPage + 1})"`}>Next</button>`;
+    pagination.innerHTML = html;
+}
+
+function changeIssuesPage(page) {
+    if (page < 1 || page > Math.ceil(filteredIssues.length / issuesPerPage)) return;
+    currentIssuesPage = page;
+    renderIssues();
 }
 
 async function updateIssueStatus(id, newStatus) {

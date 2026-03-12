@@ -98,12 +98,40 @@ const updateStudent = async (req, res) => {
     }
 };
 
+// @desc    Verify Aadhar Proof
+// @route   PUT /api/admin/students/:id/verify-aadhar
+// @access  Private/Admin
+const verifyAadhar = async (req, res) => {
+    try {
+        const { status, reason } = req.body; // status: 'Verified' or 'Rejected'
+        const student = await Student.findById(req.params.id);
+
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        student.AadharStatus = status;
+        if (status === 'Rejected') {
+            student.AadharRejectionReason = reason || 'Document not clear/valid';
+        } else {
+            student.AadharRejectionReason = undefined;
+        }
+
+        await student.save();
+        res.json({ message: `Aadhar marked as ${status}`, student });
+    } catch (error) {
+        res.status(500).json({ message: 'Error verifying Aadhar', error: error.message });
+    }
+};
+
 // @desc    Get pending profile requests
 // @route   GET /api/admin/profile-requests
 // @access  Private/Admin
 const getProfileRequests = async (req, res) => {
     try {
-        const requests = await ProfileUpdateRequest.find({ Status: 'Pending' }).populate('StudentId', 'FullName Email Contact SeatNo CurrentBatch');
+        const requests = await ProfileUpdateRequest.find({ 
+            Status: { $in: ['Pending', 'Under Review'] } 
+        }).populate('StudentId', 'FullName Email Contact SeatNo CurrentBatch LibraryID');
         res.json(requests);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching requests', error: error.message });
@@ -116,8 +144,8 @@ const getProfileRequests = async (req, res) => {
 const approveProfileRequest = async (req, res) => {
     try {
         const request = await ProfileUpdateRequest.findById(req.params.id);
-        if (!request || request.Status !== 'Pending') {
-            return res.status(404).json({ message: 'Pending request not found' });
+        if (!request || (request.Status !== 'Pending' && request.Status !== 'Under Review')) {
+            return res.status(404).json({ message: 'Request not found or already processed' });
         }
 
         const student = await Student.findById(request.StudentId);
@@ -143,17 +171,37 @@ const approveProfileRequest = async (req, res) => {
 // @access  Private/Admin
 const rejectProfileRequest = async (req, res) => {
     try {
+        const { reason } = req.body;
         const request = await ProfileUpdateRequest.findById(req.params.id);
-        if (!request || request.Status !== 'Pending') {
-            return res.status(404).json({ message: 'Pending request not found' });
+        if (!request || (request.Status !== 'Pending' && request.Status !== 'Under Review')) {
+            return res.status(404).json({ message: 'Request not found or already processed' });
         }
 
         request.Status = 'Rejected';
+        request.AdminNote = reason || 'No reason provided.';
         await request.save();
 
         res.json({ message: 'Profile request rejected' });
     } catch (error) {
         res.status(500).json({ message: 'Error rejecting request', error: error.message });
+    }
+};
+
+// @desc    Update profile request status (e.g. Under Review)
+// @route   PUT /api/admin/profile-requests/:id/status
+// @access  Private/Admin
+const updateProfileRequestStatus = async (req, res) => {
+    try {
+        const request = await ProfileUpdateRequest.findById(req.params.id);
+        if (!request) {
+            return res.status(404).json({ message: 'Request not found' });
+        }
+
+        request.Status = req.body.Status;
+        await request.save();
+        res.json({ message: `Request status updated to ${req.body.Status}` });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating status', error: error.message });
     }
 };
 
@@ -164,16 +212,54 @@ const getDashboardStats = async (req, res) => {
     try {
         const totalStudents = await Student.countDocuments({});
         const pendingStudents = await Student.countDocuments({ AccountStatus: 'Pending' });
-        const pendingProfileRequests = await ProfileUpdateRequest.countDocuments({ Status: 'Pending' });
+        const activeStudents = await Student.countDocuments({ AccountStatus: 'Active' });
+        const pendingProfileRequests = await ProfileUpdateRequest.countDocuments({ Status: { $in: ['Pending', 'Under Review'] } });
         const pendingFees = await Fee.countDocuments({ Status: 'Pending' });
         const openIssues = await Issue.countDocuments({ Status: { $in: ['Pending', 'Seen by Admin', 'In Progress'] } });
+        const pendingLeads = await InterestedStudent.countDocuments({ Status: 'Pending' });
+
+        // Total Revenue (Approved Fees)
+        const revenueResult = await Fee.aggregate([
+            { $match: { Status: { $in: ['Paid', 'Approved'] } } },
+            { $group: { _id: null, total: { $sum: '$Amount' } } }
+        ]);
+        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
+
+        // Batch & Plan Distribution (Active Students)
+        const allBatches = ['Basic', 'Fundamental', 'Standard', "Officer's"];
+        const allPlans = ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'];
+
+        const distAgg = await Student.aggregate([
+            { $match: { AccountStatus: 'Active' } },
+            { $group: { _id: { batch: '$batchType', plan: '$planDuration' }, count: { $sum: 1 } } }
+        ]);
+
+        const distribution = allBatches.map(batch => {
+            const plans = allPlans.map(plan => {
+                const found = distAgg.find(d => d._id.batch === batch && d._id.plan === plan);
+                return { name: plan, count: found ? found.count : 0 };
+            });
+            const total = plans.reduce((acc, curr) => acc + curr.count, 0);
+            return { batch, total, plans };
+        });
+
+        // Gender Distribution (Active Students)
+        const genderStats = await Student.aggregate([
+            { $match: { AccountStatus: 'Active' } },
+            { $group: { _id: '$Gender', count: { $sum: 1 } } }
+        ]);
 
         res.json({
             totalStudents,
             pendingStudents,
+            activeStudents,
             pendingProfileRequests,
             pendingFees,
-            openIssues
+            openIssues,
+            pendingLeads,
+            totalRevenue,
+            distribution,
+            genderStats
         });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching stats', error: error.message });
@@ -304,5 +390,7 @@ module.exports = {
     getInterestedStudents,
     markInterestedStudentReviewed,
     rejectInterestedStudent,
-    convertInterestedStudent
+    convertInterestedStudent,
+    updateProfileRequestStatus,
+    verifyAadhar
 };
