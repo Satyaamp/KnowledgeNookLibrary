@@ -24,6 +24,7 @@ async function loadDashboardStats() {
         const stats = await apiFetch('/admin/dashboard-stats');
         document.getElementById('stat-total-students').textContent = stats.totalStudents || 0;
         document.getElementById('stat-active-students').textContent = stats.activeStudents || 0;
+        document.getElementById('stat-inactive-students').textContent = stats.inactiveStudents || 0;
         document.getElementById('stat-pending-students').textContent = stats.pendingStudents || 0;
         document.getElementById('stat-pending-fees').textContent = stats.pendingFees || 0;
         document.getElementById('stat-open-issues').textContent = stats.openIssues || 0;
@@ -117,6 +118,50 @@ function filterStudents(immediate = false) {
 
     if (immediate) executeFilter();
     else searchTimeout = setTimeout(executeFilter, 300);
+}
+
+function showPendingFees() {
+    window.location.hash = '#fees';
+    const dropdown = document.getElementById('filterFeeStatus');
+    if (dropdown) {
+        dropdown.value = 'Pending';
+        if (currentFees.length > 0) {
+            filterFees(true);
+        }
+    }
+}
+
+function showOpenIssues() {
+    window.location.hash = '#issues';
+    const dropdown = document.getElementById('filterIssueStatus');
+    if (dropdown) {
+        dropdown.value = 'Open'; // Use a special value
+        if (currentIssues.length > 0) {
+            filterIssues(true);
+        }
+    }
+}
+
+function showActiveStudents() {
+    window.location.hash = '#students';
+    const dropdown = document.getElementById('filterStudentStatus');
+    if (dropdown) {
+        dropdown.value = 'Active';
+        if (currentStudents.length > 0) {
+            filterStudents(true);
+        }
+    }
+}
+
+function showInactiveStudents() {
+    window.location.hash = '#students';
+    const dropdown = document.getElementById('filterStudentStatus');
+    if (dropdown) {
+        dropdown.value = 'Inactive';
+        if (currentStudents.length > 0) {
+            filterStudents(true);
+        }
+    }
 }
 
 function showPendingApprovals() {
@@ -580,6 +625,7 @@ async function loadFees() {
 function filterFees(immediate = false) {
     const searchInput = document.getElementById('feeSearch');
     const query = searchInput ? searchInput.value.toLowerCase() : '';
+    const statusFilter = document.getElementById('filterFeeStatus') ? document.getElementById('filterFeeStatus').value : '';
 
     if (searchTimeout) clearTimeout(searchTimeout);
 
@@ -588,11 +634,14 @@ function filterFees(immediate = false) {
             const studentName = fee.StudentId ? (fee.StudentId.FullName || '').toLowerCase() : '';
             const libId = fee.StudentId ? (fee.StudentId.LibraryID || '').toLowerCase() : '';
             const month = (fee.Month || '').toLowerCase();
-            const status = (fee.Status || '').toLowerCase();
+            const feeStatus = (fee.Status || '');
             const batch = (fee.Batch || (fee.StudentId?.batchType || '')).toLowerCase();
             const amount = String(fee.Amount || '');
             
-            return studentName.includes(query) || libId.includes(query) || month.includes(query) || status.includes(query) || batch.includes(query) || amount.includes(query);
+            const matchesQuery = studentName.includes(query) || libId.includes(query) || month.includes(query) || feeStatus.toLowerCase().includes(query) || batch.includes(query) || amount.includes(query);
+            const matchesStatus = statusFilter === '' || feeStatus === statusFilter;
+
+            return matchesQuery && matchesStatus;
         });
         currentFeesPage = 1;
         renderFees();
@@ -920,6 +969,7 @@ async function loadIssues() {
 function filterIssues(immediate = false) {
     const searchInput = document.getElementById('issueSearch');
     const query = searchInput ? searchInput.value.toLowerCase() : '';
+    const statusFilter = document.getElementById('filterIssueStatus') ? document.getElementById('filterIssueStatus').value : '';
 
     if (searchTimeout) clearTimeout(searchTimeout);
 
@@ -929,9 +979,18 @@ function filterIssues(immediate = false) {
             const desc = (issue.Description || '').toLowerCase();
             const studentName = issue.StudentId ? (issue.StudentId.FullName || '').toLowerCase() : '';
             const libId = issue.StudentId ? (issue.StudentId.LibraryID || '').toLowerCase() : '';
-            const status = (issue.Status || '').toLowerCase();
+            const issueStatus = (issue.Status || '');
             
-            return title.includes(query) || desc.includes(query) || studentName.includes(query) || libId.includes(query) || status.includes(query);
+            const matchesQuery = title.includes(query) || desc.includes(query) || studentName.includes(query) || libId.includes(query) || issueStatus.toLowerCase().includes(query);
+            
+            let matchesStatus = true;
+            if (statusFilter === 'Open') {
+                matchesStatus = ['Pending', 'Seen by Admin', 'In Progress'].includes(issueStatus);
+            } else if (statusFilter !== '') {
+                matchesStatus = issueStatus === statusFilter;
+            }
+
+            return matchesQuery && matchesStatus;
         });
         currentIssuesPage = 1;
         renderIssues();

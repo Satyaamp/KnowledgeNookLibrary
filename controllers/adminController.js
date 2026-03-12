@@ -213,6 +213,7 @@ const getDashboardStats = async (req, res) => {
         const totalStudents = await Student.countDocuments({});
         const pendingStudents = await Student.countDocuments({ AccountStatus: 'Pending' });
         const activeStudents = await Student.countDocuments({ AccountStatus: 'Active' });
+        const inactiveStudents = await Student.countDocuments({ AccountStatus: 'Inactive' });
         const pendingProfileRequests = await ProfileUpdateRequest.countDocuments({ Status: { $in: ['Pending', 'Under Review'] } });
         const pendingFees = await Fee.countDocuments({ Status: 'Pending' });
         const openIssues = await Issue.countDocuments({ Status: { $in: ['Pending', 'Seen by Admin', 'In Progress'] } });
@@ -253,6 +254,7 @@ const getDashboardStats = async (req, res) => {
             totalStudents,
             pendingStudents,
             activeStudents,
+            inactiveStudents,
             pendingProfileRequests,
             pendingFees,
             openIssues,

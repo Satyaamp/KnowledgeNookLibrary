@@ -73,11 +73,15 @@
                                 id="stat-total-students">-</div>
                             <div style="color: var(--text-secondary); margin-top: 5px;">Total Students</div>
                         </div>
-                        <div
-                            style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                        <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;" onclick="showActiveStudents()" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                             <div style="font-size: 2.5em; font-weight: bold; color: #059669;"
                                 id="stat-active-students">-</div>
                             <div style="color: var(--text-secondary); margin-top: 5px;">Active Students</div>
+                        </div>
+                        <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;" onclick="showInactiveStudents()" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                            <div style="font-size: 2.5em; font-weight: bold; color: #374151;"
+                                id="stat-inactive-students">-</div>
+                            <div style="color: var(--text-secondary); margin-top: 5px;">Inactive Students</div>
                         </div>
                         <div
                             style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;" onclick="showPendingApprovals()" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
@@ -85,20 +89,17 @@
                                 id="stat-pending-students">-</div>
                             <div style="color: var(--text-secondary); margin-top: 5px;">Pending Approvals</div>
                         </div>
-                        <div
-                            style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                        <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;" onclick="showPendingFees()" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                             <div style="font-size: 2.5em; font-weight: bold; color: #9B1C1C;" id="stat-pending-fees">-
                             </div>
                             <div style="color: var(--text-secondary); margin-top: 5px;">Pending Fees</div>
                         </div>
-                        <div
-                            style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                        <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;" onclick="showOpenIssues()" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                             <div style="font-size: 2.5em; font-weight: bold; color: #B45309;" id="stat-open-issues">-
                             </div>
                             <div style="color: var(--text-secondary); margin-top: 5px;">Open Issues</div>
                         </div>
-                        <div
-                            style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                        <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;" onclick="window.location.hash = '#requests'" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                             <div style="font-size: 2.5em; font-weight: bold; color: #6B7280;"
                                 id="stat-pending-requests">-</div>
                             <div style="color: var(--text-secondary); margin-top: 5px;">Profile Requests</div>
@@ -109,8 +110,7 @@
                                 id="stat-total-revenue">-</div>
                             <div style="color: var(--text-secondary); margin-top: 5px;">Total Revenue</div>
                         </div>
-                        <div
-                            style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                        <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;" onclick="window.location.hash = '#interested'" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                             <div style="font-size: 2.5em; font-weight: bold; color: #DB2777;"
                                 id="stat-pending-leads">-</div>
                             <div style="color: var(--text-secondary); margin-top: 5px;">New Leads</div>
@@ -168,8 +168,14 @@
             <div id="view-fees" class="view-section" style="display: none;">
                 <div class="card">
                     <h3>Verify Fees</h3>
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <input type="text" id="feeSearch" placeholder="Search by Student Name, ID, Month, Batch, or Status..." onkeyup="filterFees()" style="padding: 10px;">
+                    <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="feeSearch" placeholder="Search by Student Name, ID, Month, Batch, or Status..." onkeyup="filterFees()" style="padding: 10px; flex: 1; min-width: 200px;">
+                        <select id="filterFeeStatus" onchange="filterFees()" style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg);">
+                            <option value="">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
                     </div>
                     <div id="feesList">Loading...</div>
                     <div id="feesPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
@@ -210,8 +216,16 @@
             <div id="view-issues" class="view-section" style="display: none;">
                 <div class="card">
                     <h3>Manage Issues</h3>
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <input type="text" id="issueSearch" placeholder="Search by Title, Description, Student Name, or Status..." onkeyup="filterIssues()" style="padding: 10px;">
+                    <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="issueSearch" placeholder="Search by Title, Description, Student Name, or Status..." onkeyup="filterIssues()" style="padding: 10px; flex: 1; min-width: 200px;">
+                        <select id="filterIssueStatus" onchange="filterIssues()" style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg);">
+                            <option value="">All Statuses</option>
+                            <option value="Open">All Open</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Seen by Admin">Seen by Admin</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
                     </div>
                     <div id="issuesList">Loading...</div>
                     <div id="issuesPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
