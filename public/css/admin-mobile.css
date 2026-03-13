@@ -1,0 +1,211 @@
+/* ===================================================
+   Knowledge Nook Library — Admin Mobile Styles
+   =================================================== */
+
+@media (max-width: 768px) {
+    /* Hide desktop specific elements */
+    .dashboard-nav-links {
+        display: none !important;
+    }
+
+    /* Navbar & Hamburger */
+    .hamburger-btn {
+        display: block !important;
+        margin-right: 8px;
+    }
+
+    .nav-container {
+        padding: 0 16px;
+    }
+
+    .logo-text {
+        font-size: 1rem;
+        max-width: 180px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .btn-logout {
+        padding: 6px;
+        border-radius: 50%;
+    }
+
+    /* Layout */
+    .dashboard-container {
+        display: block;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        padding: 20px 16px;
+    }
+
+    /* Sidebar Drawer */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 260px;
+        height: 100vh;
+        z-index: 2000; /* above everything */
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding-top: 20px;
+        box-shadow: none;
+    }
+
+    .sidebar.active {
+        left: 0;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+    }
+
+    .sidebar h2 {
+        padding-top: 10px;
+        font-size: 1.2rem;
+    }
+
+    #mobile-overlay {
+        z-index: 1500;
+    }
+
+    /* Stats Grid */
+    #dashboard-stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
+    }
+
+    #dashboard-stats-grid > div {
+        padding: 16px !important;
+    }
+
+    #dashboard-stats-grid > div div:first-child {
+        font-size: 1.6rem !important;
+    }
+
+    #dashboard-stats-grid > div div:last-child {
+        font-size: 0.75rem !important;
+    }
+
+    /* Cards */
+    .card {
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+
+    /* Forms */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group[style*="display: flex"] {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .form-group[style*="display: flex"] input,
+    .form-group[style*="display: flex"] select {
+        width: 100% !important;
+        min-width: unset !important;
+    }
+
+    /* List Items (Flex wrap for inner contents) */
+    #studentsList > div > div:first-child,
+    #feesList > div > div:first-child,
+    #issuesList > div > div:first-child,
+    #requestsList > div > div:first-child {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 10px;
+    }
+
+    #studentsList > div > div:first-child > div:last-child,
+    #feesList > div > div:first-child > div:last-child,
+    #issuesList > div > div:first-child > div:last-child {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Action Buttons in Lists */
+    #studentsList .btn-outline,
+    #feesList .btn-outline,
+    #issuesList .btn-outline {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        flex: 1;
+        justify-content: center;
+    }
+
+    /* Modals - Bottom Sheet Style */
+    .modal {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal-content {
+        width: 100%;
+        max-width: 100%;
+        max-height: 90vh;
+        border-radius: 20px 20px 0 0;
+        padding: 24px 20px;
+        margin: 0;
+        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(100%); opacity: 0.5; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-content::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: #cbd5e1;
+        border-radius: 4px;
+        margin: -10px auto 20px auto;
+    }
+
+    .close-btn {
+        top: 16px;
+        right: 16px;
+    }
+
+    #studentModalContent {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Modal Form Group */
+    .modal-content .form-group[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Mobile Toasts */
+    #toast-container {
+        left: 16px;
+        right: 16px;
+        top: 20px;
+        align-items: center;
+    }
+
+    .toast {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Stack distribution and gender stats container */
+    #distribution-stats-container,
+    #gender-stats-container {
+        grid-template-columns: 1fr !important;
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}

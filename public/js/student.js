@@ -14,6 +14,7 @@ let activeBanners = [];
 let currentBannerIndex = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
+    initTheme(); // Initialize Dark Mode Preference
     injectCustomUI(); // Inject Toast/Modal HTML
 
     // Fetch profile to get Name and Profile Picture
@@ -79,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Update Library ID in header
         if (profile.LibraryID) {
-            document.getElementById('studentLibraryID').innerHTML = `<i class="fa-solid fa-id-badge" style="margin-right: 5px;"></i> ID: ${profile.LibraryID} &nbsp;|&nbsp;`;
+            document.getElementById('studentLibraryID').innerHTML = `<i class="fa-solid fa-id-badge" style="margin-right: 5px;"></i> ID: ${profile.LibraryID} &nbsp;&nbsp;`;
 
             // Auto-fill forms
             const feeIdField = document.getElementById('feeLibraryID');
@@ -96,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Update Plan in header
         const planText = profile.planDuration ? `${profile.planDuration} (${profile.batchType || 'N/A'} - ₹${profile.amount || 0})` : 'N/A';
-        document.getElementById('studentPlan').innerHTML = `<i class="fa-solid fa-clock" style="margin-right: 5px;"></i> Plan: ${planText} &nbsp;|&nbsp;`;
+        document.getElementById('studentPlan').innerHTML = `<i class="fa-solid fa-clock" style="margin-right: 5px;"></i> Plan: ${planText} &nbsp;&nbsp;`;
 
         // Update joining date in header
         if (profile.JoiningDate) {
@@ -203,30 +204,30 @@ async function loadProfile() {
                 <div id="profileRequestStatusContainer" style="grid-column: 1 / -1; display:none;"></div>
 
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
-                    <div style="font-size: 0.85em; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Full Name</div>
-                    <div style="font-size: 1.1em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.FullName}</div>
+                    <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Full Name</div>
+                    <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.FullName}</div>
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
-                    <div style="font-size: 0.85em; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Email Address</div>
-                    <div style="font-size: 1.1em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.Email}</div>
+                    <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Email Address</div>
+                    <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.Email}</div>
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
-                    <div style="font-size: 0.85em; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Contact Number</div>
-                    <div style="font-size: 1.1em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.Contact}</div>
+                    <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Contact Number</div>
+                    <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.Contact}</div>
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="font-size: 0.85em; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Aadhar Number</div>
+                        <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Aadhar Number</div>
                         
                         <div style="display: flex; align-items: center; gap: 10px;">
                             ${data.AadharStatus === 'Rejected' ? 
                                 `<div style="text-align: right;">
-                                    <span style="font-size: 0.8em; color: #ef4444; font-weight: 500;"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>
-                                    <div style="font-size: 0.75em; color: #ef4444;">${data.AadharRejectionReason || 'Please re-upload'}</div>
+                                    <span style="font-size: 0.9em; color: #ef4444; font-weight: 500;"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>
+                                    <div style="font-size: 0.85em; color: #ef4444;">${data.AadharRejectionReason || 'Please re-upload'}</div>
                                  </div>` : ''}
 
                             ${data.AadharStatus === 'Pending' ? 
-                                `<span style="font-size: 0.8em; color: #D97706; background: #FEF3C7; padding: 2px 8px; border-radius: 4px;"><i class="fa-solid fa-clock"></i> Verification Pending</span>` : ''}
+                                `<span style="font-size: 0.9em; color: #D97706; background: #FEF3C7; padding: 2px 8px; border-radius: 4px;"><i class="fa-solid fa-clock"></i> Verification Pending</span>` : ''}
 
                             ${data.AadharProofURL ? 
                                 `<svg onclick="openImagePreview('${data.AadharProofURL}')" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="cursor: pointer; color: var(--primary-color);" title="View Aadhar">
@@ -237,7 +238,7 @@ async function loadProfile() {
 
                             ${data.AadharStatus === 'Not Uploaded' || data.AadharStatus === 'Rejected' || (!data.AadharProofURL) ? 
                                 `<div>
-                                    <label for="aadharUploadInput" class="btn-outline" style="padding: 2px 8px; font-size: 0.8em; cursor: pointer;">
+                                    <label for="aadharUploadInput" class="btn-outline" style="padding: 4px 10px; font-size: 0.9em; cursor: pointer;">
                                         <i class="fa-solid fa-upload"></i> ${data.AadharStatus === 'Rejected' ? 'Re-upload' : 'Upload'}
                                     </label>
                                     <input type="file" id="aadharUploadInput" accept="image/*" style="display: none;" onchange="handleAadharUpload(this)">
@@ -249,7 +250,7 @@ async function loadProfile() {
                             }
                         </div>
                     </div>
-                    <div style="font-size: 1.1em; color: var(--text-primary); font-weight: 500; margin-top: 5px; display: flex; align-items: center; gap: 2px;">
+                    <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px; display: flex; align-items: center; gap: 2px;">
                         ${data.AadharNumber && data.AadharNumber.length > 4 ?
                 `<span style="letter-spacing: 2px; font-size: 1.2em; position: relative; top: -2px;">${'•'.repeat(data.AadharNumber.length - 4)}</span>` + data.AadharNumber.slice(-4)
                 : data.AadharNumber || 'N/A'
@@ -257,20 +258,20 @@ async function loadProfile() {
                     </div>
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1;">
-                    <div style="font-size: 0.85em; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Full Address</div>
-                    <div style="font-size: 1.1em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.FullAddress}</div>
+                    <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Full Address</div>
+                    <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.FullAddress}</div>
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
-                    <div style="font-size: 0.85em; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Account Status</div>
-                    <div style="font-size: 1.1em; margin-top: 5px;">
-                        <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.9em; background: ${data.AccountStatus === 'Active' ? '#DEF7EC' : '#FEF3C7'}; color: ${data.AccountStatus === 'Active' ? '#03543F' : '#92400E'};">
+                    <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Account Status</div>
+                    <div style="font-size: 1.2em; margin-top: 5px;">
+                        <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.95em; background: ${data.AccountStatus === 'Active' ? '#DEF7EC' : '#FEF3C7'}; color: ${data.AccountStatus === 'Active' ? '#03543F' : '#92400E'};">
                             ${data.AccountStatus}
                         </span>
                     </div>
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
-                    <div style="font-size: 0.85em; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Library Seat No</div>
-                    <div style="font-size: 1.1em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.SeatNo}</div>
+                    <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Library Seat No</div>
+                    <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.SeatNo}</div>
                 </div>
             </div>
         `;
@@ -303,7 +304,7 @@ async function loadProfileRequestStatus() {
                                 You requested to update: <strong>${request.ProposedData ? Object.keys(request.ProposedData).join(', ') : ''}</strong>
                             </div>
                         </div>
-                        <span style="font-size: 0.8em; color: var(--text-secondary);">${new Date(request.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</span>
+                        <span style="font-size: 0.9em; color: var(--text-secondary);">${new Date(request.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</span>
                     </div>`;
             } else if (request.Status === 'Approved') {
                 bannerHTML = `
@@ -312,7 +313,7 @@ async function loadProfileRequestStatus() {
                             <div style="font-weight: 600; color: #065F46; margin-bottom: 4px;"><i class="fa-solid fa-check-circle"></i> Profile Update Approved</div>
                             <button onclick="dismissRequestNotification('${request._id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#065F46;">&times;</button>
                         </div>
-                        <p style="font-size: 0.9em; color: #047857;">Your profile has been successfully updated with the requested changes.</p>
+                        <p style="font-size: 1em; color: var(--text-secondary);">Your profile has been successfully updated with the requested changes.</p>
                     </div>`;
             } else if (request.Status === 'Rejected') {
                 bannerHTML = `
@@ -321,7 +322,7 @@ async function loadProfileRequestStatus() {
                             <div style="font-weight: 600; color: #991B1B; margin-bottom: 4px;"><i class="fa-solid fa-times-circle"></i> Profile Update Rejected</div>
                             <button onclick="dismissRequestNotification('${request._id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#991B1B;">&times;</button>
                         </div>
-                        <p style="font-size: 0.9em; color: #B91C1C;">Your request was rejected. <strong>Reason:</strong> ${request.AdminNote || 'No reason provided.'}</p>
+                        <p style="font-size: 1em; color: var(--text-secondary);">Your request was rejected. <strong>Reason:</strong> ${request.AdminNote || 'No reason provided.'}</p>
                     </div>
                 `;
             }
@@ -371,18 +372,18 @@ async function loadFees(forceFetch = false) {
         const feesToShow = currentFees.slice(startIndex, endIndex);
 
         list.innerHTML = feesToShow.map(fee => `
-            <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="border: 1px solid var(--card-border); padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div><strong>${fee.Month.charAt(0).toUpperCase() + fee.Month.slice(1)}</strong></div>
 
-                    <div style="font-size: 0.9em; color: #555;">₹${fee.Amount}</div>
+                    <div style="font-size: 1.1em; color: var(--text-primary);">₹${fee.Amount}</div>
 
-                    <div style="font-size: 0.8em; color: #888; margin-top: 4px;">
+                    <div style="font-size: 0.95em; color: var(--text-secondary); margin-top: 4px;">
                     Submitted: ${new Date(fee.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
                     </div>
 
                     ${fee.Status === 'Rejected' && fee.AdminNote
-                ? `<div style="margin-top:6px;background:#FEE2E2;padding:6px 8px;border-left:3px solid #DC2626;font-size:0.85em;color:#991B1B;">
+                ? `<div style="margin-top:6px;background:var(--input-bg);padding:8px 10px;border-left:3px solid #DC2626;font-size:0.95em;color:var(--text-primary);">
                             <strong>Reason:</strong> ${fee.AdminNote}
                         </div>`
                 : ''
@@ -391,7 +392,7 @@ async function loadFees(forceFetch = false) {
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 0.85em; padding: 3px 8px; border-radius: 12px; background: ${fee.Status === 'Approved' || fee.Status === 'Paid'
+                    <span style="font-size: 0.95em; padding: 4px 10px; border-radius: 12px; background: ${fee.Status === 'Approved' || fee.Status === 'Paid'
                 ? '#DEF7EC'
                 : (fee.Status === 'Pending' ? '#FEF3C7' : '#FDE8E8')
             }; color: ${fee.Status === 'Approved' || fee.Status === 'Paid'
@@ -403,8 +404,8 @@ async function loadFees(forceFetch = false) {
 
                     <svg onclick="openImagePreview('${fee.ProofImageURL}')"
                         xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
+                        width="20"
+                        height="20"
                         fill="currentColor"
                         viewBox="0 0 16 16"
                         style="cursor: pointer; color: var(--primary-color);"
@@ -466,17 +467,17 @@ async function loadIssues(forceFetch = false) {
         const issuesToShow = currentIssues.slice(startIndex, endIndex);
 
         list.innerHTML = issuesToShow.map(issue => `
-            <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+            <div style="border: 1px solid var(--card-border); padding: 10px; margin-bottom: 10px; border-radius: 5px;">
                 <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                    <strong>${issue.IssueTitle.charAt(0).toUpperCase() + issue.IssueTitle.slice(1)}</strong>
-                    <span style="font-size: 0.8em; color: #888;">${new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</span>
+                    <strong style="font-size: 1.1em;">${issue.IssueTitle.charAt(0).toUpperCase() + issue.IssueTitle.slice(1)}</strong>
+                    <span style="font-size: 0.95em; color: var(--text-secondary);">${new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</span>
                 </div>
-                <div style="font-size: 0.9em; color: #555; margin-top: 5px;">${issue.Description}</div>
+                <div style="font-size: 1em; color: var(--text-secondary); margin-top: 5px;">${issue.Description}</div>
                 <div style="margin-top: 5px; display: flex; justify-content: space-between; align-items: center;">
                     <div><strong>Status:</strong> <span style="color: ${issue.Status === 'Resolved' ? 'green' : (issue.Status === 'In Progress' ? 'orange' : 'red')}">${issue.Status}</span></div>
                     ${issue.Status === 'Resolved' ? `<button onclick="deleteIssue('${issue._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #ef4444; color: #ef4444; border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
                 </div>
-                ${issue.AdminResponse ? `<div style="margin-top: 5px; background: #f9f9f9; padding: 5px; border-left: 3px solid #4F46E5;"><strong>Admin Reply:</strong> ${issue.AdminResponse}</div>` : ''}
+                ${issue.AdminResponse ? `<div style="margin-top: 5px; background: var(--input-bg); padding: 5px; border-left: 3px solid #4F46E5;"><strong>Admin Reply:</strong> ${issue.AdminResponse}</div>` : ''}
             </div>
         `).join('');
 
@@ -533,7 +534,7 @@ async function loadRequestsHistory() {
             list.innerHTML = data.requests.map(req => {
                 // Format the proposed changes
                 const changes = Object.entries(req.ProposedData || {})
-                    .map(([key, val]) => `<span style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-right: 5px; color: #374151;">${key}: ${val}</span>`)
+                    .map(([key, val]) => `<span style="background: var(--input-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-right: 5px; color: var(--text-primary); border: 1px solid var(--card-border);">${key}: ${val}</span>`)
                     .join('');
                 
                 const isLocked = ['Pending', 'Under Review'].includes(req.Status);
@@ -543,23 +544,23 @@ async function loadRequestsHistory() {
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                              ${!isLocked ? `<input type="checkbox" class="request-checkbox" value="${req._id}" onchange="updateBulkDeleteState()">` : '<i class="fa-solid fa-lock" title="Active requests cannot be deleted" style="color: #ccc; width: 13px;"></i>'}
-                             <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: ${req.Status === 'Approved' ? '#DEF7EC' : (req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#FDE8E8' : (req.Status === 'Under Review' ? '#DBEAFE' : '#FEF3C7'))}; color: ${req.Status === 'Approved' ? '#03543F' : (req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#9B1C1C' : (req.Status === 'Under Review' ? '#1E40AF' : '#92400E'))}; font-weight: 500;">
+                             <span style="font-size: 0.95em; padding: 4px 10px; border-radius: 12px; background: ${req.Status === 'Approved' ? '#DEF7EC' : (req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#FDE8E8' : (req.Status === 'Under Review' ? '#DBEAFE' : '#FEF3C7'))}; color: ${req.Status === 'Approved' ? '#03543F' : (req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#9B1C1C' : (req.Status === 'Under Review' ? '#1E40AF' : '#92400E'))}; font-weight: 500;">
                                 ${req.Status}
                             </span>
                         </div>
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <small style="color: var(--text-secondary);">
+                            <span style="font-size: 0.9em; color: var(--text-secondary);">
                                 ${new Date(req.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
-                            </small>
+                            </span>
                         </div>
                     </div>
                     
                     <div style="margin-bottom: 8px;">
-                        <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 4px;">Requested Changes:</div>
+                        <div style="font-size: 1em; color: var(--text-secondary); margin-bottom: 4px;">Requested Changes:</div>
                         <div>${changes || '<em style="color:#999">No data</em>'}</div>
                     </div>
 
-                    ${req.AdminNote ? `<div style="font-size: 0.9em; background: ${req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#FEF2F2' : '#F9FAFB'}; padding: 8px; border-radius: 6px; border-left: 3px solid ${req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#EF4444' : '#D1D5DB'}; color: ${req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#B91C1C' : '#4B5563'};"><strong>Note:</strong> ${req.AdminNote}</div>` : ''}
+                    ${req.AdminNote ? `<div style="font-size: 0.95em; background: var(--input-bg); padding: 8px; border-radius: 6px; border-left: 3px solid ${req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#EF4444' : '#D1D5DB'}; color: var(--text-secondary);"><strong>Note:</strong> ${req.AdminNote}</div>` : ''}
                 </div>
             `}).join('');
 
@@ -836,28 +837,134 @@ function closeSidebar() {
     }
 }
 
-async function loadAnnouncements() {
-    const list = document.getElementById('announcementsList');
+let allAnnouncements = [];
+let unreadAnnouncements = [];
+let readAnnouncements = [];
+let currentAnnTab = 'unread';
+let unreadPage = 1;
+let readPage = 1;
+const ANNOUNCEMENTS_PER_PAGE = 5;
 
+async function loadAnnouncements() {
     try {
         const data = await apiFetch('/announcements');
-
-        if (data && data.length > 0) {
-            list.innerHTML = data.map(ann => `
-                <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-                    <strong>${ann.Title}</strong>
-                    <p style="margin: 5px 0; color: #555;">${ann.Message}</p>
-                    <small style="color: #888;">
-                        ${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
-                    </small>
-                </div>
-            `).join('');
-        } else {
-            list.innerHTML = '<p>No announcements found.</p>';
+        if (data) {
+            allAnnouncements = data;
+            processAnnouncements();
         }
-
     } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error loading announcements: ${error.message}</p>`;
+        const list = document.getElementById('announcementsListUnread');
+        if(list) list.innerHTML = `<p style="color: red;">Error loading announcements: ${error.message}</p>`;
+    }
+}
+
+function processAnnouncements() {
+    const userId = localStorage.getItem('userId');
+    const readIds = JSON.parse(localStorage.getItem(`read_announcements_${userId}`)) || [];
+
+    // Sort newest first
+    allAnnouncements.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    unreadAnnouncements = allAnnouncements.filter(a => !readIds.includes(a._id));
+    readAnnouncements = allAnnouncements.filter(a => readIds.includes(a._id));
+
+    renderAnnouncementTab();
+}
+
+window.switchAnnouncementTab = function(tab) {
+    currentAnnTab = tab;
+    
+    // Toggle Button Styles
+    const btnUnread = document.getElementById('tabBtnUnread');
+    const btnRead = document.getElementById('tabBtnRead');
+    
+    if (tab === 'unread') {
+        btnUnread.className = 'btn';
+        btnUnread.style.cssText = 'padding: 4px 12px; border-radius: 16px; font-size: 0.95em;';
+        btnRead.className = 'btn-outline';
+        btnRead.style.cssText = 'padding: 4px 12px; border-radius: 16px; font-size: 0.95em; border: none; color: var(--text-secondary);';
+        
+        document.getElementById('tabUnreadContent').style.display = 'block';
+        document.getElementById('tabReadContent').style.display = 'none';
+    } else {
+        btnRead.className = 'btn';
+        btnRead.style.cssText = 'padding: 4px 12px; border-radius: 16px; font-size: 0.95em;';
+        btnUnread.className = 'btn-outline';
+        btnUnread.style.cssText = 'padding: 4px 12px; border-radius: 16px; font-size: 0.95em; border: none; color: var(--text-secondary);';
+        
+        document.getElementById('tabUnreadContent').style.display = 'none';
+        document.getElementById('tabReadContent').style.display = 'block';
+    }
+    renderAnnouncementTab();
+}
+
+function renderAnnouncementTab() {
+    if (currentAnnTab === 'unread') {
+        renderAnnList('announcementsListUnread', 'announcementsPaginationUnread', unreadAnnouncements, unreadPage, true);
+    } else {
+        renderAnnList('announcementsListRead', 'announcementsPaginationRead', readAnnouncements, readPage, false);
+    }
+}
+
+function renderAnnList(listId, paginationId, items, page, isUnread) {
+    const list = document.getElementById(listId);
+    const pagination = document.getElementById(paginationId);
+    
+    if (!items || items.length === 0) {
+        list.innerHTML = `<p style="color: var(--text-secondary); padding: 10px; text-align:center;">No ${isUnread ? 'unread' : 'read'} announcements.</p>`;
+        pagination.innerHTML = '';
+        return;
+    }
+
+    const start = (page - 1) * ANNOUNCEMENTS_PER_PAGE;
+    const paginatedItems = items.slice(start, start + ANNOUNCEMENTS_PER_PAGE);
+
+    list.innerHTML = paginatedItems.map(ann => `
+        <div style="border-bottom: 1px solid var(--card-border); padding: 15px 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+            <div>
+                <strong style="font-size: 1.15em; display:block; margin-bottom:4px;">${ann.Title}</strong>
+                <p style="margin: 0 0 5px 0; color: var(--text-secondary); font-size: 1em; white-space: pre-wrap;">${ann.Message}</p>
+                <span style="font-size: 0.9em; color: #9CA3AF;">
+                    ${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} <span style="margin:0 5px; opacity:0.6">|</span> ${new Date(ann.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                </span>
+            </div>
+            ${isUnread ? `
+            <button onclick="markAnnouncementRead('${ann._id}')" class="btn-outline" style="padding: 6px 12px; font-size: 0.9em; white-space: nowrap; border-radius: 20px; display:flex; align-items:center; gap:5px;" title="Mark as Read">
+                <i class="fa-solid fa-check"></i> <span style="display:none;">Read</span>
+            </button>` : ''}
+        </div>
+    `).join('');
+
+    // Pagination
+    const totalPages = Math.ceil(items.length / ANNOUNCEMENTS_PER_PAGE);
+    if (totalPages > 1) {
+        let html = '';
+        html += `<button onclick="changeAnnouncementPage('${isUnread ? 'unread' : 'read'}', ${page - 1})" class="btn-outline" ${page === 1 ? 'disabled' : ''} style="padding: 2px 8px;"><i class="fa-solid fa-chevron-left"></i></button>`;
+        html += `<span style="font-size: 0.9em; padding: 0 10px; align-self:center;">${page} / ${totalPages}</span>`;
+        html += `<button onclick="changeAnnouncementPage('${isUnread ? 'unread' : 'read'}', ${page + 1})" class="btn-outline" ${page === totalPages ? 'disabled' : ''} style="padding: 2px 8px;"><i class="fa-solid fa-chevron-right"></i></button>`;
+        pagination.innerHTML = html;
+    } else {
+        pagination.innerHTML = '';
+    }
+}
+
+window.changeAnnouncementPage = function(type, newPage) {
+    if (type === 'unread') unreadPage = newPage;
+    else readPage = newPage;
+    renderAnnouncementTab();
+}
+
+window.markAnnouncementRead = function(id) {
+    const userId = localStorage.getItem('userId');
+    const readIds = JSON.parse(localStorage.getItem(`read_announcements_${userId}`)) || [];
+    
+    if (!readIds.includes(id)) {
+        readIds.push(id);
+        localStorage.setItem(`read_announcements_${userId}`, JSON.stringify(readIds));
+        showToast('Marked as read', 'success');
+        
+        // Re-process to update lists and remove the item from unread view immediately
+        processAnnouncements();
     }
 }
 
@@ -1094,5 +1201,29 @@ async function handleAadharUpload(input) {
         } catch (error) {
             showToast('Failed to update Aadhar proof: ' + error.message, 'error');
         }
+    }
+}
+
+// --- Theme / Dark Mode Logic ---
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const icon = document.getElementById('themeIcon');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+    }
+}
+
+window.toggleTheme = function() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    const icon = document.getElementById('themeIcon');
+
+    if (isDark) {
+        localStorage.setItem('theme', 'dark');
+        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+    } else {
+        localStorage.setItem('theme', 'light');
+        if (icon) icon.classList.replace('fa-sun', 'fa-moon');
     }
 }

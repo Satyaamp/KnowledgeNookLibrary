@@ -39,16 +39,16 @@ async function loadDashboardStats() {
         const distContainer = document.getElementById('distribution-stats-container');
         if (stats.distribution && stats.distribution.length > 0) {
             distContainer.innerHTML = stats.distribution.map(d => `
-                <div style="border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; background: #fff;">
+                <div style="border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; background: var(--card-bg);">
                     <div style="background: var(--bg-color); padding: 12px 15px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
                         <strong style="color: var(--primary-color); font-size: 1.05em;">${d.batch}</strong>
-                        <span style="font-size: 0.8em; background: #E0E7FF; color: #3730A3; padding: 2px 8px; border-radius: 10px; font-weight: 600;">Total: ${d.total}</span>
+                        <span style="font-size: 0.8em; background: var(--primary-light); color: var(--primary-color); padding: 2px 8px; border-radius: 10px; font-weight: 600;">Total: ${d.total}</span>
                     </div>
                     <div style="padding: 12px 15px;">
                         ${d.plans.map(p => `
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #eee;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--card-border);">
                                 <span style="font-size: 0.9em; color: var(--text-secondary);">${p.name}</span>
-                                <span style="font-weight: 600; font-size: 0.95em; ${p.count > 0 ? 'color: #059669;' : 'color: #9CA3AF;'}">${p.count}</span>
+                                <span style="font-weight: 600; font-size: 0.95em; ${p.count > 0 ? 'color: var(--success-color);' : 'color: var(--text-secondary);'}">${p.count}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -62,7 +62,7 @@ async function loadDashboardStats() {
         const genderContainer = document.getElementById('gender-stats-container');
         if (stats.genderStats && stats.genderStats.length > 0) {
             genderContainer.innerHTML = stats.genderStats.map(g => `
-                <div style="flex: 1; border: 1px solid var(--card-border); padding: 15px; border-radius: 8px; text-align: center; background: #fff; min-width: 120px;">
+                <div style="flex: 1; border: 1px solid var(--card-border); padding: 15px; border-radius: 8px; text-align: center; background: var(--card-bg); min-width: 120px;">
                     <div style="font-size: 1.5em; font-weight: bold; color: var(--text-primary);">${g.count}</div>
                     <div style="font-size: 0.9em; color: var(--text-secondary); margin-top: 5px;">${g._id || 'Not Specified'}</div>
                 </div>
@@ -271,7 +271,7 @@ async function loadInterestedStudents() {
         const data = await apiFetch('/admin/interested-students');
         if (data && data.length > 0) {
             list.innerHTML = data.map(student => `
-                <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: white;">
+                <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--card-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 1.1em;">${student.Name}</strong>
@@ -695,7 +695,7 @@ function renderFees() {
 
 
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <label for="feeStatus-${fee._id}" style="font-size: 0.85em; font-weight: 600;">Update Status:</label>
+                        <label for="feeStatus-${fee._id}" style="font-size: 0.85em; font-weight: 600;">Status:</label>
                         <select id="feeStatus-${fee._id}" onchange="updateFeeStatus('${fee._id}', this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); cursor: pointer;" ${fee.Status === 'Paid' || fee.Status === 'Rejected' ? 'disabled' : ''}>
                             <option value="Pending" ${fee.Status === 'Pending' ? 'selected' : ''}>Pending</option>
                             <option value="Paid" ${fee.Status === 'Paid' ? 'selected' : ''}>Paid</option>
@@ -819,14 +819,14 @@ async function loadRequests() {
                         ${Object.entries(req.ProposedData).map(([key, val]) => `
                             <div style="display:grid; grid-template-columns: 120px 1fr; gap:10px; font-size:0.9em; margin-bottom:4px;">
                                 <span style="font-weight:600; color:var(--text-primary);">${key}:</span>
-                                <span style="color:#555;">${val || '<em style="color:#999;">(empty)</em>'}</span>
+                                <span style="color:var(--text-secondary);">${val || '<em style="opacity: 0.5;">(empty)</em>'}</span>
                             </div>
                         `).join('')}
                     </div>
 
                     <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
                         <label style="font-size:0.9em;">Action:</label>
-                        <select onchange="handleRequestAction('${req._id}', this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid var(--card-border); background:white;">
+                        <select onchange="handleRequestAction('${req._id}', this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid var(--card-border); background:var(--card-bg); color:var(--text-primary);">
                             <option value="" disabled selected>Select Action...</option>
                             <option value="Under Review">Mark as Under Review</option>
                             <option value="Approve" style="color: green; font-weight:bold;">Approve & Apply</option>
@@ -901,7 +901,7 @@ async function loadAnnouncements() {
                         <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);">${ann.Title}</div>
                         <button onclick="deleteAnnouncement('${ann._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #ef4444; color: #ef4444; border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>
                     </div>
-                    <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 10px;">Posted ${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</div>
+                    <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 10px;">Posted ${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} at ${new Date(ann.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                     <div style="white-space: pre-wrap;">${ann.Message}</div>
                 </div>
             `).join('');
@@ -1014,8 +1014,8 @@ function renderIssues() {
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <div>
                             <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);">${issue.IssueTitle}</div>
-                            <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">Reported by: ${issue.StudentId ? `${issue.StudentId.FullName} (ID: ${issue.StudentId.LibraryID || 'N/A'})` : 'Unknown'} | Contact: ${issue.StudentId ? issue.StudentId.Contact : 'N/A'}</div>
-                            <div style="font-size: 0.85em; color: var(--text-secondary);">Date: ${new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</div>
+                            <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">${issue.StudentId ? `${issue.StudentId.FullName} (ID: ${issue.StudentId.LibraryID || 'N/A'})` : 'Unknown'} | Contact: ${issue.StudentId ? issue.StudentId.Contact : 'N/A'} | Seat: ${issue.StudentId ? issue.StudentId.SeatNo : 'N/A'}</div>
+                            <div style="font-size: 0.85em; color: var(--text-secondary);">${new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} <span style="margin:0 5px; opacity:0.6">|</span> ${new Date(issue.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: ${issue.Status === 'Resolved' ? '#DEF7EC' : (issue.Status === 'Pending' ? '#FDE8E8' : '#FEF3C7')}; color: ${issue.Status === 'Resolved' ? '#03543F' : (issue.Status === 'Pending' ? '#9B1C1C' : '#92400E')}">
@@ -1026,8 +1026,8 @@ function renderIssues() {
                     </div>
                     <div style="margin-bottom: 15px; font-size: 0.95em; white-space: pre-wrap;">${issue.Description}</div>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <label for="status-${issue._id}" style="font-size: 0.85em; font-weight: 600;">Update Status:</label>
-                        <select id="status-${issue._id}" onchange="updateIssueStatus('${issue._id}', this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); cursor: pointer;">
+                        <label for="status-${issue._id}" style="font-size: 0.85em; font-weight: 600;">Status:</label>
+                        <select id="status-${issue._id}" onchange="updateIssueStatus('${issue._id}', this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); cursor: pointer;" ${issue.Status === 'Resolved' ? 'disabled' : ''}>
                             <option value="Pending" ${issue.Status === 'Pending' ? 'selected' : ''}>Pending</option>
                             <option value="Seen by Admin" ${issue.Status === 'Seen by Admin' ? 'selected' : ''}>Seen by Admin</option>
                             <option value="In Progress" ${issue.Status === 'In Progress' ? 'selected' : ''}>In Progress</option>
@@ -1107,7 +1107,7 @@ function injectCustomUI() {
                 <h3 id="customModalTitle">Confirm</h3>
                 <p id="customModalMessage"></p>
                 <div id="customModalInputContainer" style="display:none; margin-bottom: 1rem;">
-                    <input type="text" id="customModalInput" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                    <input type="text" id="customModalInput" style="width: 100%; padding: 0.5rem; border: 1px solid var(--input-border); border-radius: 4px; font-size: 1rem; background: var(--input-bg); color: var(--text-primary);">
                 </div>
                 <div class="custom-actions">
                     <button id="customModalCancel" class="btn btn-cancel">Cancel</button>
@@ -1171,3 +1171,27 @@ function showPrompt(message, isPrompt = true) {
 
 // Initialize UI Helpers immediately
 injectCustomUI();
+
+// --- Theme / Dark Mode Logic ---
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const icon = document.getElementById('themeIcon');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+    }
+}
+
+window.toggleTheme = function() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    const icon = document.getElementById('themeIcon');
+
+    if (isDark) {
+        localStorage.setItem('theme', 'dark');
+        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+    } else {
+        localStorage.setItem('theme', 'light');
+        if (icon) icon.classList.replace('fa-sun', 'fa-moon');
+    }
+}

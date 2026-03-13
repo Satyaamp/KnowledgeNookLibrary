@@ -9,468 +9,57 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Instrument+Sans:ital,wght@0,400..700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mobile-app-style.css">
 
     <style>
-    /* ============================================================
-       MOBILE APP STYLE — max-width 768px ONLY. Desktop untouched.
-       ============================================================ */
+        /* --- Theme Variables --- */
+        :root {
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --card-border: #E5E7EB;
+            --text-primary: #111827;
+            --text-secondary: #6B7280;
+            --input-bg: #F9FAFB;
+            --input-border: #D1D5DB;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
 
-    :root {
-      --mob-bg: #F0F4FF;
-      --mob-surface: #FFFFFF;
-      --mob-surface2: #F8FAFF;
-      --mob-primary: #4F46E5;
-      --mob-primary-light: #EEF2FF;
-      --mob-accent: #06B6D4;
-      --mob-text: #111827;
-      --mob-text-sub: #6B7280;
-      --mob-text-muted: #9CA3AF;
-      --mob-border: #E5E7EB;
-      --mob-shadow: 0 4px 16px rgba(79,70,229,0.10), 0 1px 4px rgba(0,0,0,0.05);
-      --mob-shadow-lg: 0 8px 32px rgba(79,70,229,0.15), 0 2px 8px rgba(0,0,0,0.07);
-      --mob-radius: 20px;
-      --mob-radius-sm: 12px;
-      --mob-nav-h: 70px;
-      --mob-bottom-h: 64px;
-      --mob-font: 'Sora', sans-serif;
-      --mob-font-body: 'DM Sans', sans-serif;
-    }
+        body.dark-mode {
+            --bg-color: #111827;
+            --card-bg: #1F2937;
+            --card-border: #374151;
+            --text-primary: #F9FAFB;
+            --text-secondary: #9CA3AF;
+            --input-bg: #374151;
+            --input-border: #4B5563;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+        }
 
-    /* ── DESKTOP SAFETY: never show mobile-only elements ───── */
-    @media (min-width: 769px) {
-      #mobileBottomNav { display: none !important; }
-    }
+        /* --- Dark Mode Overrides --- */
+        body.dark-mode {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
 
-    /* ── ALL MOBILE STYLES ──────────────────────────────────── */
-    @media (max-width: 768px) {
-
-      body {
-        font-family: var(--mob-font-body) !important;
-        background: var(--mob-bg) !important;
-        overflow-x: hidden;
-        padding-bottom: calc(var(--mob-bottom-h) + 8px) !important;
-      }
-
-      /* ── TOP NAVBAR ───────────────────────────────────────── */
-      .top-navbar {
-        position: fixed !important;
-        top: 0; left: 0; right: 0;
-        height: var(--mob-nav-h) !important;
-        background: #fff !important;
-        border-bottom: 1px solid var(--mob-border) !important;
-        box-shadow: 0 2px 16px rgba(79,70,229,0.08) !important;
-        z-index: 1000 !important;
-        padding: 0 16px !important;
-      }
-      .top-navbar .nav-container {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        height: 100% !important;
-        max-width: 100% !important;
-      }
-      .top-navbar .logo {
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        font-family: var(--mob-font) !important;
-        font-weight: 700 !important;
-        font-size: 0.85rem !important;
-        color: var(--mob-primary) !important;
-      }
-      .top-navbar .logo .logo-text {
-        max-width: 145px !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-      }
-      /* Hide hamburger — we use bottom nav instead */
-      .top-navbar .logo .hamburger-btn { display: none !important; }
-      /* Hide desktop nav links */
-      .dashboard-nav-links { display: none !important; }
-
-      .top-navbar .nav-actions {
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-      }
-      .nav-profile-pic {
-        width: 36px !important; height: 36px !important;
-        border-radius: 50% !important;
-        object-fit: cover !important;
-        border: 2.5px solid var(--mob-primary) !important;
-        box-shadow: 0 0 0 3px rgba(79,70,229,0.12) !important;
-      }
-      /* Logout button — scoped tightly so desktop .btn is untouched */
-      .top-navbar .btn-logout {
-        background: var(--mob-primary-light) !important;
-        color: var(--mob-primary) !important;
-        border: none !important;
-        border-radius: 10px !important;
-        padding: 7px 11px !important;
-        font-size: 0.72rem !important;
-        font-weight: 600 !important;
-        font-family: var(--mob-font) !important;
-        box-shadow: none !important;
-        width: auto !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-      }
-
-      /* ── SIDEBAR + OVERLAY → hidden on mobile ─────────────── */
-      .sidebar { display: none !important; }
-      #mobile-overlay { display: none !important; }
-
-      /* ── BOTTOM NAV BAR ───────────────────────────────────── */
-      #mobileBottomNav {
-        position: fixed !important;
-        bottom: 0 !important; left: 0 !important; right: 0 !important;
-        height: var(--mob-bottom-h) !important;
-        background: #fff !important;
-        border-top: 1px solid var(--mob-border) !important;
-        display: flex !important;
-        align-items: stretch !important;
-        justify-content: space-around !important;
-        z-index: 1001 !important;
-        box-shadow: 0 -4px 20px rgba(79,70,229,0.09) !important;
-        padding: 6px 4px !important;
-      }
-      .mob-nav-item {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 3px !important;
-        padding: 5px 8px !important;
-        border-radius: 10px !important;
-        color: #9CA3AF !important;
-        font-size: 0.58rem !important;
-        font-weight: 600 !important;
-        font-family: var(--mob-font) !important;
-        flex: 1 !important;
-        border: none !important;
-        background: none !important;
-        cursor: pointer !important;
-        -webkit-tap-highlight-color: transparent !important;
-        transition: color 0.18s, background 0.18s !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.03em !important;
-      }
-      .mob-nav-item i {
-        font-size: 1.15rem !important;
-        transition: transform 0.2s cubic-bezier(.34,1.56,.64,1) !important;
-      }
-      .mob-nav-item.active {
-        color: var(--mob-primary) !important;
-        background: var(--mob-primary-light) !important;
-      }
-      .mob-nav-item.active i { transform: translateY(-2px) scale(1.12) !important; }
-      .mob-nav-item:active i { transform: scale(0.82) !important; }
-
-      /* ── MAIN LAYOUT ──────────────────────────────────────── */
-      .dashboard-container {
-        display: block !important;
-        padding-top: calc(var(--mob-nav-h) + 14px) !important;
-        margin: 0 !important;
-      }
-      .main-content {
-        padding: 0 14px 16px !important;
-        max-width: 100% !important;
-      }
-
-      /* ── WELCOME CARD ─────────────────────────────────────── */
-      .main-content > .navbar {
-        background: linear-gradient(135deg, #4338CA 0%, #6366F1 55%, #06B6D4 100%) !important;
-        border-radius: var(--mob-radius) !important;
-        padding: 22px 20px 20px !important;
-        margin-bottom: 14px !important;
-        box-shadow: var(--mob-shadow-lg) !important;
-        position: relative !important;
-        overflow: hidden !important;
-        border: none !important;
-        display: block !important;  /* not flex — lets h1 and div stack naturally */
-      }
-      .main-content > .navbar::before {
-        content: '' !important;
-        position: absolute !important;
-        top: -30px !important; right: -30px !important;
-        width: 120px !important; height: 120px !important;
-        background: rgba(255,255,255,0.07) !important;
-        border-radius: 50% !important;
-        pointer-events: none !important;
-      }
-      .main-content > .navbar h1 {
-        font-family: var(--mob-font) !important;
-        font-size: 1.25rem !important;
-        font-weight: 700 !important;
-        color: #fff !important;
-        margin: 0 0 10px 0 !important;
-        line-height: 1.3 !important;
-      }
-      /* The name span inside h1 */
-      .main-content > .navbar h1 span {
-        color: #BEF264 !important;
-      }
-
-      /*
-        THE KEY FIX FOR CHIPS:
-        The div has inline style="font-size:0.9em; color:#6B7280; padding-bottom:5px"
-        and each span has inline style="margin-right:15px"
-        We use the element IDs to beat inline styles.
-      */
-      .main-content > .navbar > div {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
-        gap: 6px !important;
-        padding-bottom: 0 !important;
-        /* override inline color & font-size */
-        color: rgba(255,255,255,0.85) !important;
-        font-size: 0.72rem !important;
-        align-items: center !important;
-      }
-      /* Target chips by ID — this beats inline style="margin-right:15px" */
-      #studentPlan,
-      #studentLibraryID,
-      #studentJoinDate {
-        background: rgba(255,255,255,0.18) !important;
-        border-radius: 20px !important;
-        padding: 3px 11px !important;
-        margin: 0 !important;            /* overrides inline margin-right: 15px */
-        font-size: 0.72rem !important;
-        color: rgba(255,255,255,0.95) !important;
-        font-family: var(--mob-font-body) !important;
-        font-weight: 500 !important;
-        display: inline-block !important;
-        white-space: nowrap !important;
-      }
-
-      /* ── BANNERS ──────────────────────────────────────────── */
-      #bannerWrapper { margin-bottom: 14px !important; }
-      #inactiveBanner,
-      #pendingBanner,
-      #passwordBanner {
-        border-radius: var(--mob-radius-sm) !important;
-        padding: 14px !important;
-      }
-      #inactiveBanner h4, #pendingBanner h4, #passwordBanner h4 {
-        font-family: var(--mob-font) !important;
-        font-size: 0.88rem !important;
-      }
-      #inactiveBanner p, #pendingBanner p, #passwordBanner p {
-        font-size: 0.82rem !important;
-      }
-      /* Change Password button inside banner — keep it small */
-      #passwordBanner .btn {
-        width: auto !important;
-        display: inline-block !important;
-        padding: 8px 16px !important;
-        font-size: 0.82rem !important;
-      }
-
-      /* ── CARDS ────────────────────────────────────────────── */
-      .card {
-        background: #fff !important;
-        border-radius: var(--mob-radius) !important;
-        padding: 18px 16px !important;
-        margin-bottom: 14px !important;
-        box-shadow: var(--mob-shadow) !important;
-        border: 1px solid rgba(229,231,235,0.8) !important;
-      }
-      .card h3 {
-        font-family: var(--mob-font) !important;
-        font-size: 1rem !important;
-        font-weight: 700 !important;
-        color: var(--mob-text) !important;
-        margin-bottom: 14px !important;
-      }
-      .card h4 {
-        font-family: var(--mob-font) !important;
-        font-size: 0.85rem !important;
-        font-weight: 600 !important;
-        margin-bottom: 10px !important;
-      }
-
-      /* ── GRID: stack vertically on mobile ─────────────────── */
-      .grid-2 {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 0 !important;
-      }
-      .grid-2 > div:first-child {
-        margin-bottom: 20px !important;
-        padding-bottom: 20px !important;
-        border-bottom: 1px solid var(--mob-border) !important;
-      }
-
-      /* ── FORMS ────────────────────────────────────────────── */
-      .form-group { margin-bottom: 12px !important; }
-      .form-group label {
-        font-family: var(--mob-font) !important;
-        font-size: 0.7rem !important;
-        font-weight: 600 !important;
-        color: var(--mob-text-sub) !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.05em !important;
-        display: block !important;
-        margin-bottom: 5px !important;
-      }
-      .form-group input,
-      .form-group textarea,
-      .form-group select {
-        width: 100% !important;
-        border: 1.5px solid var(--mob-border) !important;
-        border-radius: var(--mob-radius-sm) !important;
-        padding: 11px 14px !important;
-        font-size: 0.92rem !important;
-        font-family: var(--mob-font-body) !important;
-        color: var(--mob-text) !important;
-        background: var(--mob-surface2) !important;
-        outline: none !important;
-        -webkit-appearance: none !important;
-        box-shadow: none !important;
-      }
-      .form-group input:focus,
-      .form-group textarea:focus {
-        border-color: var(--mob-primary) !important;
-        box-shadow: 0 0 0 3px rgba(79,70,229,0.12) !important;
-        background: #fff !important;
-      }
-      .form-group input[disabled],
-      .form-group input[readonly] {
-        background: #F3F4F6 !important;
-        color: var(--mob-text-muted) !important;
-        cursor: not-allowed !important;
-      }
-      .form-group textarea {
-        resize: vertical !important;
-        min-height: 88px !important;
-      }
-      .form-group input[type="file"] {
-        padding: 10px !important;
-        font-size: 0.8rem !important;
-        border: 1.5px dashed var(--mob-primary) !important;
-        background: var(--mob-primary-light) !important;
-        color: var(--mob-primary) !important;
-        cursor: pointer !important;
-      }
-
-      /* ── MAIN ACTION BUTTON (.btn) ────────────────────────── */
-      /* Only target .btn inside .main-content to avoid touching logout */
-      .main-content .btn {
-        background: linear-gradient(135deg, #4F46E5, #6366F1) !important;
-        color: #fff !important;
-        border: none !important;
-        border-radius: var(--mob-radius-sm) !important;
-        padding: 13px 20px !important;
-        font-size: 0.9rem !important;
-        font-weight: 600 !important;
-        font-family: var(--mob-font) !important;
-        width: 100% !important;
-        cursor: pointer !important;
-        box-shadow: 0 4px 12px rgba(79,70,229,0.28) !important;
-        display: block !important;
-        text-align: center !important;
-      }
-      .main-content .btn:active { transform: scale(0.97) !important; }
-      /* Except small inline buttons (password banner, profile update submit) */
-      .main-content .btn[style*="width: auto"],
-      .main-content .btn[style*="width:auto"] {
-        width: auto !important;
-        display: inline-block !important;
-      }
-
-      .btn-outline {
-        background: transparent !important;
-        border: 1.5px solid var(--mob-primary) !important;
-        color: var(--mob-primary) !important;
-        border-radius: 10px !important;
-        padding: 7px 14px !important;
-        font-size: 0.8rem !important;
-        font-weight: 600 !important;
-        font-family: var(--mob-font) !important;
-        cursor: pointer !important;
-        box-shadow: none !important;
-        width: auto !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-      }
-
-      /* ── MODALS → slide-up bottom sheet ──────────────────── */
-      .modal {
-        align-items: flex-end !important;
-        padding: 0 !important;
-        justify-content: flex-end !important;
-      }
-      .modal-content {
-        width: 100% !important;
-        max-width: 100% !important;
-        border-radius: 24px 24px 0 0 !important;
-        padding: 10px 20px 36px !important;
-        max-height: 92vh !important;
-        overflow-y: auto !important;
-        position: relative !important;
-        animation: slideUpSheet 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
-      }
-      /* Drag handle */
-      .modal-content::before {
-        content: '' !important;
-        display: block !important;
-        width: 40px !important; height: 4px !important;
-        background: var(--mob-border) !important;
-        border-radius: 2px !important;
-        margin: 8px auto 18px !important;
-      }
-      @keyframes slideUpSheet {
-        from { transform: translateY(100%); opacity: 0.4; }
-        to   { transform: translateY(0);    opacity: 1; }
-      }
-      .modal-content h2 {
-        font-family: var(--mob-font) !important;
-        font-size: 1.05rem !important;
-        font-weight: 700 !important;
-      }
-      .modal-content .close-btn {
-        position: absolute !important;
-        top: 16px !important; right: 16px !important;
-        width: 28px !important; height: 28px !important;
-        background: #F3F4F6 !important;
-        border-radius: 50% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 1rem !important;
-        color: var(--mob-text-sub) !important;
-        cursor: pointer !important;
-        line-height: 1 !important;
-      }
-      /* Profile update: single column */
-      #profileUpdateModalContent {
-        grid-template-columns: 1fr !important;
-      }
-      /* Crop modal: shorter preview box */
-      #cropModal .modal-content div[style*="height: 400px"] {
-        height: 250px !important;
-      }
-
-      /* ── VIEW SECTION ANIMATION ───────────────────────────── */
-      .view-section {
-        animation: fadeInUp 0.26s ease forwards;
-      }
-      @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(10px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-
-      /* ── MISC ─────────────────────────────────────────────── */
-      .mt-1 { margin-top: 10px !important; }
-      .mt-2 { margin-top: 16px !important; }
-      .font-small { font-size: 0.82rem !important; }
-    }
+        body.dark-mode .card,
+        body.dark-mode .sidebar,
+        body.dark-mode .top-navbar,
+        body.dark-mode .navbar,
+        body.dark-mode .modal-content,
+        body.dark-mode #mobileBottomNav,
+        body.dark-mode .announcement-card {
+            background-color: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--card-border) !important;
+        }
+        
+        body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+            background-color: var(--input-bg) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--input-border) !important;
+        }
     </style>
 </head>
 
@@ -479,20 +68,28 @@
     <nav class="top-navbar">
         <div class="nav-container">
             <div class="logo">
-                <i class="fa-solid fa-bars hamburger-btn" onclick="toggleSidebar()"></i>
                 <i class="fa-solid fa-book-open-reader"></i> <span class="logo-text">Knowledge Nook Library</span>
             </div>
             <ul class="dashboard-nav-links">
-                <li><a href="#home"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
+                <li><a href="#home"><i class="fa-solid fa-bullhorn"></i> Notifications</a></li>
                 <li><a href="#profile"><i class="fa-solid fa-id-card"></i> Profile</a></li>
                 <li><a href="#fees"><i class="fa-solid fa-file-invoice-dollar"></i> Fees</a></li>
                 <li><a href="#requests"><i class="fa-solid fa-clock-rotate-left"></i> My Requests</a></li>
                 <li><a href="#issues"><i class="fa-solid fa-triangle-exclamation"></i> Issues</a></li>
             </ul>
             <div class="nav-actions">
+                <button onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; margin-right: 15px; color: inherit;" title="Toggle Dark Mode">
+                    <i id="themeIcon" class="fa-solid fa-moon"></i>
+                </button>
                 <input type="file" id="navProfilePicInput" accept="image/*" style="display: none;" onchange="handleProfilePicUpload(this)">
                 <img id="navProfilePic" src="/img/default-avatar.png" alt="Profile" class="nav-profile-pic" onclick="document.getElementById('navProfilePicInput').click()" style="cursor: pointer;" title="Click to update profile picture">
-                <button onclick="logout()" class="btn btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                <button onclick="logout()" class="btn-logout">
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                </button>
             </div>
         </div>
     </nav>
@@ -500,7 +97,6 @@
 
     <div class="dashboard-container">
         <div class="sidebar">
-            <h2><i class="fa-solid fa-user-graduate"></i> Student Portal</h2>
             <ul>
                 <li><a href="#home" onclick="closeSidebar()"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
                 <li><a href="#profile" onclick="closeSidebar()"><i class="fa-solid fa-id-card"></i> Profile</a></li>
@@ -512,7 +108,7 @@
         <div class="main-content">
             <div class="navbar" style="align-items: flex-end;">
                 <h1 style="margin: 0;">Welcome, <span id="studentName"></span></h1>
-                <div style="font-size: 0.9em; color: #6B7280; font-weight: 500; padding-bottom: 5px;">
+                <div style="font-size: 1em; color: #6B7280; font-weight: 500; padding-bottom: 5px;">
                     <span id="studentPlan" style="margin-right: 15px;"></span>
                     <span id="studentLibraryID" style="margin-right: 15px;"></span>
                     <span id="studentJoinDate"></span>
@@ -525,25 +121,25 @@
                 </button>
                 <div id="inactiveBanner" style="display: none; background: #FEF2F2; border: 1px solid #FECACA; padding: 15px; border-radius: 8px; border-left: 4px solid #EF4444;">
                     <h4 style="color: #991B1B; margin-bottom: 5px;"><i class="fa-solid fa-ban"></i> Account Inactive</h4>
-                    <p style="color: #991B1B; font-size: 0.9em; margin: 0;">Your account is currently inactive. You cannot perform actions like payments or updates. Please contact the administrator.</p>
+                    <p style="color: #991B1B; font-size: 1em; margin: 0;">Your account is currently inactive. You cannot perform actions like payments or updates. Please contact the administrator.</p>
                     <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                        <a id="inactiveEmailBtn" href="mailto:knowledgenooklibrary@gmail.com" style="display: inline-block; padding: 6px 15px; background: #991B1B; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: 500;"><i class="fa-solid fa-envelope" style="margin-right: 5px;"></i> Email Admin</a>
-                        <a id="inactiveWhatsappBtn" href="https://wa.me/917903547986" target="_blank" style="display: inline-block; padding: 6px 15px; background: #25D366; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: 500;"><i class="fa-brands fa-whatsapp" style="margin-right: 5px;"></i> WhatsApp</a>
-                        <a href="tel:+917903547986" style="display: inline-block; padding: 6px 15px; background: #3B82F6; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: 500;"><i class="fa-solid fa-phone" style="margin-right: 5px;"></i> Call (+91 79035 47986)</a>
-                        <a href="tel:+919717490285" style="display: inline-block; padding: 6px 15px; background: #3B82F6; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: 500;"><i class="fa-solid fa-phone" style="margin-right: 5px;"></i> Call (+91 97174 90285)</a>
+                        <a id="inactiveEmailBtn" href="mailto:knowledgenooklibrary@gmail.com" style="display: inline-block; padding: 6px 15px; background: #991B1B; color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-envelope" style="margin-right: 5px;"></i> Email Admin</a>
+                        <a id="inactiveWhatsappBtn" href="https://wa.me/917903547986" target="_blank" style="display: inline-block; padding: 6px 15px; background: #25D366; color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-brands fa-whatsapp" style="margin-right: 5px;"></i> WhatsApp</a>
+                        <a href="tel:+917903547986" style="display: inline-block; padding: 6px 15px; background: #3B82F6; color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-phone" style="margin-right: 5px;"></i> Call (+91 79035 47986)</a>
+                        <a href="tel:+919717490285" style="display: inline-block; padding: 6px 15px; background: #3B82F6; color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-phone" style="margin-right: 5px;"></i> Call (+91 97174 90285)</a>
                     </div>
                 </div>
                 <div id="pendingBanner" style="display: none; background: #FEFCE8; border: 1px solid #FDE047; padding: 15px; border-radius: 8px; border-left: 4px solid #F59E0B;">
                     <h4 style="color: #854D0E; margin-bottom: 5px;"><i class="fa-solid fa-clock"></i> Account Pending Approval</h4>
-                    <p style="color: #854D0E; font-size: 0.9em; margin: 0;">Your application has been submitted and is awaiting admin review. <span id="pendingIdDisplay" style="font-weight: 600;"></span></p>
+                    <p style="color: #854D0E; font-size: 1em; margin: 0;">Your application has been submitted and is awaiting admin review. <span id="pendingIdDisplay" style="font-weight: 600;"></span></p>
                     <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                        <a id="pendingEmailBtn" href="mailto:knowledgenooklibrary@gmail.com" style="display: inline-block; padding: 6px 15px; background: #B45309; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: 500;"><i class="fa-solid fa-envelope" style="margin-right: 5px;"></i> Contact for Queries</a>
+                        <a id="pendingEmailBtn" href="mailto:knowledgenooklibrary@gmail.com" style="display: inline-block; padding: 6px 15px; background: #B45309; color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-envelope" style="margin-right: 5px;"></i> Contact for Queries</a>
                     </div>
                 </div>
                 <div id="passwordBanner" style="display: none; background: #FEF3C7; border: 1px solid #FCD34D; padding: 15px; border-radius: 8px; border-left: 4px solid #F59E0B;">
                     <h4 style="color: #92400E; margin-bottom: 5px;"><i class="fa-solid fa-shield-halved"></i> Action Required: Update Password</h4>
-                    <p style="color: #92400E; font-size: 0.9em; margin-bottom: 10px;">You are using a default or temporary password. Please update your password immediately to secure your account.</p>
-                    <button onclick="promptChangePassword()" class="btn" style="padding: 0.4rem 1rem; font-size: 0.85em; background: #D97706; border: none; width: auto;">Change Password</button>
+                    <p style="color: #92400E; font-size: 1em; margin-bottom: 10px;">You are using a default or temporary password. Please update your password immediately to secure your account.</p>
+                    <button onclick="promptChangePassword()" class="btn" style="padding: 0.4rem 1rem; font-size: 0.95em; background: #D97706; border: none; width: auto;">Change Password</button>
                 </div>
                 <button onclick="navigateBanners(1)" id="btnBannerNext" style="position: absolute; right: -15px; top: 50%; transform: translateY(-50%); z-index: 10; width: 30px; height: 30px; border-radius: 50%; background: white; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; display: none; align-items: center; justify-content: center;">
                     <i class="fa-solid fa-chevron-right"></i>
@@ -553,8 +149,21 @@
             <!-- Home / Announcements View -->
             <div id="view-home" class="view-section">
                 <div class="card" id="announcementsSection">
-                    <h3>Announcements</h3>
-                    <div id="announcementsList">Loading...</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">Announcements</h3>
+                        <div style="display: flex; gap: 5px; background: var(--input-bg); padding: 4px; border-radius: 20px; border: 1px solid var(--card-border);">
+                            <button id="tabBtnUnread" onclick="switchAnnouncementTab('unread')" class="btn" style="padding: 4px 12px; border-radius: 16px; font-size: 0.95em;">Unread</button>
+                            <button id="tabBtnRead" onclick="switchAnnouncementTab('read')" class="btn-outline" style="padding: 4px 12px; border-radius: 16px; font-size: 0.95em; border: none; color: var(--text-secondary);">Read</button>
+                        </div>
+                    </div>
+                    <div id="tabUnreadContent">
+                        <div id="announcementsListUnread">Loading...</div>
+                        <div id="announcementsPaginationUnread" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
+                    </div>
+                    <div id="tabReadContent" style="display: none;">
+                        <div id="announcementsListRead">Loading...</div>
+                        <div id="announcementsPaginationRead" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -563,7 +172,7 @@
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <h3>My Profile</h3>
-                        <button onclick="showUpdateProfileModal()" class="btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85em;"><i class="fa-solid fa-pen-to-square"></i> Request Update</button>
+                        <button onclick="showUpdateProfileModal()" class="btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.95em;"><i class="fa-solid fa-pen-to-square"></i> Request Update</button>
                     </div>
                     <div id="profileContent">Loading profile...</div>
                 </div>
@@ -651,10 +260,10 @@
             <div id="view-requests" class="view-section" style="display: none;">
                 <div class="card">
                     <h3>My Update Requests</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 15px;">History of changes you requested for your profile.</p>
+                    <p style="color: var(--text-secondary); font-size: 1em; margin-bottom: 15px;">History of changes you requested for your profile.</p>
                     <div id="requestsActions" style="display: none; margin-bottom: 15px; align-items: center; gap: 15px; padding: 10px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px;">
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9em; cursor: pointer; font-weight: 500;"><input type="checkbox" id="selectAllRequests" onchange="toggleSelectAllRequests()"> Select All</label>
-                        <button id="bulkDeleteBtn" onclick="deleteSelectedRequests()" class="btn-outline" style="padding: 0.3rem 0.8rem; font-size: 0.85em; color: #ef4444; border-color: #ef4444;" disabled><i class="fa-solid fa-trash"></i> Delete Selected</button>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 1em; cursor: pointer; font-weight: 500;"><input type="checkbox" id="selectAllRequests" onchange="toggleSelectAllRequests()"> Select All</label>
+                        <button id="bulkDeleteBtn" onclick="deleteSelectedRequests()" class="btn-outline" style="padding: 0.3rem 0.8rem; font-size: 0.95em; color: #ef4444; border-color: #ef4444;" disabled><i class="fa-solid fa-trash"></i> Delete Selected</button>
                     </div>
                     <div id="requestsHistoryList">Loading...</div>
                     <div id="requestsPagination" style="margin-top: 15px;"></div>
@@ -668,7 +277,7 @@
         <div class="modal-content" style="max-width: 800px;">
             <span class="close-btn" onclick="closeProfileUpdateModal()">&times;</span>
             <h2 style="margin-bottom: 15px;">Request Profile Update</h2>
-            <p style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 20px;">Submit changes for admin review. Your current profile remains active until the request is approved.</p>
+            <p style="font-size: 1em; color: var(--text-secondary); margin-bottom: 20px;">Submit changes for admin review. Your current profile remains active until the request is approved.</p>
             <form id="profileUpdateForm">
                 <div id="profileUpdateModalContent" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;"></div>
                 <div style="text-align: right; margin-top: 15px; border-top: 1px solid var(--card-border); padding-top: 15px;">
@@ -729,18 +338,18 @@
       if (window.innerWidth > 768) return; // desktop → do nothing
 
       var items = [
-        { hash: 'home',     icon: 'fa-bullhorn',              label: 'News'    },
-        { hash: 'profile',  icon: 'fa-id-card',               label: 'Profile' },
-        { hash: 'fees',     icon: 'fa-file-invoice-dollar',   label: 'Fees'    },
-        { hash: 'requests', icon: 'fa-clock-rotate-left',     label: 'History' },
-        { hash: 'issues',   icon: 'fa-triangle-exclamation',  label: 'Issues'  }
+        { hash: 'home',     icon: 'fa-bullhorn'    },
+        { hash: 'profile',  icon: 'fa-id-card'},
+        { hash: 'fees',     icon: 'fa-indian-rupee-sign'   },
+        { hash: 'requests', icon: 'fa-clock-rotate-left' },
+        { hash: 'issues',   icon: 'fa-triangle-exclamation' }
       ];
 
       var nav = document.createElement('nav');
       nav.id = 'mobileBottomNav';
       nav.innerHTML = items.map(function(it) {
         return '<button class="mob-nav-item" data-hash="' + it.hash + '" onclick="mobileNavTo(\'' + it.hash + '\',this)">'
-             + '<i class="fa-solid ' + it.icon + '"></i><span>' + it.label + '</span></button>';
+             + '<i class="fa-solid ' + it.icon + '"></i></button>';
       }).join('');
       document.body.appendChild(nav);
 
