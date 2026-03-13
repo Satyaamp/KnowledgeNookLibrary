@@ -9,6 +9,9 @@ const announcementSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    ImageURL: {
+        type: String, // Optional field to store Cloudinary URL
+    },
     CreatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Administrator',

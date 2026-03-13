@@ -32,6 +32,7 @@
                 <li><a href="#fees"><i class="fa-solid fa-file-invoice-dollar"></i> Fees</a></li>
                 <li><a href="#issues"><i class="fa-solid fa-triangle-exclamation"></i> Issues</a></li>
                 <li><a href="#requests"><i class="fa-solid fa-id-card"></i> Requests</a></li>
+                <li><a href="#search"><i class="fa-solid fa-magnifying-glass"></i> Search</a></li>
             </ul>
             <div class="nav-actions">
                 <button onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; margin-right: 15px; color: inherit;" title="Toggle Dark Mode">
@@ -52,6 +53,7 @@
     <div class="dashboard-container">
         <div class="sidebar">
             <h2><i class="fa-solid fa-user-shield"></i> Admin Portal</h2>
+            
             <ul>
                 <li><a href="#home" onclick="closeSidebar()"><i class="fa-solid fa-home"></i> Dashboard</a></li>
                 <li><a href="#announcements" onclick="closeSidebar()"><i class="fa-solid fa-bullhorn"></i>
@@ -66,6 +68,7 @@
                         Issues</a></li>
                 <li><a href="#requests" onclick="closeSidebar()"><i class="fa-solid fa-id-card"></i> Profile
                         Requests</a></li>
+                <!-- <li><a href="#search" onclick="closeSidebar()"><i class="fa-solid fa-magnifying-glass"></i> Quick Search</a></li> -->
             </ul>
         </div>
         <div class="main-content">
@@ -75,7 +78,15 @@
             <!-- Home View -->
             <div id="view-home" class="view-section">
                 <div class="card">
-                    <h3 style="margin-bottom: 20px;">Overview</h3>
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+    
+    <h3 style="margin: 0;">Overview</h3>
+    
+    <a href="#search" onclick="closeSidebar()" style="text-decoration: none;">
+        <i class="fa-solid fa-magnifying-glass"></i> Quick Search
+    </a>
+
+</div>
                     <div id="dashboard-stats-grid">
                         <div
                             style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
@@ -149,6 +160,20 @@
                 </div>
             </div>
 
+            <!-- Quick Search View -->
+            <div id="view-search" class="view-section" style="display: none;">
+                <div class="card">
+                    <h3>Quick Search Student</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Search globally by Library ID, Name, Phone, Email, or Aadhar Number.</p>
+                    <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px;">
+                        <input type="text" id="globalStudentSearch" placeholder="Type here to search..." onkeyup="performGlobalSearch()" style="padding: 15px; font-size: 1.1em; flex: 1; border: 2px solid var(--primary-color); border-radius: 8px;">
+                    </div>
+                    <div id="globalSearchResults">
+                        <p style="color: var(--text-secondary); text-align: center; padding: 20px;">Enter search criteria above to find a student.</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Students View -->
             <div id="view-students" class="view-section" style="display: none;">
                 <div class="card">
@@ -216,6 +241,10 @@
                             <textarea id="announcementContent" rows="4" required
                                 style="width: 100%; border: 1px solid var(--input-border); border-radius: 8px; padding: 12px; font-family: inherit; font-size: 1em;"></textarea>
                         </div>
+                        <div class="form-group">
+                            <label>Image (Optional)</label>
+                            <input type="file" id="announcementImage" accept="image/*">
+                        </div>
                         <button type="submit" class="btn">Post Announcement</button>
                     </form>
                     <hr style="border: 0; border-top: 1px solid var(--card-border); margin: 20px 0;">
@@ -248,19 +277,19 @@
 
     <!-- Student Details Modal -->
     <div id="studentModal" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-content" style="max-width: 900px;">
             <span class="close-btn" onclick="closeStudentModal()">&times;</span>
-            <h2 style="margin-bottom: 15px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px;">
-                Student Profile Info</h2>
+            <h2 style="margin-bottom: 25px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px;">
+                Edit Student Profile</h2>
             <form id="updateStudentForm" onsubmit="submitStudentUpdate(event)">
                 <input type="hidden" id="modalStudentId">
                 <div id="studentModalContent"
-                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px 25px; margin-bottom: 30px;">
                     <!-- Student details populated via JS -->
                 </div>
                 <div
-                    style="text-align: right; margin-top: 15px; border-top: 1px solid var(--card-border); padding-top: 15px;">
-                    <button type="submit" class="btn">Update All Changes</button>
+                    style="text-align: right; margin-top: 20px; border-top: 1px solid var(--card-border); padding-top: 20px;">
+                    <button type="submit" class="btn" style="padding: 12px 24px; font-size: 1.05em;">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -307,6 +336,10 @@
                             <option value="Officer's">Officer's</option>
                         </select>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label>Batch Timing</label>
+                    <input type="text" id="convertBatchTiming" placeholder="E.g. 9 AM - 6 PM">
                 </div>
                 <div class="form-group">
                     <label for="convertAmount">Calculated Amount (₹)</label>
@@ -413,7 +446,13 @@
             if (hash === '#fees') loadFees();
             if (hash === '#issues') loadIssues();
             if (hash === '#requests') loadRequests();
-
+            if (hash === '#search') {
+                if (currentStudents.length === 0) loadStudents();
+                setTimeout(() => {
+                    const searchInput = document.getElementById('globalStudentSearch');
+                    if (searchInput) searchInput.focus();
+                }, 100);
+            }
         }
     </script>
     <script src="../js/admin.js"></script>

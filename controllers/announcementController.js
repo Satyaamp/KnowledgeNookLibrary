@@ -1,5 +1,6 @@
 const Announcement = require('../models/Announcement');
 const DeletedAnnouncement = require('../models/DeletedAnnouncement');
+const cloudinary = require('../config/cloudinary');
 
 // @desc    Create an announcement
 // @route   POST /api/announcements
@@ -7,10 +8,19 @@ const DeletedAnnouncement = require('../models/DeletedAnnouncement');
 const createAnnouncement = async (req, res) => {
     try {
         const { Title, Message } = req.body;
+        let ImageURL = null;
+
+        if (req.file) {
+            const b64 = Buffer.from(req.file.buffer).toString("base64");
+            const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+            const result = await cloudinary.uploader.upload(dataURI, { folder: 'announcements' });
+            ImageURL = result.secure_url;
+        }
 
         const announcement = await Announcement.create({
             Title,
             Message,
+            ImageURL,
             CreatedBy: req.user.id
         });
 

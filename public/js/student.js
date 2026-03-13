@@ -96,14 +96,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (feeAmountField) feeAmountField.value = profile.amount || 0;
 
         // Update Plan in header
-        const planText = profile.planDuration ? `${profile.planDuration} (${profile.batchType || 'N/A'} - ₹${profile.amount || 0})` : 'N/A';
-        document.getElementById('studentPlan').innerHTML = `<i class="fa-solid fa-clock" style="margin-right: 5px;"></i> Plan: ${planText} &nbsp;&nbsp;`;
+        const planText = profile.planDuration ? `${profile.planDuration} (${profile.batchType || 'N/A'}) | ${profile.batchTiming || 'N/A'} | ${profile.SeatNo || 0}` : 'N/A';
+        document.getElementById('studentPlan').innerHTML = `<i class="fa-solid fa-clock" style="margin-right: 5px;"></i>${planText} &nbsp;&nbsp;`;
 
         // Update joining date in header
         if (profile.JoiningDate) {
             document.getElementById('studentJoinDate').innerHTML = `
             <i class="fa-solid fa-calendar-days" style="margin-right: 5px;"></i> 
-            Joined: ${new Date(profile.JoiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}`;
+            ${new Date(profile.JoiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}`;
         }
 
         // Save name to localStorage for future use (e.g., if profile fetch fails next time)
@@ -423,7 +423,7 @@ async function loadFees(forceFetch = false) {
         if (totalPages > 1) {
             let paginationHTML = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
             paginationHTML += `<button onclick="changeFeesPage(${feesCurrentPage - 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${feesCurrentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>`;
-            paginationHTML += `<span style="font-weight: 500; color: #4B5563;">Page ${feesCurrentPage} of ${totalPages}</span>`;
+            paginationHTML += `<span style="font-weight: 500; color: var(--text-secondary); padding: 0 5px;">${feesCurrentPage} / ${totalPages}</span>`;
             paginationHTML += `<button onclick="changeFeesPage(${feesCurrentPage + 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${feesCurrentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>`;
             paginationHTML += '</div>';
             paginationContainer.innerHTML = paginationHTML;
@@ -486,7 +486,7 @@ async function loadIssues(forceFetch = false) {
         if (totalPages > 1) {
             let paginationHTML = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
             paginationHTML += `<button onclick="changeIssuesPage(${issuesCurrentPage - 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${issuesCurrentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>`;
-            paginationHTML += `<span style="font-weight: 500; color: #4B5563;">Page ${issuesCurrentPage} of ${totalPages}</span>`;
+            paginationHTML += `<span style="font-weight: 500; color: var(--text-secondary); padding: 0 5px;">${issuesCurrentPage} / ${totalPages}</span>`;
             paginationHTML += `<button onclick="changeIssuesPage(${issuesCurrentPage + 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${issuesCurrentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>`;
             paginationHTML += '</div>';
             paginationContainer.innerHTML = paginationHTML;
@@ -568,7 +568,7 @@ async function loadRequestsHistory() {
             if (data.totalPages > 1) {
                 let paginationHTML = '<div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.9em;">';
                 paginationHTML += `<button onclick="changeRequestsPage(${requestsCurrentPage - 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${requestsCurrentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>`;
-                paginationHTML += `<span style="font-weight: 500; color: #4B5563;">Page ${requestsCurrentPage} of ${data.totalPages}</span>`;
+                paginationHTML += `<span style="font-weight: 500; color: var(--text-secondary); padding: 0 5px;">${requestsCurrentPage} / ${data.totalPages}</span>`;
                 paginationHTML += `<button onclick="changeRequestsPage(${requestsCurrentPage + 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${requestsCurrentPage === data.totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>`;
                 paginationHTML += '</div>';
                 paginationContainer.innerHTML = paginationHTML;
@@ -919,21 +919,29 @@ function renderAnnList(listId, paginationId, items, page, isUnread) {
     const start = (page - 1) * ANNOUNCEMENTS_PER_PAGE;
     const paginatedItems = items.slice(start, start + ANNOUNCEMENTS_PER_PAGE);
 
-    list.innerHTML = paginatedItems.map(ann => `
+    list.innerHTML = paginatedItems.map(ann => {
+        const shortMsg = ann.Message.length > 75 ? ann.Message.substring(0, 75) + '...' : ann.Message;
+        return `
         <div style="border-bottom: 1px solid var(--card-border); padding: 15px 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
-            <div>
+            <div style="flex: 1;">
                 <strong style="font-size: 1.15em; display:block; margin-bottom:4px;">${ann.Title}</strong>
-                <p style="margin: 0 0 5px 0; color: var(--text-secondary); font-size: 1em; white-space: pre-wrap;">${ann.Message}</p>
+                <p style="margin: 0 0 5px 0; color: var(--text-secondary); font-size: 1em; white-space: pre-wrap;">${shortMsg}</p>
                 <span style="font-size: 0.9em; color: #9CA3AF;">
                     ${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} <span style="margin:0 5px; opacity:0.6">|</span> ${new Date(ann.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                 </span>
+                ${ann.ImageURL ? `<span style="margin-left: 10px; font-size: 0.85em; color: var(--primary-color);"><i class="fa-solid fa-image"></i> Attachment</span>` : ''}
             </div>
-            ${isUnread ? `
-            <button onclick="markAnnouncementRead('${ann._id}')" class="btn-outline" style="padding: 6px 12px; font-size: 0.9em; white-space: nowrap; border-radius: 20px; display:flex; align-items:center; gap:5px;" title="Mark as Read">
-                <i class="fa-solid fa-check"></i> <span style="display:none;">Read</span>
-            </button>` : ''}
+            <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                <button onclick="openAnnouncementModal('${ann._id}')" class="btn-outline" style="padding: 6px 12px; font-size: 0.9em; border-radius: 20px;" title="View Full Announcement">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+                ${isUnread ? `
+                <button onclick="markAnnouncementRead('${ann._id}')" class="btn-outline" style="padding: 6px 12px; font-size: 0.9em; border-radius: 20px; color: var(--success-color); border-color: var(--success-color);" title="Mark as Read">
+                    <i class="fa-solid fa-check"></i>
+                </button>` : ''}
+            </div>
         </div>
-    `).join('');
+    `}).join('');
 
     // Pagination
     const totalPages = Math.ceil(items.length / ANNOUNCEMENTS_PER_PAGE);
@@ -966,6 +974,28 @@ window.markAnnouncementRead = function(id) {
         // Re-process to update lists and remove the item from unread view immediately
         processAnnouncements();
     }
+}
+
+window.openAnnouncementModal = function(id) {
+    const ann = allAnnouncements.find(a => a._id === id);
+    if (!ann) return;
+
+    document.getElementById('annModalTitle').textContent = ann.Title;
+    document.getElementById('annModalDate').textContent = `${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} | ${new Date(ann.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+    document.getElementById('annModalMessage').textContent = ann.Message;
+    
+    const imgContainer = document.getElementById('annModalImageContainer');
+    if (ann.ImageURL) {
+        document.getElementById('annModalImage').src = ann.ImageURL;
+        imgContainer.style.display = 'block';
+    } else {
+        imgContainer.style.display = 'none';
+    }
+    document.getElementById('announcementModal').style.display = 'block';
+}
+
+window.closeAnnouncementModal = function() {
+    document.getElementById('announcementModal').style.display = 'none';
 }
 
 function openImagePreview(url) {

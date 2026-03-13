@@ -23,6 +23,7 @@ const studentSchema = new mongoose.Schema({
     SeatNo: { type: String },
     planDuration: { type: String, enum: ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'] },
     batchType: { type: String, enum: ['Basic', 'Fundamental', 'Standard', "Officer's"] },
+    batchTiming: { type: String },
     amount: { type: Number },
     JoiningDate: { type: Date, default: Date.now },
     AccountStatus: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Active' },

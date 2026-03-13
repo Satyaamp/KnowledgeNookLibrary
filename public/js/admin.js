@@ -186,21 +186,24 @@ function renderStudents() {
     const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
 
     list.innerHTML = paginatedStudents.map(student => `
-        <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <img src="${student.ProfilePictureURL || '/img/default-avatar.png'}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--card-border); ${student.ProfilePictureURL ? 'cursor: pointer;' : ''}" ${student.ProfilePictureURL ? `onclick="window.open('${student.ProfilePictureURL}', '_blank')"` : ''} title="View Profile Picture">
-                    <strong>${student.FullName || student.FirstName + ' ' + (student.LastName || '')}</strong>
+                    <img src="${student.ProfilePictureURL || '/img/default-avatar.png'}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--card-border); ${student.ProfilePictureURL ? 'cursor: pointer;' : ''}" ${student.ProfilePictureURL ? `onclick="window.open('${student.ProfilePictureURL}', '_blank')"` : ''} title="View Profile Picture">
+                    <div>
+                        <strong style="font-size: 1.15em; color: var(--primary-color); display: block; line-height: 1.2;">${student.FullName || student.FirstName + ' ' + (student.LastName || '')}</strong>
+                        <span style="font-size: 0.85em; color: var(--text-secondary);">ID: ${student.LibraryID || 'Not Assigned'}</span>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <select onchange="updateStudentStatus('${student._id}', this.value)" style="padding: 5px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--bg-color); font-size: 0.85em; font-weight: 500; cursor: pointer;">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <select onchange="updateStudentStatus('${student._id}', this.value)" style="padding: 5px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); font-size: 0.85em; font-weight: 500; cursor: pointer; width: auto;">
                         <option value="Pending" ${student.AccountStatus === 'Pending' ? 'selected' : ''}>Pending</option>
                         <option value="Active" ${student.AccountStatus === 'Active' ? 'selected' : ''}>Active</option>
                         <option value="Inactive" ${student.AccountStatus === 'Inactive' ? 'selected' : ''}>Inactive</option>
                     </select>
 
                     <!-- Aadhar Verification Controls -->
-                    <div style="display: flex; align-items: center; gap: 5px; margin-left: 10px; padding-left: 10px; border-left: 1px solid var(--card-border);">
+                    <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
                         ${student.AadharProofURL ? 
                             `<button onclick="window.open('${student.AadharProofURL}', '_blank')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #6B7280; color: #6B7280; border-radius: 4px; font-size: 0.85em;" title="View Aadhar"><i class="fa-solid fa-address-card"></i></button>` 
                             : ''
@@ -213,23 +216,25 @@ function renderStudents() {
                         }
 
                         ${student.AadharStatus === 'Verified' ? 
-                            `<span style="font-size: 0.8em; color: #059669; display: flex; align-items: center; gap: 4px;" title="Aadhar Verified"><i class="fa-solid fa-shield-check"></i> Verified</span>` : ''}
+                            `<span style="font-size: 0.8em; color: #059669; display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: #DEF7EC; border-radius: 12px;" title="Aadhar Verified"><i class="fa-solid fa-shield-check"></i> Verified</span>` : ''}
                         
                         ${student.AadharStatus === 'Rejected' ? 
-                            `<span style="font-size: 0.8em; color: #DC2626; display: flex; align-items: center; gap: 4px;" title="Rejected: ${student.AadharRejectionReason || 'Invalid'}"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>` : ''}
+                            `<span style="font-size: 0.8em; color: #DC2626; display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: #FDE8E8; border-radius: 12px;" title="Rejected: ${student.AadharRejectionReason || 'Invalid'}"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>` : ''}
                         
                         ${(!student.AadharProofURL) ? 
-                            `<span style="font-size: 0.8em; color: #ef4444; display: flex; align-items: center; gap: 4px;" title="Proof not uploaded"><i class="fa-solid fa-circle-exclamation"></i> Upload Pending</span>` : ''}
+                            `<span style="font-size: 0.8em; color: #ef4444; display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: #FDE8E8; border-radius: 12px;" title="Proof not uploaded"><i class="fa-solid fa-circle-exclamation"></i> Pending Proof</span>` : ''}
                     </div>
 
-                    <button onclick="viewStudent('${student._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-eye"></i> View</button>
+                    <button onclick="viewStudent('${student._id}')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
                 </div>
             </div>
-            <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 5px;">
-                <i class="fa-solid fa-id-badge"></i> ID: ${student.LibraryID || 'Not Assigned'} | <i class="fa-solid fa-envelope"></i> ${student.Email || 'N/A'} | <i class="fa-solid fa-phone"></i> ${student.Contact}
-            </div>
-            <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 15px;">
-                <i class="fa-solid fa-chair"></i> Seat: ${student.SeatNo || 'Unassigned'} | Plan: ${student.planDuration || 'N/A'} (${student.batchType || 'N/A'} - ₹${student.amount || 0})
+            <div style="font-size: 0.95em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; padding-top: 12px; border-top: 1px solid var(--card-border);">
+                <div><i class="fa-solid fa-phone" style="width: 16px; color: var(--text-muted);"></i> ${student.Contact || 'N/A'}</div>
+                <div><i class="fa-solid fa-envelope" style="width: 16px; color: var(--text-muted);"></i> ${student.Email || 'N/A'}</div>
+                <div><i class="fa-solid fa-chair" style="width: 16px; color: var(--text-muted);"></i> Seat: ${student.SeatNo || 'Unassigned'}</div>
+                <div><i class="fa-solid fa-layer-group" style="width: 16px; color: var(--text-muted);"></i> ${student.planDuration || 'N/A'} (${student.batchType || 'N/A'})</div>
+                <div><i class="fa-solid fa-clock" style="width: 16px; color: var(--text-muted);"></i> ${student.batchTiming || 'N/A'}</div>
+                <div><i class="fa-solid fa-indian-rupee-sign" style="width: 16px; color: var(--text-muted);"></i> ${student.amount || 0}</div>
             </div>
         </div>
     `).join('');
@@ -262,6 +267,52 @@ function changeStudentsPage(page) {
     if (page < 1 || page > Math.ceil(filteredStudents.length / studentsPerPage)) return;
     currentStudentsPage = page;
     renderStudents();
+}
+
+function performGlobalSearch() {
+    const query = document.getElementById('globalStudentSearch').value.toLowerCase().trim();
+    const resultsContainer = document.getElementById('globalSearchResults');
+
+    if (!query) {
+        resultsContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Enter search criteria above to find a student.</p>';
+        return;
+    }
+
+    const matches = currentStudents.filter(s => {
+        return (s.LibraryID && s.LibraryID.toLowerCase().includes(query)) ||
+               (s.Contact && s.Contact.toLowerCase().includes(query)) ||
+               (s.Email && s.Email.toLowerCase().includes(query)) ||
+               (s.AadharNumber && s.AadharNumber.toLowerCase().includes(query)) ||
+               ((s.FullName || s.FirstName + ' ' + (s.LastName || '')).toLowerCase().includes(query));
+    });
+
+    if (matches.length === 0) {
+        resultsContainer.innerHTML = '<p style="color: var(--error-color); text-align: center; padding: 20px;">No student found matching this criteria.</p>';
+        return;
+    }
+
+    resultsContainer.innerHTML = matches.map(student => `
+        <div onclick="viewStudent('${student._id}', true)" style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="${student.ProfilePictureURL || '/img/default-avatar.png'}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--card-border);">
+                    <div>
+                        <strong style="font-size: 1.15em; color: var(--primary-color);">${student.FullName || student.FirstName + ' ' + (student.LastName || '')}</strong>
+                        <div style="font-size: 0.9em; color: var(--text-secondary);">ID: ${student.LibraryID || 'N/A'}</div>
+                    </div>
+                </div>
+                <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: ${student.AccountStatus === 'Active' ? '#DEF7EC' : (student.AccountStatus === 'Pending' ? '#FEF3C7' : '#FDE8E8')}; color: ${student.AccountStatus === 'Active' ? '#03543F' : (student.AccountStatus === 'Pending' ? '#92400E' : '#9B1C1C')}; font-weight: 500;">
+                    ${student.AccountStatus}
+                </span>
+            </div>
+            <div style="font-size: 0.95em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding-top: 10px; border-top: 1px solid var(--card-border);">
+                <div><i class="fa-solid fa-phone" style="width: 16px;"></i> ${student.Contact || 'N/A'}</div>
+                <div><i class="fa-solid fa-envelope" style="width: 16px;"></i> ${student.Email || 'N/A'}</div>
+                <div><i class="fa-solid fa-chair" style="width: 16px;"></i> Seat: ${student.SeatNo || 'N/A'}</div>
+                <div><i class="fa-solid fa-clock" style="width: 16px;"></i> ${student.batchTiming || 'N/A'}</div>
+            </div>
+        </div>
+    `).join('');
 }
 
 async function loadInterestedStudents() {
@@ -354,6 +405,7 @@ async function submitConvertStudent(e) {
         SeatNo: document.getElementById('convertSeatNo').value,
         planDuration: document.getElementById('convertPlanDuration').value,
         batchType: document.getElementById('convertBatchType').value,
+        batchTiming: document.getElementById('convertBatchTiming').value,
         amount: document.getElementById('convertAmount').value,
         JoiningDate: document.getElementById('convertDate').value
     };
@@ -444,7 +496,7 @@ async function rejectAadhar(id) {
     }
 }
 
-function viewStudent(id) {
+function viewStudent(id, isReadOnly = false) {
     const student = currentStudents.find(s => s._id === id);
     if (!student) return;
 
@@ -452,57 +504,12 @@ function viewStudent(id) {
     const content = document.getElementById('studentModalContent');
 
     content.innerHTML = `
+        <div style="grid-column: 1 / -1; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--card-border);">
+            <h3 style="margin: 0; color: var(--primary-color); font-size: 1.1em;"><i class="fa-solid fa-book-open-reader"></i> Library & Account Details</h3>
+        </div>
         <div class="form-group">
             <label>Library ID</label>
             <input type="text" id="modalLibraryID" value="${student.LibraryID || ''}">
-        </div>
-        <div class="form-group">
-            <label>First Name</label>
-            <input type="text" id="modalFirstName" value="${student.FirstName || ''}" required>
-        </div>
-        <div class="form-group">
-            <label>Last Name</label>
-            <input type="text" id="modalLastName" value="${student.LastName || ''}">
-        </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="modalEmail" value="${student.Email || ''}">
-        </div>
-        <div class="form-group">
-            <label>Contact</label>
-            <input type="text" id="modalContact" value="${student.Contact || ''}" required>
-        </div>
-        <div class="form-group">
-            <label>DOB (YYYY-MM-DD)</label>
-            <input type="date" id="modalDOB" value="${student.DOB ? new Date(student.DOB).toISOString().split('T')[0] : ''}">
-        </div>
-        <div class="form-group">
-            <label>Gender</label>
-            <select id="modalGender">
-                <option value="Male" ${student.Gender === 'Male' ? 'selected' : ''}>Male</option>
-                <option value="Female" ${student.Gender === 'Female' ? 'selected' : ''}>Female</option>
-                <option value="Other" ${student.Gender === 'Other' ? 'selected' : ''}>Other</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Aadhar Number</label>
-            <input type="text" id="modalAadhar" value="${student.AadharNumber || ''}">
-        </div>
-        <div class="form-group">
-            <label>Father's Name</label>
-            <input type="text" id="modalFatherName" value="${student.FatherName || ''}">
-        </div>
-        <div class="form-group">
-            <label>City</label>
-            <input type="text" id="modalCity" value="${student.City || ''}">
-        </div>
-        <div class="form-group">
-            <label>Area</label>
-            <input type="text" id="modalArea" value="${student.Area || ''}">
-        </div>
-        <div class="form-group">
-            <label>Pincode</label>
-            <input type="text" id="modalPincode" value="${student.Pincode || ''}">
         </div>
         <div class="form-group">
             <label>Account Status</label>
@@ -511,7 +518,6 @@ function viewStudent(id) {
                 <option value="Active" ${student.AccountStatus === 'Active' ? 'selected' : ''}>Active</option>
                 <option value="Inactive" ${student.AccountStatus === 'Inactive' ? 'selected' : ''}>Inactive</option>
             </select>
-        </div>
         </div>
         <div class="form-group">
             <label>Seat Number</label>
@@ -536,10 +542,88 @@ function viewStudent(id) {
             </select>
         </div>
         <div class="form-group">
+            <label>Batch Timing</label>
+            <input type="text" id="modalBatchTiming" value="${student.batchTiming || ''}" placeholder="E.g. 9 AM - 6 PM">
+        </div>
+        <div class="form-group">
             <label>Calculated Amount (₹)</label>
             <input type="number" id="modalAmount" value="${student.amount || ''}" placeholder="E.g., 1000">
         </div>
+
+        <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--card-border);">
+            <h3 style="margin: 0; color: var(--primary-color); font-size: 1.1em;"><i class="fa-solid fa-user"></i> Personal Details</h3>
+        </div>
+        <div class="form-group">
+            <label>First Name</label>
+            <input type="text" id="modalFirstName" value="${student.FirstName || ''}" required>
+        </div>
+        <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" id="modalLastName" value="${student.LastName || ''}">
+        </div>
+        <div class="form-group">
+            <label>DOB (YYYY-MM-DD)</label>
+            <input type="date" id="modalDOB" value="${student.DOB ? new Date(student.DOB).toISOString().split('T')[0] : ''}">
+        </div>
+        <div class="form-group">
+            <label>Gender</label>
+            <select id="modalGender">
+                <option value="Male" ${student.Gender === 'Male' ? 'selected' : ''}>Male</option>
+                <option value="Female" ${student.Gender === 'Female' ? 'selected' : ''}>Female</option>
+                <option value="Other" ${student.Gender === 'Other' ? 'selected' : ''}>Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Father's Name</label>
+            <input type="text" id="modalFatherName" value="${student.FatherName || ''}">
+        </div>
+        <div class="form-group">
+            <label>Aadhar Number</label>
+            <input type="text" id="modalAadhar" value="${student.AadharNumber || ''}">
+        </div>
+
+        <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--card-border);">
+            <h3 style="margin: 0; color: var(--primary-color); font-size: 1.1em;"><i class="fa-solid fa-address-book"></i> Contact Information</h3>
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="modalEmail" value="${student.Email || ''}">
+        </div>
+        <div class="form-group">
+            <label>Contact</label>
+            <input type="text" id="modalContact" value="${student.Contact || ''}" required>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+            <label>City</label>
+            <input type="text" id="modalCity" value="${student.City || ''}">
+        </div>
+        <div class="form-group">
+            <label>Area</label>
+            <input type="text" id="modalArea" value="${student.Area || ''}">
+        </div>
+        <div class="form-group">
+            <label>Pincode</label>
+            <input type="text" id="modalPincode" value="${student.Pincode || ''}">
+        </div>
     `;
+
+    const modalTitle = document.querySelector('#studentModal h2');
+    const submitBtn = document.querySelector('#updateStudentForm button[type="submit"]');
+
+    if (isReadOnly) {
+        modalTitle.textContent = 'Student Profile (View Only)';
+        if (submitBtn) submitBtn.style.display = 'none';
+        
+        const formElements = content.querySelectorAll('input, select');
+        formElements.forEach(el => {
+            el.disabled = true;
+            el.style.backgroundColor = 'var(--bg-color)';
+            el.style.cursor = 'not-allowed';
+        });
+    } else {
+        modalTitle.textContent = 'Edit Student Profile';
+        if (submitBtn) submitBtn.style.display = 'inline-block';
+    }
 
     document.getElementById('modalStudentId').value = student._id;
     modal.style.display = 'block';
@@ -587,6 +671,7 @@ async function submitStudentUpdate(e) {
             SeatNo: document.getElementById('modalSeatNo').value,
             planDuration: document.getElementById('modalPlanDuration').value,
             batchType: document.getElementById('modalBatchType').value,
+            batchTiming: document.getElementById('modalBatchTiming').value,
             amount: document.getElementById('modalAmount').value
         };
 
@@ -666,16 +751,16 @@ function renderFees() {
                             ${fee.Status}
                         </span>
                     </div>
-                    <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 5px;">
-                    Month: ${fee.Month || 'N/A'} | 
-                    Batch: ${
-                        fee.Batch || 
-                        (fee.StudentId 
-                            ? `${fee.StudentId.planDuration || 'N/A'} (${fee.StudentId.batchType || 'N/A'})`
-                            : 'N/A'
-                        )
-                    } | 
-                    Amount: ₹${fee.Amount || 0}
+                    <div style="font-size: 0.95em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 15px; padding-top: 10px; border-top: 1px solid var(--card-border);">
+                        <div><strong>Month:</strong> ${fee.Month || 'N/A'}</div>
+                        <div><strong>Batch:</strong> ${
+                            fee.Batch || 
+                            (fee.StudentId 
+                                ? `${fee.StudentId.planDuration || 'N/A'} (${fee.StudentId.batchType || 'N/A'})`
+                                : 'N/A'
+                            )
+                        }</div>
+                        <div><strong>Amount:</strong> ₹${fee.Amount || 0}</div>
                     </div>
                     <div style="margin-bottom: 15px;">
                         <a href="${fee.ProofImageURL}" target="_blank" style="font-size: 0.85em; color: var(--primary-color);">
@@ -696,7 +781,7 @@ function renderFees() {
 
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <label for="feeStatus-${fee._id}" style="font-size: 0.85em; font-weight: 600;">Status:</label>
-                        <select id="feeStatus-${fee._id}" onchange="updateFeeStatus('${fee._id}', this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); cursor: pointer;" ${fee.Status === 'Paid' || fee.Status === 'Rejected' ? 'disabled' : ''}>
+                        <select id="feeStatus-${fee._id}" onchange="updateFeeStatus('${fee._id}', this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); cursor: pointer; width: auto;" ${fee.Status === 'Paid' || fee.Status === 'Rejected' ? 'disabled' : ''}>
                             <option value="Pending" ${fee.Status === 'Pending' ? 'selected' : ''}>Pending</option>
                             <option value="Paid" ${fee.Status === 'Paid' ? 'selected' : ''}>Paid</option>
                             <option value="Rejected" ${fee.Status === 'Rejected' ? 'selected' : ''}>Rejected</option>
@@ -826,7 +911,7 @@ async function loadRequests() {
 
                     <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
                         <label style="font-size:0.9em;">Action:</label>
-                        <select onchange="handleRequestAction('${req._id}', this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid var(--card-border); background:var(--card-bg); color:var(--text-primary);">
+                        <select onchange="handleRequestAction('${req._id}', this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid var(--card-border); background:var(--card-bg); color:var(--text-primary); width: auto;">
                             <option value="" disabled selected>Select Action...</option>
                             <option value="Under Review">Mark as Under Review</option>
                             <option value="Approve" style="color: green; font-weight:bold;">Approve & Apply</option>
@@ -903,6 +988,7 @@ async function loadAnnouncements() {
                     </div>
                     <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 10px;">Posted ${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} at ${new Date(ann.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                     <div style="white-space: pre-wrap;">${ann.Message}</div>
+                    ${ann.ImageURL ? `<div style="margin-top: 10px;"><img src="${ann.ImageURL}" style="max-width: 100%; max-height: 200px; border-radius: 8px; cursor: pointer; border: 1px solid var(--card-border);" onclick="openImageModal('${ann.ImageURL}')"></div>` : ''}
                 </div>
             `).join('');
         } else {
@@ -923,14 +1009,23 @@ async function createAnnouncement(e) {
     try {
         const title = document.getElementById('announcementTitle').value;
         const content = document.getElementById('announcementContent').value;
+        const imageFile = document.getElementById('announcementImage').files[0];
+
+        const formData = new FormData();
+        formData.append('Title', title);
+        formData.append('Message', content);
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
 
         await apiFetch('/announcements', {
             method: 'POST',
-            body: JSON.stringify({ Title: title, Message: content })
+            body: formData
         });
 
         document.getElementById('announcementTitle').value = '';
         document.getElementById('announcementContent').value = '';
+        document.getElementById('announcementImage').value = '';
         showToast('Announcement posted successfully!', 'success');
         loadAnnouncements();
     } catch (error) {
@@ -1014,7 +1109,7 @@ function renderIssues() {
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <div>
                             <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);">${issue.IssueTitle}</div>
-                            <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">${issue.StudentId ? `${issue.StudentId.FullName} (ID: ${issue.StudentId.LibraryID || 'N/A'})` : 'Unknown'} | Contact: ${issue.StudentId ? issue.StudentId.Contact : 'N/A'} | Seat: ${issue.StudentId ? issue.StudentId.SeatNo : 'N/A'}</div>
+                            <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px; display: flex; gap: 10px; flex-wrap: wrap;"><span><i class="fa-solid fa-user"></i> ${issue.StudentId ? `${issue.StudentId.FullName} (ID: ${issue.StudentId.LibraryID || 'N/A'})` : 'Unknown'}</span> <span><i class="fa-solid fa-phone"></i> ${issue.StudentId ? issue.StudentId.Contact : 'N/A'}</span> <span><i class="fa-solid fa-chair"></i> Seat: ${issue.StudentId ? issue.StudentId.SeatNo : 'N/A'}</span></div>
                             <div style="font-size: 0.85em; color: var(--text-secondary);">${new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} <span style="margin:0 5px; opacity:0.6">|</span> ${new Date(issue.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center;">
@@ -1027,7 +1122,7 @@ function renderIssues() {
                     <div style="margin-bottom: 15px; font-size: 0.95em; white-space: pre-wrap;">${issue.Description}</div>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <label for="status-${issue._id}" style="font-size: 0.85em; font-weight: 600;">Status:</label>
-                        <select id="status-${issue._id}" onchange="updateIssueStatus('${issue._id}', this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); cursor: pointer;" ${issue.Status === 'Resolved' ? 'disabled' : ''}>
+                        <select id="status-${issue._id}" onchange="updateIssueStatus('${issue._id}', this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); cursor: pointer; width: auto;" ${issue.Status === 'Resolved' ? 'disabled' : ''}>
                             <option value="Pending" ${issue.Status === 'Pending' ? 'selected' : ''}>Pending</option>
                             <option value="Seen by Admin" ${issue.Status === 'Seen by Admin' ? 'selected' : ''}>Seen by Admin</option>
                             <option value="In Progress" ${issue.Status === 'In Progress' ? 'selected' : ''}>In Progress</option>
@@ -1194,4 +1289,46 @@ window.toggleTheme = function() {
         localStorage.setItem('theme', 'light');
         if (icon) icon.classList.replace('fa-sun', 'fa-moon');
     }
+}
+
+function openImageModal(url) {
+    document.getElementById('modalImage').src = url;
+    document.getElementById('imageModal').style.display = 'flex';
+}
+
+window.closeImageModal = function() {
+    document.getElementById('imageModal').style.display = 'none';
+    document.getElementById('modalImage').src = '';
+}
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const icon = document.getElementById('themeIcon');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+    }
+}
+
+window.toggleTheme = function() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    const icon = document.getElementById('themeIcon');
+
+    if (isDark) {
+        localStorage.setItem('theme', 'dark');
+        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+    } else {
+        localStorage.setItem('theme', 'light');
+        if (icon) icon.classList.replace('fa-sun', 'fa-moon');
+    }
+}
+
+function openImageModal(url) {
+    document.getElementById('modalImage').src = url;
+    document.getElementById('imageModal').style.display = 'flex';
+}
+
+window.closeImageModal = function() {
+    document.getElementById('imageModal').style.display = 'none';
+    document.getElementById('modalImage').src = '';
 }

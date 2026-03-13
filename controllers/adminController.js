@@ -14,7 +14,7 @@ const addStudent = async (req, res) => {
         const {
             FirstName, LastName, DOB, Gender, Email, Contact,
             Password, FatherName, City, Area, Pincode,
-            AadharNumber, SeatNo, CurrentBatch, LibraryID
+            AadharNumber, SeatNo, CurrentBatch, LibraryID, batchTiming
         } = req.body;
 
         const studentExists = await Student.findOne({ Email });
@@ -29,7 +29,7 @@ const addStudent = async (req, res) => {
         const student = await Student.create({
             FirstName, LastName, DOB, Gender, Email, Contact,
             Password: hashedPassword, FatherName, City, Area, Pincode,
-            AadharNumber, SeatNo, CurrentBatch, LibraryID,
+            AadharNumber, SeatNo, CurrentBatch, LibraryID, batchTiming,
             AccountStatus: 'Active' // Creating directly from admin makes it active
         });
 
@@ -77,6 +77,7 @@ const updateStudent = async (req, res) => {
             student.batchType = req.body.batchType !== undefined ? req.body.batchType : student.batchType;
             student.amount = req.body.amount !== undefined ? req.body.amount : student.amount;
             student.LibraryID = req.body.LibraryID !== undefined ? req.body.LibraryID : student.LibraryID;
+            student.batchTiming = req.body.batchTiming !== undefined ? req.body.batchTiming : student.batchTiming;
 
             const updatedStudent = await student.save();
             res.json(updatedStudent);
@@ -328,7 +329,7 @@ const rejectInterestedStudent = async (req, res) => {
 // @access  Private/Admin
 const convertInterestedStudent = async (req, res) => {
     try {
-        const { SeatNo, planDuration, batchType, amount, JoiningDate, Email, LibraryID } = req.body;
+        const { SeatNo, planDuration, batchType, batchTiming, amount, JoiningDate, Email, LibraryID } = req.body;
         const interested = await InterestedStudent.findById(req.params.id);
 
         if (!interested) {
@@ -354,6 +355,7 @@ const convertInterestedStudent = async (req, res) => {
             SeatNo: SeatNo || '',
             planDuration: planDuration || interested.planDuration,
             batchType: batchType || interested.batchType,
+            batchTiming: batchTiming || '',
             amount: amount || interested.amount,
             JoiningDate: JoiningDate || Date.now(),
             Password: hashedPassword,
