@@ -20,6 +20,7 @@ let currentIssuesPage = 1;
 const issuesPerPage = 10;
 
 async function loadDashboardStats() {
+ 
     try {
         const stats = await apiFetch('/admin/dashboard-stats');
         document.getElementById('stat-total-students').textContent = stats.totalStudents || 0;
@@ -304,18 +305,18 @@ async function loadInterestedStudents() {
 }
 
 async function reviewInterestedStudent(id) {
-    if (!confirm('Mark this student as reviewed?')) return;
+    if (!await showConfirm('Mark this student as reviewed?')) return;
     try {
         await apiFetch(`/admin/interested-students/${id}/review`, { method: 'PUT' });
-        alert('Student marked as reviewed successfully');
+        showToast('Student marked as reviewed successfully', 'success');
         loadInterestedStudents();
     } catch (error) {
-        alert('Error: ' + error.message);
+        showToast('Error: ' + error.message, 'error');
     }
 }
 
 async function rejectInterestedStudent(id) {
-    const reason = prompt('Please enter a reason for rejection:');
+    const reason = await showPrompt('Please enter a reason for rejection:');
     if (reason === null) return; // User cancelled
 
     try {
@@ -324,10 +325,10 @@ async function rejectInterestedStudent(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ Reason: reason || 'Not specified' })
         });
-        alert('Application rejected');
+        showToast('Application rejected', 'success');
         loadInterestedStudents();
     } catch (error) {
-        alert('Error: ' + error.message);
+        showToast('Error: ' + error.message, 'error');
     }
 }
 
@@ -383,7 +384,7 @@ async function submitConvertStudent(e) {
 }
 
 async function updateStudentStatus(id, status) {
-    if (!confirm(`Are you sure you want to change this student's status to "${status}"?`)) {
+    if (!await showConfirm(`Are you sure you want to change this student's status to "${status}"?`)) {
         // Re-render to revert the dropdown if user cancels.
         renderStudents();
         return;
@@ -397,13 +398,13 @@ async function updateStudentStatus(id, status) {
         const student = currentStudents.find(s => s._id === id);
         if (student) student.AccountStatus = status;
     } catch (error) {
-        alert('Error updating status: ' + error.message);
+        showToast('Error updating status: ' + error.message, 'error');
         renderStudents(); // Re-render on error to show correct state
     }
 }
 
 async function approveStudent(id) {
-    if (!confirm('Are you sure you want to approve this student account?')) return;
+    if (!await showConfirm('Are you sure you want to approve this student account?')) return;
     try {
         await apiFetch('/admin/students/' + id, {
             method: 'PUT',
@@ -411,12 +412,12 @@ async function approveStudent(id) {
         });
         loadStudents();
     } catch (error) {
-        alert('Error approving student: ' + error.message);
+        showToast('Error approving student: ' + error.message, 'error');
     }
 }
 
 async function verifyAadhar(id, status) {
-    if (!confirm('Mark Aadhar as Verified?')) return;
+    if (!await showConfirm('Mark Aadhar as Verified?')) return;
     try {
         await apiFetch(`/admin/students/${id}/verify-aadhar`, {
             method: 'PUT',
@@ -424,12 +425,12 @@ async function verifyAadhar(id, status) {
         });
         loadStudents();
     } catch (error) {
-        alert('Error: ' + error.message);
+        showToast('Error: ' + error.message, 'error');
     }
 }
 
 async function rejectAadhar(id) {
-    const reason = prompt("Please enter the reason for rejecting the Aadhar proof:");
+    const reason = await showPrompt("Please enter the reason for rejecting the Aadhar proof:");
     if (reason === null) return;
 
     try {
@@ -439,7 +440,7 @@ async function rejectAadhar(id) {
         });
         loadStudents();
     } catch (error) {
-        alert('Error: ' + error.message);
+        showToast('Error: ' + error.message, 'error');
     }
 }
 
@@ -594,11 +595,11 @@ async function submitStudentUpdate(e) {
             body: JSON.stringify(payload)
         });
 
-        alert('Student profile updated successfully!');
+        showToast('Student profile updated successfully!', 'success');
         closeStudentModal();
         loadStudents(); // Refresh the list
     } catch (error) {
-        alert('Error updating student: ' + error.message);
+        showToast('Error updating student: ' + error.message, 'error');
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -735,20 +736,20 @@ async function updateFeeStatus(id, newStatus) {
     let payload = { Status: newStatus };
 
     if (newStatus === 'Rejected') {
-        const note = prompt('Please enter a reason for rejection (Admin Note):');
+        const note = await showPrompt('Please enter a reason for rejection (Admin Note):');
         if (note === null) {
             // User cancelled the prompt, revert the dropdown
             loadFees();
             return;
         }
         if (!note.trim()) {
-            alert('A rejection reason is required.');
+            showToast('A rejection reason is required.', 'warning');
             loadFees();
             return;
         }
         payload.AdminNote = note.trim();
     } else {
-        if (!confirm(`Are you sure you want to mark this payment as ${newStatus}?`)) {
+        if (!await showConfirm(`Are you sure you want to mark this payment as ${newStatus}?`)) {
             loadFees(); // Revert dropdown
             return;
         }
@@ -761,7 +762,7 @@ async function updateFeeStatus(id, newStatus) {
         });
         loadFees();
     } catch (error) {
-        alert('Error updating fee status: ' + error.message);
+        showToast('Error updating fee status: ' + error.message, 'error');
         loadFees();
     }
 }
@@ -771,7 +772,7 @@ async function updateRemark(id) {
     const note = document.getElementById(`note-${id}`).value.trim();
 
     if (!note) {
-        alert("Remark cannot be empty");
+        showToast("Remark cannot be empty", "warning");
         return;
     }
 
@@ -785,12 +786,14 @@ async function updateRemark(id) {
         });
 
         alert("Remark updated");
+        showToast("Remark updated", "success");
 
         loadFees();
 
     } catch (err) {
 
         alert("Error updating remark");
+        showToast("Error updating remark", "error");
 
     }
 
@@ -854,22 +857,22 @@ async function handleRequestAction(id, action) {
                 body: JSON.stringify({ Status: 'Under Review' })
             });
             loadRequests();
-        } catch (error) { alert(error.message); }
+        } catch (error) { showToast(error.message, 'error'); }
     }
 }
 
 async function approveRequest(id) {
-    if (!confirm('Approve this profile update?')) return;
+    if (!await showConfirm('Approve this profile update?')) return;
     try {
         await apiFetch('/admin/profile-requests/' + id + '/approve', { method: 'PUT' });
         loadRequests();
     } catch (error) {
-        alert('Error: ' + error.message);
+        showToast('Error: ' + error.message, 'error');
     }
 }
 
 async function rejectRequest(id) {
-    const reason = prompt("Please provide a reason for rejecting this request (optional, will be shown to the student).");
+    const reason = await showPrompt("Please provide a reason for rejecting this request (optional, will be shown to the student).");
     if (reason === null) return; // User clicked cancel
 
     try {
@@ -881,7 +884,7 @@ async function rejectRequest(id) {
         });
         loadRequests();
     } catch (error) {
-        alert('Error: ' + error.message);
+        showToast('Error: ' + error.message, 'error');
     }
 }
 
@@ -928,10 +931,10 @@ async function createAnnouncement(e) {
 
         document.getElementById('announcementTitle').value = '';
         document.getElementById('announcementContent').value = '';
-        alert('Announcement posted successfully!');
+        showToast('Announcement posted successfully!', 'success');
         loadAnnouncements();
     } catch (error) {
-        alert('Error posting announcement: ' + error.message);
+        showToast('Error posting announcement: ' + error.message, 'error');
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -939,12 +942,12 @@ async function createAnnouncement(e) {
 }
 
 async function deleteAnnouncement(id) {
-    if (!confirm('Are you sure you want to delete this announcement?')) return;
+    if (!await showConfirm('Are you sure you want to delete this announcement?')) return;
     try {
         await apiFetch('/announcements/' + id, { method: 'DELETE' });
         loadAnnouncements();
     } catch (error) {
-        alert('Error deleting announcement: ' + error.message);
+        showToast('Error deleting announcement: ' + error.message, 'error');
     }
 }
 
@@ -1071,17 +1074,100 @@ async function updateIssueStatus(id, newStatus) {
         // We can reload to get correct styling on the badge
         loadIssues();
     } catch (error) {
-        alert('Error updating status: ' + error.message);
+        showToast('Error updating status: ' + error.message, 'error');
         loadIssues(); // reload to revert a failed change
     }
 }
 
 async function deleteIssue(id) {
-    if (!confirm('Are you sure you want to delete this resolved issue?')) return;
+    if (!await showConfirm('Are you sure you want to delete this resolved issue?')) return;
     try {
         await apiFetch('/issues/' + id, { method: 'DELETE' });
         loadIssues();
     } catch (error) {
-        alert('Error deleting issue: ' + error.message);
+        showToast('Error deleting issue: ' + error.message, 'error');
     }
 }
+
+// --- Custom UI Helpers ---
+function injectCustomUI() {
+    // Toast Container
+    if (!document.getElementById('toast-container')) {
+        const div = document.createElement('div');
+        div.id = 'toast-container';
+        document.body.appendChild(div);
+    }
+    // Custom Confirm/Prompt Modal
+    if (!document.getElementById('customModalOverlay')) {
+        const div = document.createElement('div');
+        div.id = 'customModalOverlay';
+        div.className = 'custom-modal-overlay';
+        div.innerHTML = `
+            <div class="custom-box">
+                <h3 id="customModalTitle">Confirm</h3>
+                <p id="customModalMessage"></p>
+                <div id="customModalInputContainer" style="display:none; margin-bottom: 1rem;">
+                    <input type="text" id="customModalInput" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                </div>
+                <div class="custom-actions">
+                    <button id="customModalCancel" class="btn btn-cancel">Cancel</button>
+                    <button id="customModalConfirm" class="btn">Confirm</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(div);
+    }
+}
+
+function showToast(message, type = 'info') { 
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = '<i class="fa-solid fa-circle-info" style="color:var(--primary-color)"></i>';
+    if (type === 'success') icon = '<i class="fa-solid fa-circle-check" style="color:#10B981"></i>';
+    if (type === 'error') icon = '<i class="fa-solid fa-circle-exclamation" style="color:#EF4444"></i>';
+    if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation" style="color:#F59E0B"></i>';
+
+    toast.innerHTML = `<div style="display:flex; align-items:center; gap:10px;">${icon} <span>${message}</span></div>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function showConfirm(message) {
+    return showPrompt(message, false);
+}
+
+function showPrompt(message, isPrompt = true) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('customModalOverlay');
+        const inputContainer = document.getElementById('customModalInputContainer');
+        const input = document.getElementById('customModalInput');
+        
+        document.getElementById('customModalTitle').textContent = isPrompt ? 'Input Required' : 'Confirm';
+        document.getElementById('customModalMessage').textContent = message;
+        inputContainer.style.display = isPrompt ? 'block' : 'none';
+        input.value = '';
+
+        const confirmBtn = document.getElementById('customModalConfirm');
+        const cancelBtn = document.getElementById('customModalCancel');
+
+        const cleanup = () => {
+            overlay.classList.remove('active');
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+        };
+
+        confirmBtn.onclick = () => { cleanup(); resolve(isPrompt ? input.value : true); };
+        cancelBtn.onclick = () => { cleanup(); resolve(isPrompt ? null : false); };
+
+        overlay.classList.add('active');
+        if(isPrompt) input.focus();
+    });
+}
+
+// Initialize UI Helpers immediately
+injectCustomUI();

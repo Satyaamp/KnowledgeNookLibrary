@@ -1,0 +1,624 @@
+/* ============================================================
+   MOBILE APP STYLE — Knowledge Nook Library Student Dashboard
+   Import AFTER your existing style.css
+   Only applies at ≤768px unless noted
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
+/* ── CSS Variables (mobile theme) ─────────────────────────── */
+:root {
+  --mob-bg: #F0F4FF;
+  --mob-surface: #FFFFFF;
+  --mob-surface2: #F8FAFF;
+  --mob-primary: #4F46E5;
+  --mob-primary-light: #EEF2FF;
+  --mob-accent: #06B6D4;
+  --mob-success: #10B981;
+  --mob-warning: #F59E0B;
+  --mob-danger: #EF4444;
+  --mob-text: #111827;
+  --mob-text-sub: #6B7280;
+  --mob-text-muted: #9CA3AF;
+  --mob-border: #E5E7EB;
+  --mob-shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --mob-shadow: 0 4px 16px rgba(79,70,229,0.10), 0 1px 4px rgba(0,0,0,0.05);
+  --mob-shadow-lg: 0 8px 32px rgba(79,70,229,0.15), 0 2px 8px rgba(0,0,0,0.07);
+  --mob-radius: 20px;
+  --mob-radius-sm: 12px;
+  --mob-nav-h: 70px;
+  --mob-bottom-h: 64px;
+  --mob-font: 'Sora', sans-serif;
+  --mob-font-body: 'DM Sans', sans-serif;
+}
+
+/* ── MOBILE ONLY ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* Global resets */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    font-family: var(--mob-font-body);
+    background: var(--mob-bg);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── TOP NAVBAR → App Header ──────────────────────────── */
+  .top-navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--mob-nav-h);
+    background: var(--mob-surface);
+    border-bottom: 1px solid var(--mob-border);
+    box-shadow: 0 2px 16px rgba(79,70,229,0.08);
+    z-index: 1000;
+    padding: 0 16px;
+  }
+
+  .top-navbar .nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    max-width: 100%;
+  }
+
+  /* Logo */
+  .top-navbar .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mob-font);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--mob-primary);
+    text-decoration: none;
+  }
+
+  .top-navbar .logo .logo-text {
+    max-width: 160px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.88rem;
+  }
+
+  .top-navbar .logo i.fa-book-open-reader {
+    font-size: 1.2rem;
+    color: var(--mob-primary);
+  }
+
+  /* Hide hamburger — we use bottom nav */
+  .top-navbar .logo .hamburger-btn { display: none !important; }
+
+  /* Hide desktop nav links in header */
+  .dashboard-nav-links { display: none !important; }
+
+  /* Nav right: avatar + logout */
+  .top-navbar .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-profile-pic {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2.5px solid var(--mob-primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+    transition: box-shadow 0.2s;
+  }
+
+  .nav-profile-pic:active { box-shadow: 0 0 0 5px rgba(79,70,229,0.18); }
+
+  .btn-logout {
+    background: var(--mob-primary-light);
+    color: var(--mob-primary);
+    border: none;
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--mob-font);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-logout:active { transform: scale(0.96); }
+
+  /* ── SIDEBAR → Hide completely on mobile ─────────────── */
+  .sidebar { display: none !important; }
+  #mobile-overlay { display: none !important; }
+
+  /* ── BOTTOM NAVIGATION BAR ────────────────────────────── */
+  /* Create a floating bottom nav */
+  body::after {
+    content: '';
+    display: block;
+    height: calc(var(--mob-bottom-h) + 16px);
+  }
+
+  /* We inject the bottom nav via JS below, 
+     but style it here preemptively */
+  #mobileBottomNav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: var(--mob-bottom-h);
+    background: var(--mob-surface);
+    border-top: 1px solid var(--mob-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 4px;
+    z-index: 1000;
+    box-shadow: 0 -4px 20px rgba(79,70,229,0.10);
+  }
+
+  .mob-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 14px;
+    border-radius: var(--mob-radius-sm);
+    text-decoration: none;
+    color: var(--mob-text-muted);
+    font-size: 0.62rem;
+    font-weight: 600;
+    font-family: var(--mob-font);
+    letter-spacing: 0.01em;
+    transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
+    flex: 1;
+    border: none;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mob-nav-item i {
+    font-size: 1.15rem;
+    transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  .mob-nav-item.active {
+    color: var(--mob-primary);
+    background: var(--mob-primary-light);
+  }
+
+  .mob-nav-item.active i { transform: translateY(-2px) scale(1.15); }
+  .mob-nav-item:active i { transform: scale(0.88); }
+
+  /* ── MAIN LAYOUT ──────────────────────────────────────── */
+  .dashboard-container {
+    display: block;
+    padding-top: calc(var(--mob-nav-h) + 12px);
+    padding-bottom: 0;
+    min-height: 100vh;
+  }
+
+  .main-content {
+    padding: 0 14px 12px;
+    max-width: 100%;
+  }
+
+  /* ── WELCOME HEADER ───────────────────────────────────── */
+  .main-content > .navbar {
+    background: linear-gradient(135deg, var(--mob-primary) 0%, #6366F1 60%, var(--mob-accent) 100%);
+    border-radius: var(--mob-radius);
+    padding: 20px 20px 18px;
+    margin-bottom: 14px;
+    color: white;
+    box-shadow: var(--mob-shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .main-content > .navbar::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+
+  .main-content > .navbar::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; right: 40px;
+    width: 80px; height: 80px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+
+  .main-content > .navbar h1 {
+    font-family: var(--mob-font);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 6px !important;
+  }
+
+  .main-content > .navbar h1 span {
+    color: #BEF264;
+  }
+
+  .main-content > .navbar > div {
+    font-size: 0.75rem !important;
+    color: rgba(255,255,255,0.80) !important;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-family: var(--mob-font-body);
+  }
+
+  .main-content > .navbar > div span {
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 2px 10px;
+    backdrop-filter: blur(4px);
+    margin: 0 !important;
+    font-size: 0.72rem;
+  }
+
+  /* ── BANNERS ──────────────────────────────────────────── */
+  #bannerWrapper {
+    margin-bottom: 14px !important;
+  }
+
+  #inactiveBanner, #pendingBanner, #passwordBanner {
+    border-radius: var(--mob-radius-sm) !important;
+    padding: 14px !important;
+    font-size: 0.85em;
+  }
+
+  #inactiveBanner h4, #pendingBanner h4, #passwordBanner h4 {
+    font-family: var(--mob-font);
+    font-size: 0.9rem;
+  }
+
+  /* ── CARDS ────────────────────────────────────────────── */
+  .card {
+    background: var(--mob-surface);
+    border-radius: var(--mob-radius);
+    padding: 18px 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--mob-shadow);
+    border: 1px solid rgba(229,231,235,0.6);
+    transition: box-shadow 0.2s;
+  }
+
+  .card h3 {
+    font-family: var(--mob-font);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--mob-text);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card h4 {
+    font-family: var(--mob-font);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--mob-text);
+    margin-bottom: 10px;
+  }
+
+  /* ── GRID: stack on mobile ────────────────────────────── */
+  .grid-2 {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .grid-2 > div:first-child {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--mob-border);
+  }
+
+  /* ── FORMS ────────────────────────────────────────────── */
+  .form-group { margin-bottom: 12px; }
+
+  .form-group label {
+    font-family: var(--mob-font);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--mob-text-sub);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    border: 1.5px solid var(--mob-border);
+    border-radius: var(--mob-radius-sm);
+    padding: 11px 14px;
+    font-size: 0.92rem;
+    font-family: var(--mob-font-body);
+    color: var(--mob-text);
+    background: var(--mob-surface2);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    border-color: var(--mob-primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+    background: white;
+  }
+
+  .form-group input[disabled],
+  .form-group input[readonly] {
+    background: var(--mob-bg) !important;
+    color: var(--mob-text-muted) !important;
+    border-color: var(--mob-border) !important;
+  }
+
+  .form-group textarea { resize: vertical; min-height: 90px; }
+
+  /* File input */
+  input[type="file"] {
+    padding: 10px;
+    font-size: 0.82rem;
+    border-radius: var(--mob-radius-sm);
+    border: 1.5px dashed var(--mob-primary);
+    background: var(--mob-primary-light);
+    color: var(--mob-primary);
+    width: 100%;
+    cursor: pointer;
+  }
+
+  /* ── BUTTONS ──────────────────────────────────────────── */
+  .btn {
+    background: linear-gradient(135deg, var(--mob-primary), #6366F1);
+    color: white;
+    border: none;
+    border-radius: var(--mob-radius-sm);
+    padding: 13px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: var(--mob-font);
+    width: 100%;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 6px rgba(79,70,229,0.2);
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--mob-primary);
+    color: var(--mob-primary);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: var(--mob-font);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn-outline:active {
+    background: var(--mob-primary-light);
+    transform: scale(0.96);
+  }
+
+  /* ── ANNOUNCEMENTS ────────────────────────────────────── */
+  #announcementsList > * {
+    border-radius: var(--mob-radius-sm);
+    padding: 14px;
+    margin-bottom: 10px;
+    background: var(--mob-surface2);
+    border: 1px solid var(--mob-border);
+    font-size: 0.88rem;
+    font-family: var(--mob-font-body);
+    transition: box-shadow 0.2s;
+  }
+
+  /* ── PROFILE CONTENT ──────────────────────────────────── */
+  #profileContent {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    font-family: var(--mob-font-body);
+  }
+
+  /* ── FEES / ISSUES LISTS ──────────────────────────────── */
+  #feesList > *, #issuesList > * {
+    border-radius: var(--mob-radius-sm);
+    margin-bottom: 8px;
+    padding: 12px 14px;
+    background: var(--mob-surface2);
+    border: 1px solid var(--mob-border);
+    font-size: 0.85rem;
+    font-family: var(--mob-font-body);
+  }
+
+  /* ── REQUESTS HISTORY LIST ────────────────────────────── */
+  #requestsHistoryList > * {
+    border-radius: var(--mob-radius-sm);
+    margin-bottom: 10px;
+    padding: 14px;
+    background: var(--mob-surface2);
+    border: 1px solid var(--mob-border);
+    font-size: 0.85rem;
+    font-family: var(--mob-font-body);
+  }
+
+  #requestsActions {
+    border-radius: var(--mob-radius-sm) !important;
+    padding: 10px 14px !important;
+  }
+
+  /* ── PAGINATION ───────────────────────────────────────── */
+  #feesPagination, #issuesPagination, #requestsPagination {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  #feesPagination button, #issuesPagination button, #requestsPagination button {
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    font-family: var(--mob-font);
+    border: 1.5px solid var(--mob-border);
+    background: white;
+    color: var(--mob-text);
+    cursor: pointer;
+    min-width: 34px;
+  }
+
+  /* ── MODALS → Bottom sheet style ─────────────────────── */
+  .modal {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 24px 24px 0 0 !important;
+    padding: 24px 20px 32px !important;
+    animation: slideUpSheet 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  @keyframes slideUpSheet {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  /* Bottom sheet handle */
+  .modal-content::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--mob-border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  .modal-content h2 {
+    font-family: var(--mob-font);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .modal-content .close-btn {
+    position: absolute;
+    top: 20px; right: 20px;
+    width: 32px; height: 32px;
+    background: var(--mob-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--mob-text-sub);
+    cursor: pointer;
+    line-height: 1;
+    text-align: center;
+    padding: 0;
+  }
+
+  /* Profile update grid → single column */
+  #profileUpdateModalContent {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Crop modal */
+  #cropModal .modal-content div[style*="height: 400px"] {
+    height: 260px !important;
+  }
+
+  /* Password modal */
+  #changePasswordModal .modal-content { max-width: 100% !important; }
+
+  /* Image preview modal */
+  #imagePreviewModal > div {
+    max-width: 96% !important;
+    max-height: 86% !important;
+  }
+
+  /* ── SECTION transitions ──────────────────────────────── */
+  .view-section {
+    animation: fadeInUp 0.3s ease forwards;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── MISC UTILS ───────────────────────────────────────── */
+  .mt-1 { margin-top: 10px !important; }
+  .mt-2 { margin-top: 16px !important; }
+  .font-small { font-size: 0.82rem; font-family: var(--mob-font-body); }
+
+} /* end @media (max-width: 768px) */
+
+
+/* ── BOTTOM NAV INJECTION SCRIPT ───────────────────────────── 
+   Add this small script at the end of your HTML body,
+   or paste into student.js
+   It creates the bottom nav bar automatically on mobile.
+   ──────────────────────────────────────────────────────────── */
+/*
+<script>
+(function(){
+  if (window.innerWidth > 768) return;
+  const nav = document.createElement('nav');
+  nav.id = 'mobileBottomNav';
+  const items = [
+    { href: '#home',     icon: 'fa-bullhorn',           label: 'News'     },
+    { href: '#profile',  icon: 'fa-id-card',            label: 'Profile'  },
+    { href: '#fees',     icon: 'fa-file-invoice-dollar', label: 'Fees'    },
+    { href: '#requests', icon: 'fa-clock-rotate-left',  label: 'History'  },
+    { href: '#issues',   icon: 'fa-triangle-exclamation',label: 'Issues'  },
+  ];
+  nav.innerHTML = items.map(it => `
+    <button class="mob-nav-item" onclick="location.hash='${it.href.slice(1)}'; updateActiveTab(this)">
+      <i class="fa-solid ${it.icon}"></i>
+      <span>${it.label}</span>
+    </button>
+  `).join('');
+  document.body.appendChild(nav);
+
+  function updateActiveTab(el) {
+    document.querySelectorAll('.mob-nav-item').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // Set initial active based on hash
+  const hash = location.hash || '#home';
+  const idx = ['#home','#profile','#fees','#requests','#issues'].indexOf(hash);
+  const btns = document.querySelectorAll('.mob-nav-item');
+  if (btns[idx]) btns[idx].classList.add('active');
+})();
+</script>
+*/

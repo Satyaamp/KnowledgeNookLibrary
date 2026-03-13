@@ -1,8 +1,11 @@
-const CACHE_NAME = 'library-cache-v3';
+const CACHE_NAME = 'library-cache-v5';
 const urlsToCache = [
     '/',
     '/index.html',
     '/css/style.css',
+    '/css/mobile-app-style.css',
+    '/css/landing.css',
+
     '/js/api.js',
     '/js/auth.js',
     '/student/dashboard.html',

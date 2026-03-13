@@ -497,3 +497,76 @@ body::before {
     font-size: 1.5rem;
   }
 }
+
+/* --- Custom Toast Notifications --- */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  background: white;
+  color: var(--text-primary);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-left: 5px solid var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 300px;
+  max-width: 400px;
+  animation: slideInToast 0.3s ease-out forwards;
+  font-size: 0.95rem;
+}
+
+.toast.success { border-left-color: #10B981; }
+.toast.error { border-left-color: #EF4444; }
+.toast.warning { border-left-color: #F59E0B; }
+
+@keyframes slideInToast {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* --- Custom Modal (Alert/Confirm/Prompt Replacement) --- */
+.custom-modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 10000;
+  display: none; /* Toggled via JS */
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.custom-modal-overlay.active { display: flex; }
+
+.custom-box {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  transform: scale(0.95);
+  animation: popIn 0.2s ease-out forwards;
+}
+
+@keyframes popIn { to { transform: scale(1); } }
+
+.custom-box h3 { margin-bottom: 0.5rem; color: var(--text-primary); font-size: 1.25rem; }
+.custom-box p { margin-bottom: 1.5rem; color: var(--text-secondary); }
+.custom-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.custom-actions .btn { margin-top: 0; width: auto; padding: 0.6rem 1.2rem; }
+.btn-cancel { background: #E5E7EB; color: #374151; }
+.btn-cancel:hover { background: #D1D5DB; }
+}

@@ -62,6 +62,12 @@ const registerAdmin = async (req, res) => {
     const { name, email, password } = req.body;
 
     try {
+        // Security: Check if any admin exists. If so, block public registration.
+        const adminCount = await Administrator.countDocuments({});
+        if (adminCount > 0) {
+            return res.status(403).json({ message: 'Admin setup already complete. Setup is disabled.' });
+        }
+
         const adminExists = await Administrator.findOne({ Email: email.toLowerCase() });
         if (adminExists) {
             return res.status(400).json({ message: 'Admin already exists' });

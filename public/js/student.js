@@ -10,18 +10,31 @@ function logout() {
 
 let originalProfileData = {};
 let cropper = null;
+let activeBanners = [];
+let currentBannerIndex = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
+    injectCustomUI(); // Inject Toast/Modal HTML
+
     // Fetch profile to get Name and Profile Picture
     try {
         const profile = await apiFetch('/students/profile');
         originalProfileData = profile;
 
-        // SHOW INACTIVE BANNER
+        // --- BANNER LOGIC START ---
+        activeBanners = [];
+        // Reset displays
+        const inactiveEl = document.getElementById('inactiveBanner');
+        const pendingEl = document.getElementById('pendingBanner');
+        const passwordEl = document.getElementById('passwordBanner');
+
+        if (inactiveEl) inactiveEl.style.display = 'none';
+        if (pendingEl) pendingEl.style.display = 'none';
+        if (passwordEl) passwordEl.style.display = 'none';
+
         if (profile.AccountStatus === 'Inactive') {
             const banner = document.getElementById("inactiveBanner");
             if (banner) {
-                banner.style.display = "block";
                 const whatsappBtn = document.getElementById('inactiveWhatsappBtn');
                 const emailBtn = document.getElementById('inactiveEmailBtn');
                 if (profile.LibraryID) {
@@ -29,14 +42,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (whatsappBtn) whatsappBtn.href = `https://wa.me/917903547986?text=${message}`;
                     if (emailBtn) emailBtn.href = `mailto:knowledgenooklibrary@gmail.com?subject=Account Inactive (ID: ${profile.LibraryID})&body=${message}`;
                 }
+                activeBanners.push('inactiveBanner');
+            }
+        } else if (profile.AccountStatus === 'Pending') {
+            const banner = document.getElementById("pendingBanner");
+            if (banner) {
+                const emailBtn = document.getElementById('pendingEmailBtn');
+                if (profile.LibraryID) {
+                    const idDisplay = document.getElementById('pendingIdDisplay');
+                    if (idDisplay) idDisplay.textContent = `ID: ${profile.LibraryID}`;
+
+                    const message = encodeURIComponent(`Hello, I am writing regarding my pending account application. My Library ID is ${profile.LibraryID}.`);
+                    if (emailBtn) emailBtn.href = `mailto:knowledgenooklibrary@gmail.com?subject=Account Pending Approval (ID: ${profile.LibraryID})&body=${message}`;
+                }
+                activeBanners.push('pendingBanner');
             }
         }
 
-        // SHOW PASSWORD BANNER
-        if (profile.mustChangePassword) {
+        // Show password banner if needed (and not inactive)
+        if (profile.mustChangePassword && profile.AccountStatus !== 'Inactive') {
             const banner = document.getElementById("passwordBanner");
-            if (banner) banner.style.display = "block";
+            if (banner) activeBanners.push('passwordBanner');
         }
+
+        updateBannerUI();
+        // --- BANNER LOGIC END ---
 
         // Update first name
         const firstName = profile.FullName ? profile.FullName.split(' ')[0] : 'Student';
@@ -99,9 +129,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     const profileUpdateForm = document.getElementById('profileUpdateForm');
     if (profileUpdateForm) profileUpdateForm.addEventListener('submit', handleProfileUpdateSubmit);
 
+    // Bind Change Password Submit
+    // Note: The HTML calls submitChangePassword(event) directly, but we need to define it.
+
     // Initial route
     handleRoute();
 });
+
+window.navigateBanners = function(direction) {
+    if (activeBanners.length <= 1) return;
+    currentBannerIndex += direction;
+    if (currentBannerIndex < 0) currentBannerIndex = activeBanners.length - 1;
+    if (currentBannerIndex >= activeBanners.length) currentBannerIndex = 0;
+    updateBannerUI();
+}
+
+function updateBannerUI() {
+    const wrapper = document.getElementById('bannerWrapper');
+    if (!wrapper) return;
+
+    const prevBtn = document.getElementById('btnBannerPrev');
+    const nextBtn = document.getElementById('btnBannerNext');
+    
+    // Hide all banners first (handled by reset, but good safety)
+    activeBanners.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+
+    if (activeBanners.length === 0) {
+        wrapper.style.display = 'none';
+        return;
+    }
+
+    wrapper.style.display = 'block';
+    const currentBanner = document.getElementById(activeBanners[currentBannerIndex]);
+    if (currentBanner) currentBanner.style.display = 'block';
+
+    const showControls = activeBanners.length > 1;
+    if (prevBtn) prevBtn.style.display = showControls ? 'flex' : 'none';
+    if (nextBtn) nextBtn.style.display = showControls ? 'flex' : 'none';
+}
 
 function handleRoute() {
     const hash = window.location.hash || '#home';
@@ -195,14 +263,9 @@ async function loadProfile() {
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.85em; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Account Status</div>
                     <div style="font-size: 1.1em; margin-top: 5px;">
-                        <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.9em; background: ${data.AccountStatus === 'Approved' ? '#DEF7EC' : '#FEF3C7'}; color: ${data.AccountStatus === 'Approved' ? '#03543F' : '#92400E'};">
+                        <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.9em; background: ${data.AccountStatus === 'Active' ? '#DEF7EC' : '#FEF3C7'}; color: ${data.AccountStatus === 'Active' ? '#03543F' : '#92400E'};">
                             ${data.AccountStatus}
                         </span>
-                        ${data.AccountStatus === 'Pending' ? `
-                        <div style="margin-top: 10px; font-size: 0.85em;">
-                            <a href="https://wa.me/917903547986" target="_blank" style="color: #25D366; margin-right: 10px; text-decoration: none; font-weight: 500;"><i class="fa-brands fa-whatsapp"></i> Chat</a>
-                            <a href="tel:+917903547986" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><i class="fa-solid fa-phone"></i> Call</a>
-                        </div>` : ''}
                     </div>
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
@@ -542,12 +605,12 @@ async function deleteSelectedRequests() {
     const ids = Array.from(checkboxes).map(cb => cb.value);
 
     if (originalProfileData.AccountStatus === 'Inactive') {
-        alert("Your account is inactive. You cannot perform this action.");
+        showToast("Your account is inactive.", "error");
         return;
     }
 
     if (ids.length === 0) return;
-    if (!confirm(`Are you sure you want to delete ${ids.length} items from your history?`)) return;
+    if (!await showConfirm(`Are you sure you want to delete ${ids.length} items from your history?`)) return;
 
     try {
         await apiFetch('/students/profile-requests', { 
@@ -556,35 +619,35 @@ async function deleteSelectedRequests() {
         });
         loadRequestsHistory();
     } catch (error) {
-        alert('Error: ' + error.message);
+        showToast(error.message, 'error');
     }
 }
 
 async function deleteProfileRequest(id) {
     if (originalProfileData.AccountStatus === 'Inactive') {
-        alert("Your account is inactive. You cannot perform this action.");
+        showToast("Your account is inactive.", "error");
         return;
     }
-    if (!confirm('Are you sure you want to delete this item from your history?')) return;
+    if (!await showConfirm('Are you sure you want to delete this item from your history?')) return;
     try {
         await apiFetch(`/students/profile-requests/${id}`, { method: 'DELETE' });
         loadRequestsHistory(); // Refresh the list
     } catch (error) {
-        alert('Error: ' + error.message);
+        showToast(error.message, 'error');
     }
 }
 
 async function deleteIssue(id) {
     if (originalProfileData.AccountStatus === 'Inactive') {
-        alert("Your account is inactive. You cannot perform this action.");
+        showToast("Your account is inactive.", "error");
         return;
     }
-    if (!confirm('Are you sure you want to delete this resolved issue?')) return;
+    if (!await showConfirm('Are you sure you want to delete this resolved issue?')) return;
     try {
         await apiFetch('/issues/' + id, { method: 'DELETE' });
         await loadIssues(true);
     } catch (error) {
-        alert('Error deleting issue: ' + error.message);
+        showToast('Error deleting issue: ' + error.message, 'error');
     }
 }
 
@@ -599,7 +662,7 @@ function showUpdateProfileModal() {
 
     const student = originalProfileData;
     if (!student || Object.keys(student).length === 0) {
-        alert('Profile data not loaded yet. Please wait a moment and try again.');
+        showToast('Profile data not loaded yet. Please wait.', 'warning');
         return;
     }
 
@@ -627,7 +690,7 @@ async function handleProfileUpdateSubmit(e) {
     const msg = document.getElementById('profileUpdateMsg');
 
     if (originalProfileData.AccountStatus === 'Inactive') {
-        alert("Your account is inactive. You cannot perform this action.");
+        showToast("Your account is inactive.", "error");
         return;
     }
 
@@ -683,7 +746,7 @@ async function handleFeeSubmit(e) {
     const msg = document.getElementById('feeMsg');
 
     if (originalProfileData.AccountStatus === 'Inactive') {
-        alert("Your account is inactive. You cannot perform this action.");
+        showToast("Your account is inactive.", "error");
         return;
     }
 
@@ -724,7 +787,7 @@ async function handleIssueSubmit(e) {
     const msg = document.getElementById('issueMsg');
 
     if (originalProfileData.AccountStatus === 'Inactive') {
-        alert("Your account is inactive. You cannot perform this action.");
+        showToast("Your account is inactive.", "error");
         return;
     }
 
@@ -800,7 +863,7 @@ async function loadAnnouncements() {
 
 function openImagePreview(url) {
     if (!url) {
-        alert("No image available to preview.");
+        showToast("No image available to preview.", "warning");
         return;
     }
     document.getElementById('previewImageElement').src = url;
@@ -812,27 +875,106 @@ function closeImagePreview() {
     document.getElementById('previewImageElement').src = '';
 }
 
+// --- Custom UI Helpers ---
+function injectCustomUI() {
+    // Toast Container
+    if (!document.getElementById('toast-container')) {
+        const div = document.createElement('div');
+        div.id = 'toast-container';
+        document.body.appendChild(div);
+    }
+    // Custom Confirm Modal
+    if (!document.getElementById('customModalOverlay')) {
+        const div = document.createElement('div');
+        div.id = 'customModalOverlay';
+        div.className = 'custom-modal-overlay';
+        div.innerHTML = `
+            <div class="custom-box">
+                <h3 id="customModalTitle">Confirm</h3>
+                <p id="customModalMessage"></p>
+                <div class="custom-actions">
+                    <button id="customModalCancel" class="btn btn-cancel">Cancel</button>
+                    <button id="customModalConfirm" class="btn">Confirm</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(div);
+    }
+}
+
+function showToast(message, type = 'info') { // type: success, error, warning, info
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = '<i class="fa-solid fa-circle-info" style="color:var(--primary-color)"></i>';
+    if (type === 'success') icon = '<i class="fa-solid fa-circle-check" style="color:#10B981"></i>';
+    if (type === 'error') icon = '<i class="fa-solid fa-circle-exclamation" style="color:#EF4444"></i>';
+
+    toast.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px;">
+            ${icon} <span>${message}</span>
+        </div>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function showConfirm(message) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('customModalOverlay');
+        document.getElementById('customModalMessage').textContent = message;
+        
+        const confirmBtn = document.getElementById('customModalConfirm');
+        const cancelBtn = document.getElementById('customModalCancel');
+
+        // Clean up listeners
+        const cleanup = () => {
+            overlay.classList.remove('active');
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+        };
+
+        confirmBtn.onclick = () => { cleanup(); resolve(true); };
+        cancelBtn.onclick = () => { cleanup(); resolve(false); };
+
+        overlay.classList.add('active');
+    });
+}
 
 async function promptChangePassword() {
-
-    const currentPassword = prompt("Enter your CURRENT password:");
-
     if (originalProfileData.AccountStatus === 'Inactive') {
-        alert("Your account is inactive. You cannot perform this action.");
+        showToast("Your account is inactive. You cannot perform this action.", "error");
         return;
     }
+    // Open the HTML modal
+    document.getElementById('changePasswordModal').style.display = 'block';
+    // Reset Form
+    document.getElementById('passwordForm').reset();
+    document.getElementById('passwordMsg').textContent = '';
+}
 
-    if (!currentPassword) return;
+function closePasswordModal() {
+    document.getElementById('changePasswordModal').style.display = 'none';
+}
 
-    const newPassword = prompt("Enter your NEW password:");
+// This needs to be global because it's called via onsubmit in HTML
+window.submitChangePassword = async function(event) {
+    event.preventDefault();
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const msg = document.getElementById('passwordMsg');
 
     if (!newPassword || newPassword.length < 6) {
-        alert("New password must be at least 6 characters.");
+        msg.style.color = 'red';
+        msg.textContent = "New password must be at least 6 characters.";
         return;
     }
 
     try {
-
         await apiFetch('/students/change-password', {
             method: 'PUT',
             body: JSON.stringify({
@@ -841,15 +983,14 @@ async function promptChangePassword() {
             })
         });
 
-        alert("Password updated successfully.");
-
+        showToast("Password updated successfully.", "success");
+        closePasswordModal();
         // Hide banner after update
         document.getElementById("passwordBanner").style.display = "none";
 
     } catch (error) {
-
-        alert("Error updating password: " + error.message);
-
+        msg.style.color = 'red';
+        msg.textContent = error.message;
     }
 }
 
@@ -858,14 +999,14 @@ async function handleProfilePicUpload(input) {
         const file = input.files[0];
 
         if (originalProfileData.AccountStatus === 'Inactive') {
-            alert("Your account is inactive. You cannot perform this action.");
+            showToast("Your account is inactive.", "error");
             input.value = '';
             return;
         }
 
         // Ensure it is an image
         if (!file.type.startsWith('image/')) {
-            alert('Please select a valid image file.');
+            showToast('Please select a valid image file.', 'error');
             return;
         }
 
@@ -919,12 +1060,12 @@ async function saveCroppedImage() {
                 method: 'POST',
                 body: formData
             });
-            alert('Profile picture updated successfully');
+            showToast('Profile picture updated successfully', 'success');
             closeCropModal();
             loadProfile(); // Refresh profile section
             document.getElementById('navProfilePic').src = data.profilePictureURL; // Update nav bar
         } catch (error) {
-            alert('Failed to update profile picture: ' + error.message);
+            showToast('Failed to update profile picture: ' + error.message, 'error');
             btn.textContent = originalText;
             btn.disabled = false;
         }
@@ -934,7 +1075,7 @@ async function saveCroppedImage() {
 async function handleAadharUpload(input) {
     if (input.files && input.files[0]) {
         if (originalProfileData.AccountStatus === 'Inactive') {
-            alert("Your account is inactive. You cannot perform this action.");
+            showToast("Your account is inactive.", "error");
             input.value = '';
             return;
         }
@@ -948,10 +1089,10 @@ async function handleAadharUpload(input) {
                 method: 'POST',
                 body: formData
             });
-            alert('Aadhar proof uploaded successfully! Please wait for admin verification.');
+            showToast('Aadhar proof uploaded successfully! Please wait for admin verification.', 'success');
             loadProfile(); // Refresh to show pending status
         } catch (error) {
-            alert('Failed to update Aadhar proof: ' + error.message);
+            showToast('Failed to update Aadhar proof: ' + error.message, 'error');
         }
     }
 }
