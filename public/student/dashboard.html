@@ -35,6 +35,26 @@
             --input-bg: #374151;
             --input-border: #4B5563;
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+
+            /* --- Modern style.css Variables Sync --- */
+            --bg: #111827;
+            --surface: #1F2937;
+            --surface-2: #374151;
+            --surface-3: #0f172a;
+            --text: #F9FAFB;
+            --text-secondary: #9CA3AF;
+            --border: #374151;
+            --border-strong: #4B5563;
+            --primary-light: rgba(37, 99, 235, 0.2);
+
+            /* --- Mobile App Variables Sync --- */
+            --mob-bg: #111827;
+            --mob-surface: #1F2937;
+            --mob-surface2: #374151;
+            --mob-text: #F9FAFB;
+            --mob-text-sub: #9CA3AF;
+            --mob-text-muted: #6B7280;
+            --mob-border: #4B5563;
         }
 
         /* --- Dark Mode Overrides --- */
@@ -119,27 +139,27 @@
                 <button onclick="navigateBanners(-1)" id="btnBannerPrev" style="position: absolute; left: -15px; top: 50%; transform: translateY(-50%); z-index: 10; width: 30px; height: 30px; border-radius: 50%; background: white; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; display: none; align-items: center; justify-content: center;">
                     <i class="fa-solid fa-chevron-left"></i>
                 </button>
-                <div id="inactiveBanner" style="display: none; background: #FEF2F2; border: 1px solid #FECACA; padding: 15px; border-radius: 8px; border-left: 4px solid #EF4444;">
-                    <h4 style="color: #991B1B; margin-bottom: 5px;"><i class="fa-solid fa-ban"></i> Account Inactive</h4>
-                    <p style="color: #991B1B; font-size: 1em; margin: 0;">Your account is currently inactive. You cannot perform actions like payments or updates. Please contact the administrator.</p>
+                <div id="inactiveBanner" style="display: none; background: var(--bg-color); border: 1px solid var(--error-color); padding: 15px; border-radius: 8px; border-left: 4px solid var(--error-color);">
+                    <h4 style="color: var(--error-color); margin-bottom: 5px;"><i class="fa-solid fa-ban"></i> Account Inactive</h4>
+                    <p style="color: var(--text-primary); font-size: 1em; margin: 0;">Your account is currently inactive. You cannot perform actions like payments or updates. Please contact the administrator.</p>
                     <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                        <a id="inactiveEmailBtn" href="mailto:knowledgenooklibrary@gmail.com" style="display: inline-block; padding: 6px 15px; background: #991B1B; color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-envelope" style="margin-right: 5px;"></i> Email Admin</a>
-                        <a id="inactiveWhatsappBtn" href="https://wa.me/917903547986" target="_blank" style="display: inline-block; padding: 6px 15px; background: #25D366; color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-brands fa-whatsapp" style="margin-right: 5px;"></i> WhatsApp</a>
-                        <a href="tel:+917903547986" style="display: inline-block; padding: 6px 15px; background: #3B82F6; color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-phone" style="margin-right: 5px;"></i> Call (+91 79035 47986)</a>
-                        <a href="tel:+919717490285" style="display: inline-block; padding: 6px 15px; background: #3B82F6; color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-phone" style="margin-right: 5px;"></i> Call (+91 97174 90285)</a>
+                        <a id="inactiveEmailBtn" href="mailto:knowledgenooklibrary@gmail.com" style="display: inline-block; padding: 6px 15px; background: var(--error-color); color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-envelope" style="margin-right: 5px;"></i> Email Admin</a>
+                        <a id="inactiveWhatsappBtn" href="https://wa.me/917903547986" target="_blank" style="display: inline-block; padding: 6px 15px; background: var(--success-color); color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-brands fa-whatsapp" style="margin-right: 5px;"></i> WhatsApp</a>
+                        <a href="tel:+917903547986" style="display: inline-block; padding: 6px 15px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-phone" style="margin-right: 5px;"></i> Call (+91 79035 47986)</a>
+                        <a href="tel:+919717490285" style="display: inline-block; padding: 6px 15px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-phone" style="margin-right: 5px;"></i> Call (+91 97174 90285)</a>
                     </div>
                 </div>
-                <div id="pendingBanner" style="display: none; background: #FEFCE8; border: 1px solid #FDE047; padding: 15px; border-radius: 8px; border-left: 4px solid #F59E0B;">
-                    <h4 style="color: #854D0E; margin-bottom: 5px;"><i class="fa-solid fa-clock"></i> Account Pending Approval</h4>
-                    <p style="color: #854D0E; font-size: 1em; margin: 0;">Your application has been submitted and is awaiting admin review. <span id="pendingIdDisplay" style="font-weight: 600;"></span></p>
+                <div id="pendingBanner" style="display: none; background: var(--bg-color); border: 1px solid var(--warning-color); padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning-color);">
+                    <h4 style="color: var(--warning-color); margin-bottom: 5px;"><i class="fa-solid fa-clock"></i> Account Pending Approval</h4>
+                    <p style="color: var(--text-primary); font-size: 1em; margin: 0;">Your application has been submitted and is awaiting admin review. <span id="pendingIdDisplay" style="font-weight: 600;"></span></p>
                     <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                        <a id="pendingEmailBtn" href="mailto:knowledgenooklibrary@gmail.com" style="display: inline-block; padding: 6px 15px; background: #B45309; color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-envelope" style="margin-right: 5px;"></i> Contact for Queries</a>
+                        <a id="pendingEmailBtn" href="mailto:knowledgenooklibrary@gmail.com" style="display: inline-block; padding: 6px 15px; background: var(--warning-color); color: white; text-decoration: none; border-radius: 6px; font-size: 0.95em; font-weight: 500;"><i class="fa-solid fa-envelope" style="margin-right: 5px;"></i> Contact for Queries</a>
                     </div>
                 </div>
-                <div id="passwordBanner" style="display: none; background: #FEF3C7; border: 1px solid #FCD34D; padding: 15px; border-radius: 8px; border-left: 4px solid #F59E0B;">
-                    <h4 style="color: #92400E; margin-bottom: 5px;"><i class="fa-solid fa-shield-halved"></i> Action Required: Update Password</h4>
-                    <p style="color: #92400E; font-size: 1em; margin-bottom: 10px;">You are using a default or temporary password. Please update your password immediately to secure your account.</p>
-                    <button onclick="promptChangePassword()" class="btn" style="padding: 0.4rem 1rem; font-size: 0.95em; background: #D97706; border: none; width: auto;">Change Password</button>
+                <div id="passwordBanner" style="display: none; background: var(--bg-color); border: 1px solid var(--warning-color); padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning-color);">
+                    <h4 style="color: var(--warning-color); margin-bottom: 5px;"><i class="fa-solid fa-shield-halved"></i> Action Required: Update Password</h4>
+                    <p style="color: var(--text-primary); font-size: 1em; margin-bottom: 10px;">You are using a default or temporary password. Please update your password immediately to secure your account.</p>
+                    <button onclick="promptChangePassword()" class="btn" style="padding: 0.4rem 1rem; font-size: 0.95em; background: var(--warning-color); border: none; width: auto;">Change Password</button>
                 </div>
                 <button onclick="navigateBanners(1)" id="btnBannerNext" style="position: absolute; right: -15px; top: 50%; transform: translateY(-50%); z-index: 10; width: 30px; height: 30px; border-radius: 50%; background: white; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; display: none; align-items: center; justify-content: center;">
                     <i class="fa-solid fa-chevron-right"></i>
@@ -181,30 +201,35 @@
             <!-- Fees View -->
             <div id="view-fees" class="view-section" style="display: none;">
                 <div class="card">
-                    <h3>Fee Management</h3>
+                    <h4>Upload Receipt</h4>
                     <div class="grid-2 mt-2">
                         <div>
-                            <h4>Upload Receipt</h4>
+                      
                             <form id="feeForm" class="mt-1">
                                 <div class="form-group">
                                     <label>Library ID</label>
                                     <input type="text" id="feeLibraryID" readonly disabled style="background: var(--bg-color); cursor: not-allowed; color: var(--text-secondary);">
                                 </div>
                                 <div class="form-group">
-                                    <label>Batch</label>
+                                    <label>Current Batch</label>
                                     <input type="text" id="feeBatch" readonly disabled style="background: var(--bg-color); cursor: not-allowed; color: var(--text-secondary);">
                                 </div>
                                 <div class="form-group">
-                                    <label>Month / Description</label>
+                                    <label>Month & Year</label>
                                     <input type="text" id="feeMonth" required placeholder="e.g. October 2026">
                                 </div>
                                 <div class="form-group">
-                                    <label>Amount Paid</label>
+                                    <label>Amount</label>
                                     <input type="number" id="feeAmount" required readonly style="background: var(--bg-color); cursor: not-allowed; color: var(--text-secondary);">
                                 </div>
                                 <div class="form-group">
                                     <label>Receipt Image</label>
                                     <input type="file" id="feeReceipt" accept="image/*" required>
+
+                                    <small style="color: black; font-size:0.85em;">
+                                        Upload a clear receipt image showing the <strong>Transaction ID, Date & Time, and Sender details</strong>. 
+                                        Unclear or incomplete receipts may be rejected.
+                                    </small>
                                 </div>
                                 <button type="submit" class="btn" id="feeSubmitBtn">Upload Receipt</button>
                             </form>
@@ -224,22 +249,22 @@
             <!-- Issues View -->
             <div id="view-issues" class="view-section" style="display: none;">
                 <div class="card">
-                    <h3>Library Issues</h3>
+                    <h4>Report Issue</h4>
                     <div class="grid-2 mt-2">
                         <div>
-                            <h4>Report Issue</h4>
+                            
                             <form id="issueForm" class="mt-1">
                                 <div class="form-group">
-                                    <label>Library ID</label>
+                                    <label>Student ID</label>
                                     <input type="text" id="issueLibraryID" readonly disabled style="background: var(--bg-color); cursor: not-allowed; color: var(--text-secondary);">
                                 </div>
                                 <div class="form-group">
-                                    <label>Issue Title</label>
-                                    <input type="text" id="issueTitle" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Description</label>
-                                    <textarea id="issueDesc" rows="4" required></textarea>
+                                    <label>Issue</label>
+                                      <input type="text" id="issueTitle" placeholder="Wi-Fi not working in reading area"" required>
+                                  </div>
+                                  <div class="form-group">
+                                      <label>Description</label>
+                                      <textarea id="issueDesc" rows="4" placeholder="Describe the issue in detail (where it happened, when it started, and what problem you are facing)" required></textarea>
                                 </div>
                                 <button type="submit" class="btn">Submit Issue</button>
                             </form>

@@ -222,12 +222,12 @@ async function loadProfile() {
                         <div style="display: flex; align-items: center; gap: 10px;">
                             ${data.AadharStatus === 'Rejected' ? 
                                 `<div style="text-align: right;">
-                                    <span style="font-size: 0.9em; color: #ef4444; font-weight: 500;"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>
-                                    <div style="font-size: 0.85em; color: #ef4444;">${data.AadharRejectionReason || 'Please re-upload'}</div>
+                                    <span style="font-size: 0.9em; color: var(--error-color); font-weight: 500;"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>
+                                    <div style="font-size: 0.85em; color: var(--error-color);">${data.AadharRejectionReason || 'Please re-upload'}</div>
                                  </div>` : ''}
 
                             ${data.AadharStatus === 'Pending' ? 
-                                `<span style="font-size: 0.9em; color: #D97706; background: #FEF3C7; padding: 2px 8px; border-radius: 4px;"><i class="fa-solid fa-clock"></i> Verification Pending</span>` : ''}
+                                `<span style="font-size: 0.9em; color: var(--warning-color); background: var(--bg-color); border: 1px solid currentColor; padding: 2px 8px; border-radius: 4px;"><i class="fa-solid fa-clock"></i> Verification Pending</span>` : ''}
 
                             ${data.AadharProofURL ? 
                                 `<svg onclick="openImagePreview('${data.AadharProofURL}')" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="cursor: pointer; color: var(--primary-color);" title="View Aadhar">
@@ -246,7 +246,7 @@ async function loadProfile() {
                             }
 
                             ${data.AadharStatus === 'Verified' ? 
-                                `<span style="color: #059669;" title="Verified"><i class="fa-solid fa-circle-check"></i></span>` : ''
+                                `<span style="color: var(--success-color);" title="Verified"><i class="fa-solid fa-circle-check"></i></span>` : ''
                             }
                         </div>
                     </div>
@@ -264,7 +264,7 @@ async function loadProfile() {
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Account Status</div>
                     <div style="font-size: 1.2em; margin-top: 5px;">
-                        <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.95em; background: ${data.AccountStatus === 'Active' ? '#DEF7EC' : '#FEF3C7'}; color: ${data.AccountStatus === 'Active' ? '#03543F' : '#92400E'};">
+                        <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.95em; border: 1px solid currentColor; background: var(--bg-color); color: ${data.AccountStatus === 'Active' ? 'var(--success-color)' : 'var(--warning-color)'}; font-weight: 600;">
                             ${data.AccountStatus}
                         </span>
                     </div>
@@ -295,9 +295,9 @@ async function loadProfileRequestStatus() {
             let bannerHTML = '';
             if (request.Status === 'Pending' || request.Status === 'Under Review') {
                 bannerHTML = `
-                    <div style="background: ${request.Status === 'Under Review' ? '#EFF6FF' : '#FFFBEB'}; border: 1px solid ${request.Status === 'Under Review' ? '#BFDBFE' : '#FCD34D'}; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="background: var(--bg-color); border: 1px solid ${request.Status === 'Under Review' ? 'var(--primary-color)' : 'var(--warning-color)'}; border-left: 4px solid ${request.Status === 'Under Review' ? 'var(--primary-color)' : 'var(--warning-color)'}; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <div style="font-weight: 600; color: ${request.Status === 'Under Review' ? '#1E40AF' : '#92400E'}; margin-bottom: 4px;">
+                            <div style="font-weight: 600; color: ${request.Status === 'Under Review' ? 'var(--primary-color)' : 'var(--warning-color)'}; margin-bottom: 4px;">
                                 <i class="fa-solid fa-circle-info"></i> Update Request ${request.Status}
                             </div>
                             <div style="font-size: 0.9em; color: var(--text-secondary);">
@@ -308,19 +308,19 @@ async function loadProfileRequestStatus() {
                     </div>`;
             } else if (request.Status === 'Approved') {
                 bannerHTML = `
-                    <div style="background: #ECFDF5; border: 1px solid #A7F3D0; padding: 15px; border-radius: 8px;">
+                    <div style="background: var(--bg-color); border: 1px solid var(--success-color); border-left: 4px solid var(--success-color); padding: 15px; border-radius: 8px;">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <div style="font-weight: 600; color: #065F46; margin-bottom: 4px;"><i class="fa-solid fa-check-circle"></i> Profile Update Approved</div>
-                            <button onclick="dismissRequestNotification('${request._id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#065F46;">&times;</button>
+                            <div style="font-weight: 600; color: var(--success-color); margin-bottom: 4px;"><i class="fa-solid fa-check-circle"></i> Profile Update Approved</div>
+                            <button onclick="dismissRequestNotification('${request._id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color: var(--success-color);">&times;</button>
                         </div>
                         <p style="font-size: 1em; color: var(--text-secondary);">Your profile has been successfully updated with the requested changes.</p>
                     </div>`;
             } else if (request.Status === 'Rejected') {
                 bannerHTML = `
-                    <div style="background: #FEF2F2; border: 1px solid #FECACA; padding: 15px; border-radius: 8px;">
+                    <div style="background: var(--bg-color); border: 1px solid var(--error-color); border-left: 4px solid var(--error-color); padding: 15px; border-radius: 8px;">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <div style="font-weight: 600; color: #991B1B; margin-bottom: 4px;"><i class="fa-solid fa-times-circle"></i> Profile Update Rejected</div>
-                            <button onclick="dismissRequestNotification('${request._id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#991B1B;">&times;</button>
+                            <div style="font-weight: 600; color: var(--error-color); margin-bottom: 4px;"><i class="fa-solid fa-times-circle"></i> Profile Update Rejected</div>
+                            <button onclick="dismissRequestNotification('${request._id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color: var(--error-color);">&times;</button>
                         </div>
                         <p style="font-size: 1em; color: var(--text-secondary);">Your request was rejected. <strong>Reason:</strong> ${request.AdminNote || 'No reason provided.'}</p>
                     </div>
@@ -379,26 +379,34 @@ async function loadFees(forceFetch = false) {
                     <div style="font-size: 1.1em; color: var(--text-primary);">₹${fee.Amount}</div>
 
                     <div style="font-size: 0.95em; color: var(--text-secondary); margin-top: 4px;">
-                    Submitted: ${new Date(fee.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
+                    
+                    ${new Date(fee.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
                     </div>
 
                     ${fee.Status === 'Rejected' && fee.AdminNote
-                ? `<div style="margin-top:6px;background:var(--input-bg);padding:8px 10px;border-left:3px solid #DC2626;font-size:0.95em;color:var(--text-primary);">
-                            <strong>Reason:</strong> ${fee.AdminNote}
-                        </div>`
+                ? `<div style="
+                margin-top:8px;
+                background:var(--bg-color);
+                padding:10px 12px;
+                border-left:4px solid var(--error-color);
+                border-left:3px solid rgb(255, 5, 5);
+               
+                border-radius:6px;
+    font-size:0.95em;
+    color:var(--text-primary);
+">
+    ${fee.AdminNote}
+</div>`
                 : ''
             }
 
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 0.95em; padding: 4px 10px; border-radius: 12px; background: ${fee.Status === 'Approved' || fee.Status === 'Paid'
-                ? '#DEF7EC'
-                : (fee.Status === 'Pending' ? '#FEF3C7' : '#FDE8E8')
-            }; color: ${fee.Status === 'Approved' || fee.Status === 'Paid'
-                ? '#03543F'
-                : (fee.Status === 'Pending' ? '#92400E' : '#9B1C1C')
-            }">
+                    <span style="font-size: 0.95em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${fee.Status === 'Approved' || fee.Status === 'Paid'
+                ? 'var(--success-color)'
+                : (fee.Status === 'Pending' ? 'var(--warning-color)' : 'var(--error-color)')
+            }; font-weight: 600;">
                         ${fee.Status}
                     </span>
 
@@ -474,10 +482,10 @@ async function loadIssues(forceFetch = false) {
                 </div>
                 <div style="font-size: 1em; color: var(--text-secondary); margin-top: 5px;">${issue.Description}</div>
                 <div style="margin-top: 5px; display: flex; justify-content: space-between; align-items: center;">
-                    <div><strong>Status:</strong> <span style="color: ${issue.Status === 'Resolved' ? 'green' : (issue.Status === 'In Progress' ? 'orange' : 'red')}">${issue.Status}</span></div>
-                    ${issue.Status === 'Resolved' ? `<button onclick="deleteIssue('${issue._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #ef4444; color: #ef4444; border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
+                    <div><strong>Status:</strong> <span style="color: ${issue.Status === 'Resolved' ? 'var(--success-color)' : (issue.Status === 'In Progress' ? 'var(--warning-color)' : 'var(--error-color)')}; font-weight: 600;">${issue.Status}</span></div>
+                    ${issue.Status === 'Resolved' ? `<button onclick="deleteIssue('${issue._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--error-color); color: var(--error-color); border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
                 </div>
-                ${issue.AdminResponse ? `<div style="margin-top: 5px; background: var(--input-bg); padding: 5px; border-left: 3px solid #4F46E5;"><strong>Admin Reply:</strong> ${issue.AdminResponse}</div>` : ''}
+                ${issue.AdminResponse ? `<div style="margin-top: 8px; background: var(--bg-color); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border); border-left: 3px solid var(--primary-color);"><strong>Admin Reply:</strong> ${issue.AdminResponse}</div>` : ''}
             </div>
         `).join('');
 
@@ -544,7 +552,7 @@ async function loadRequestsHistory() {
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                              ${!isLocked ? `<input type="checkbox" class="request-checkbox" value="${req._id}" onchange="updateBulkDeleteState()">` : '<i class="fa-solid fa-lock" title="Active requests cannot be deleted" style="color: #ccc; width: 13px;"></i>'}
-                             <span style="font-size: 0.95em; padding: 4px 10px; border-radius: 12px; background: ${req.Status === 'Approved' ? '#DEF7EC' : (req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#FDE8E8' : (req.Status === 'Under Review' ? '#DBEAFE' : '#FEF3C7'))}; color: ${req.Status === 'Approved' ? '#03543F' : (req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#9B1C1C' : (req.Status === 'Under Review' ? '#1E40AF' : '#92400E'))}; font-weight: 500;">
+                             <span style="font-size: 0.95em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${req.Status === 'Approved' ? 'var(--success-color)' : (req.Status === 'Rejected' || req.Status === 'Cancelled' ? 'var(--error-color)' : (req.Status === 'Under Review' ? 'var(--primary-color)' : 'var(--warning-color)'))}; font-weight: 600;">
                                 ${req.Status}
                             </span>
                         </div>
@@ -560,7 +568,7 @@ async function loadRequestsHistory() {
                         <div>${changes || '<em style="color:#999">No data</em>'}</div>
                     </div>
 
-                    ${req.AdminNote ? `<div style="font-size: 0.95em; background: var(--input-bg); padding: 8px; border-radius: 6px; border-left: 3px solid ${req.Status === 'Rejected' || req.Status === 'Cancelled' ? '#EF4444' : '#D1D5DB'}; color: var(--text-secondary);"><strong>Note:</strong> ${req.AdminNote}</div>` : ''}
+                    ${req.AdminNote ? `<div style="font-size: 0.95em; background: var(--bg-color); padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); border-left: 3px solid ${req.Status === 'Rejected' || req.Status === 'Cancelled' ? 'var(--error-color)' : 'var(--text-secondary)'}; color: var(--text-primary);"><strong>Note:</strong> ${req.AdminNote}</div>` : ''}
                 </div>
             `}).join('');
 

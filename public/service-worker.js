@@ -1,4 +1,4 @@
-const CACHE_NAME = 'library-cache-v10';
+const CACHE_NAME = 'library-cache-v13';
 const urlsToCache = [
     '/',
     '/index.html',

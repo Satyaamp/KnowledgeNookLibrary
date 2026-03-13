@@ -210,19 +210,19 @@ function renderStudents() {
                         }
                         
                         ${(student.AadharStatus === 'Pending' || student.AadharStatus === 'Not Uploaded' && student.AadharProofURL) ? 
-                            `<button onclick="verifyAadhar('${student._id}', 'Verified')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #059669; color: #059669; border-radius: 4px; font-size: 0.85em;" title="Approve Aadhar"><i class="fa-solid fa-check"></i></button>
-                             <button onclick="rejectAadhar('${student._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #DC2626; color: #DC2626; border-radius: 4px; font-size: 0.85em;" title="Reject Aadhar"><i class="fa-solid fa-xmark"></i></button>` 
+                            `<button onclick="verifyAadhar('${student._id}', 'Verified')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--success-color); color: var(--success-color); border-radius: 4px; font-size: 0.85em;" title="Approve Aadhar"><i class="fa-solid fa-check"></i></button>
+                             <button onclick="rejectAadhar('${student._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--error-color); color: var(--error-color); border-radius: 4px; font-size: 0.85em;" title="Reject Aadhar"><i class="fa-solid fa-xmark"></i></button>` 
                             : ''
                         }
 
                         ${student.AadharStatus === 'Verified' ? 
-                            `<span style="font-size: 0.8em; color: #059669; display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: #DEF7EC; border-radius: 12px;" title="Aadhar Verified"><i class="fa-solid fa-shield-check"></i> Verified</span>` : ''}
+                            `<span style="font-size: 0.8em; color: var(--success-color); display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;" title="Aadhar Verified"><i class="fa-solid fa-shield-check"></i> Verified</span>` : ''}
                         
                         ${student.AadharStatus === 'Rejected' ? 
-                            `<span style="font-size: 0.8em; color: #DC2626; display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: #FDE8E8; border-radius: 12px;" title="Rejected: ${student.AadharRejectionReason || 'Invalid'}"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>` : ''}
+                            `<span style="font-size: 0.8em; color: var(--error-color); display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;" title="Rejected: ${student.AadharRejectionReason || 'Invalid'}"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>` : ''}
                         
                         ${(!student.AadharProofURL) ? 
-                            `<span style="font-size: 0.8em; color: #ef4444; display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: #FDE8E8; border-radius: 12px;" title="Proof not uploaded"><i class="fa-solid fa-circle-exclamation"></i> Pending Proof</span>` : ''}
+                            `<span style="font-size: 0.8em; color: var(--error-color); display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;" title="Proof not uploaded"><i class="fa-solid fa-circle-exclamation"></i> Pending Proof</span>` : ''}
                     </div>
 
                     <button onclick="viewStudent('${student._id}')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
@@ -301,7 +301,7 @@ function performGlobalSearch() {
                         <div style="font-size: 0.9em; color: var(--text-secondary);">ID: ${student.LibraryID || 'N/A'}</div>
                     </div>
                 </div>
-                <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: ${student.AccountStatus === 'Active' ? '#DEF7EC' : (student.AccountStatus === 'Pending' ? '#FEF3C7' : '#FDE8E8')}; color: ${student.AccountStatus === 'Active' ? '#03543F' : (student.AccountStatus === 'Pending' ? '#92400E' : '#9B1C1C')}; font-weight: 500;">
+                <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${student.AccountStatus === 'Active' ? 'var(--success-color)' : (student.AccountStatus === 'Pending' ? 'var(--warning-color)' : 'var(--error-color)')}; font-weight: 600;">
                     ${student.AccountStatus}
                 </span>
             </div>
@@ -326,7 +326,7 @@ async function loadInterestedStudents() {
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 1.1em;">${student.Name}</strong>
-                            <span style="font-size: 0.85em; margin-left: 10px; padding: 3px 8px; border-radius: 12px; background: ${student.Status === 'Reviewed' ? '#DEF7EC' : '#FEF3C7'}; color: ${student.Status === 'Reviewed' ? '#03543F' : '#92400E'}">${student.Status}</span>
+                            <span style="font-size: 0.85em; margin-left: 10px; padding: 3px 8px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${student.Status === 'Reviewed' ? 'var(--success-color)' : 'var(--warning-color)'}; font-weight: 600;">${student.Status}</span>
                         </div>
                         <div style="font-size: 0.85em; color: var(--text-light);">
                             ${new Date(student.SubmittedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
@@ -341,9 +341,9 @@ async function loadInterestedStudents() {
                     ${student.Remarks ? `<div style="font-size: 0.9em; background: var(--input-bg); padding: 8px; border-radius: 4px; margin-bottom: 10px;"><em>"${student.Remarks}"</em></div>` : ''}
                     
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        ${student.Status === 'Pending' ? `<button onclick="reviewInterestedStudent('${student._id}')" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85em; background: #22C55E;">Mark Reviewed</button>` : ''}
+                        ${student.Status === 'Pending' ? `<button onclick="reviewInterestedStudent('${student._id}')" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85em; background: var(--success-color);">Mark Reviewed</button>` : ''}
                         ${student.Status === 'Reviewed' ? `<button onclick="promptConvertStudent('${student._id}')" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85em;">Create Account</button>` : ''}
-                        <button onclick="rejectInterestedStudent('${student._id}')" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85em; background: #EF4444;">Reject</button>
+                        <button onclick="rejectInterestedStudent('${student._id}')" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85em; background: var(--error-color);">Reject</button>
                     </div>
                 </div>
             `).join('');
@@ -747,7 +747,7 @@ function renderFees() {
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <strong>${fee.StudentId ? `${fee.StudentId.FullName} (ID: ${fee.StudentId.LibraryID || 'N/A'})` : 'Unknown Student'}</strong>
-                        <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: ${fee.Status === 'Approved' || fee.Status === 'Paid' ? '#DEF7EC' : (fee.Status === 'Pending' ? '#FEF3C7' : '#FDE8E8')}; color: ${fee.Status === 'Approved' || fee.Status === 'Paid' ? '#03543F' : (fee.Status === 'Pending' ? '#92400E' : '#9B1C1C')}">
+                        <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${fee.Status === 'Approved' || fee.Status === 'Paid' ? 'var(--success-color)' : (fee.Status === 'Pending' ? 'var(--warning-color)' : 'var(--error-color)')}; font-weight: 600;">
                             ${fee.Status}
                         </span>
                     </div>
@@ -770,7 +770,7 @@ function renderFees() {
 
                         ${fee.Status === 'Rejected' && fee.AdminNote ? `
                         <div style="margin-top:8px; margin-bottom:10px;">
-                            <span style="display:inline-block; padding:6px 12px; background:#FEE2E2; border-radius:8px; font-size:0.85em; color:#991B1B;">
+                            <span style="display:inline-block; padding:6px 12px; background: var(--bg-color); border: 1px solid var(--error-color); border-radius:8px; font-size:0.85em; color:var(--error-color);">
                                 <strong>Reason:</strong> ${fee.AdminNote}
                             </span>
                         </div>
@@ -894,7 +894,7 @@ async function loadRequests() {
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <strong>Request from: ${req.StudentId ? `${req.StudentId.FullName} (ID: ${req.StudentId.LibraryID || 'N/A'})` : 'Unknown'}</strong>
-                        <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: ${req.Status === 'Under Review' ? '#DBEAFE' : '#FEF3C7'}; color: ${req.Status === 'Under Review' ? '#1E40AF' : '#92400E'};">
+                        <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${req.Status === 'Under Review' ? 'var(--primary-color)' : 'var(--warning-color)'}; font-weight: 600;">
                             ${req.Status}
                         </span>
                     </div>
@@ -1113,10 +1113,10 @@ function renderIssues() {
                             <div style="font-size: 0.85em; color: var(--text-secondary);">${new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} <span style="margin:0 5px; opacity:0.6">|</span> ${new Date(issue.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center;">
-                            <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: ${issue.Status === 'Resolved' ? '#DEF7EC' : (issue.Status === 'Pending' ? '#FDE8E8' : '#FEF3C7')}; color: ${issue.Status === 'Resolved' ? '#03543F' : (issue.Status === 'Pending' ? '#9B1C1C' : '#92400E')}">
+                            <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${issue.Status === 'Resolved' ? 'var(--success-color)' : (issue.Status === 'Pending' ? 'var(--error-color)' : 'var(--warning-color)')}; font-weight: 600;">
                                 ${issue.Status}
                             </span>
-                            ${issue.Status === 'Resolved' ? `<button onclick="deleteIssue('${issue._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #ef4444; color: #ef4444; border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
+                            ${issue.Status === 'Resolved' ? `<button onclick="deleteIssue('${issue._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--error-color); color: var(--error-color); border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
                         </div>
                     </div>
                     <div style="margin-bottom: 15px; font-size: 0.95em; white-space: pre-wrap;">${issue.Description}</div>
