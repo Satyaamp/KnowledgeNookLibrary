@@ -156,7 +156,7 @@
             <ul class="dashboard-nav-links">
                 <li><a href="#home"><i class="fa-solid fa-bullhorn"></i> Notifications</a></li>
                 <li><a href="#profile"><i class="fa-solid fa-id-card"></i> Profile</a></li>
-                <li><a href="#fees"><i class="fa-solid fa-file-invoice-dollar"></i> Fees</a></li>
+                <li><a href="#fees"><i class="fa-solid fa-indian-rupee-sign"></i> Fees</a></li>
                 <li><a href="#requests"><i class="fa-solid fa-clock-rotate-left"></i> My Requests</a></li>
                 <li><a href="#issues"><i class="fa-solid fa-triangle-exclamation"></i> Issues</a></li>
             </ul>
@@ -304,7 +304,19 @@
                         </div>
                         <div>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 0.5rem;">
-                                <h4 style="margin: 0;">Payment History</h4>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <h4 style="margin: 0;">Payment History</h4>
+                                    <div style="display: inline-flex; align-items: center; gap: 5px;">
+                                        <i class="fa-solid fa-filter" style="color: var(--primary-color); font-size: 0.9em;" title="Filter Fees"></i>
+                                        <select id="studentFeeFilter" onchange="filterStudentFees()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); font-size: 0.85em; cursor: pointer; width: auto;">
+                                            <option value="">All</option>
+                                            <option value="Pending">Pending</option>
+                                            <option value="Paid">Paid</option>
+                                            <option value="Rejected">Rejected</option>
+                                            <option value="Resubmitted">Resubmitted</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <div id="feesPagination"></div>
                             </div>
                             <div id="feesList" class="mt-1">Loading fees...</div>
@@ -343,7 +355,19 @@
                         </div>
                         <div>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 0.5rem;">
-                                <h4 style="margin: 0;">My Previous Issues</h4>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <h4 style="margin: 0;">My Issues</h4>
+                                    <div style="display: inline-flex; align-items: center; gap: 5px;">
+                                        <i class="fa-solid fa-filter" style="color: var(--primary-color); font-size: 0.9em;" title="Filter Issues"></i>
+                                        <select id="studentIssueFilter" onchange="filterStudentIssues()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); font-size: 0.85em; cursor: pointer; width: auto;">
+                                            <option value="">All</option>
+                                            <option value="Pending">Pending</option>
+                                            <option value="Seen by Admin">Seen by Admin</option>
+                                            <option value="In Progress">In Progress</option>
+                                            <option value="Resolved">Resolved</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <div id="issuesPagination"></div>
                             </div>
                             <div id="issuesList" class="mt-1">Loading...</div>
@@ -393,6 +417,23 @@
             <div id="annModalMessage" style="font-size: 1em; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 20px; line-height: 1.6;"></div>
             <div id="annModalImageContainer" style="text-align: center; display: none;">
                 <img id="annModalImage" src="" style="max-width: 100%; max-height: 350px; border-radius: 8px; border: 1px solid var(--card-border); cursor: pointer;" onclick="openImagePreview(this.src)" title="Click to enlarge">
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Issue Modal -->
+    <div id="issueModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-btn" onclick="closeIssueModal()">&times;</span>
+            <h2 id="issueModalTitle" style="margin-bottom: 5px;"></h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div id="issueModalDate" style="font-size: 0.9em; color: var(--text-secondary);"></div>
+                <span id="issueModalStatus" style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); font-weight: 600;"></span>
+            </div>
+            <div id="issueModalDesc" style="font-size: 1em; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 20px; line-height: 1.6; word-break: break-word;"></div>
+            <div id="issueModalAdminReplyContainer" style="display: none; margin-top: 15px; background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--card-border); border-left: 4px solid var(--primary-color);">
+                <strong style="color: var(--primary-color); font-size: 0.95em; display: flex; align-items: center; gap: 5px; margin-bottom: 5px;"><i class="fa-solid fa-reply"></i> Admin Reply</strong>
+                <div id="issueModalAdminReply" style="font-size: 0.95em; color: var(--text-primary); white-space: pre-wrap; word-break: break-word;"></div>
             </div>
         </div>
     </div>

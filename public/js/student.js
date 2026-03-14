@@ -391,12 +391,13 @@ async function dismissRequestNotification(id) {
             container.innerHTML = '';
         }
     } catch (error) {
-        alert('Could not dismiss notification. Please try again.');
+        showToast('Could not dismiss notification. Please try again.', 'error');
         console.error(error);
     }
 }
 
 let currentFees = [];
+let filteredStudentFees = [];
 let feesCurrentPage = 1;
 const FEES_PER_PAGE = 3;
 
@@ -406,22 +407,45 @@ async function loadFees(forceFetch = false) {
         list.innerHTML = 'Loading fees...';
         try {
             currentFees = await apiFetch('/fees/status');
-            feesCurrentPage = 1;
+            filterStudentFees();
         } catch (error) {
             list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
             return;
         }
+    } else {
+        filterStudentFees();
     }
+}
 
-    if (currentFees && currentFees.length > 0) {
+window.filterStudentFees = function() {
+    const filterValue = document.getElementById('studentFeeFilter') ? document.getElementById('studentFeeFilter').value : '';
+    
+    if (!filterValue) {
+        filteredStudentFees = [...currentFees];
+    } else if (filterValue === 'Resubmitted') {
+        filteredStudentFees = currentFees.filter(fee => fee.isResubmitted && fee.Status === 'Pending');
+    } else {
+        filteredStudentFees = currentFees.filter(fee => fee.Status === filterValue);
+    }
+    
+    feesCurrentPage = 1;
+    renderStudentFees();
+}
+
+function renderStudentFees() {
+    const list = document.getElementById('feesList');
+    if (filteredStudentFees && filteredStudentFees.length > 0) {
         const startIndex = (feesCurrentPage - 1) * FEES_PER_PAGE;
         const endIndex = startIndex + FEES_PER_PAGE;
-        const feesToShow = currentFees.slice(startIndex, endIndex);
+        const feesToShow = filteredStudentFees.slice(startIndex, endIndex);
 
         list.innerHTML = feesToShow.map(fee => `
-            <div style="border: 1px solid var(--card-border); padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="border-bottom: 2px solid black; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <div><strong>${fee.Month.charAt(0).toUpperCase() + fee.Month.slice(1)}</strong></div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <strong>${fee.Month.charAt(0).toUpperCase() + fee.Month.slice(1)}</strong>
+                        ${fee.isResubmitted && fee.Status === 'Pending' ? `<span style="font-size: 0.75em; padding: 2px 8px; border-radius: 12px; background: var(--primary-light); color: var(--primary-color); font-weight: 600;"><i class="fa-solid fa-rotate-right"></i> Resubmitted</span>` : ''}
+                    </div>
 
                     <div style="font-size: 1.1em; color: var(--text-primary);">₹${fee.Amount}</div>
 
@@ -430,22 +454,25 @@ async function loadFees(forceFetch = false) {
                     ${new Date(fee.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
                     </div>
 
-                    ${fee.Status === 'Rejected' && fee.AdminNote
-                ? `<div style="
-                margin-top:8px;
-                background:var(--bg-color);
-                padding:10px 12px;
-                border-left:4px solid var(--error-color);
-                border-left:3px solid rgb(255, 5, 5);
-               
-                border-radius:6px;
-    font-size:0.95em;
-    color:var(--text-primary);
-">
-    ${fee.AdminNote}
-</div>`
-                : ''
-            }
+                    ${fee.Status === 'Rejected' && fee.AdminNote ? `
+                    <div style="margin-top:8px;">
+                        <span onclick="const el = document.getElementById('stu-reject-details-${fee._id}'); el.style.display = el.style.display === 'none' ? 'block' : 'none';" style="cursor: pointer; font-size: 0.85em; color: var(--error-color); display: inline-flex; align-items: center; gap: 5px; font-weight: 600;">
+                            <i class="fa-solid fa-circle-info"></i> Reason
+                        </span>
+                        <div id="stu-reject-details-${fee._id}" style="display: none; margin-top: 5px; background:var(--bg-color); padding:10px 12px; border-left:3px solid var(--error-color); border-radius:6px; font-size:0.9em; color:var(--text-primary);">
+                            ${fee.AdminNote}
+                        </div>
+                    </div>` : ''}
+
+                    ${fee.Status === 'Paid' && fee.AdminNote ? `
+                    <div style="margin-top:8px;">
+                        <span onclick="const el = document.getElementById('stu-details-${fee._id}'); el.style.display = el.style.display === 'none' ? 'block' : 'none';" style="cursor: pointer; font-size: 0.85em; color: var(--success-color); display: inline-flex; align-items: center; gap: 5px; font-weight: 600;">
+                            <i class="fa-solid fa-circle-info"></i> Payment Details
+                        </span>
+                        <div id="stu-details-${fee._id}" style="display: none; margin-top: 5px; background:var(--bg-color); padding:10px 12px; border-left:3px solid var(--success-color); border-radius:6px; font-size:0.9em; color:var(--text-primary);">
+                            ${fee.AdminNote}
+                        </div>
+                    </div>` : ''}
 
                 </div>
 
@@ -457,6 +484,7 @@ async function loadFees(forceFetch = false) {
                         ${fee.Status}
                     </span>
 
+                    ${fee.ProofImageURL ? `
                     <svg onclick="openImagePreview('${fee.ProofImageURL}')"
                         xmlns="http://www.w3.org/2000/svg"
                         width="20"
@@ -469,11 +497,18 @@ async function loadFees(forceFetch = false) {
                     <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
                     <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
                     </svg>
+                    ` : ''}
+
+                    ${fee.Status === 'Rejected' ? `
+                        <button onclick="prepareReupload('${fee.Month}')" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-color: var(--primary-color); color: var(--primary-color); border-radius: 6px;">
+                            <i class="fa-solid fa-upload"></i> Re-upload
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `).join('');
 
-        const totalPages = Math.ceil(currentFees.length / FEES_PER_PAGE);
+        const totalPages = Math.ceil(filteredStudentFees.length / FEES_PER_PAGE);
         const paginationContainer = document.getElementById('feesPagination');
         if (totalPages > 1) {
             let paginationHTML = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
@@ -493,13 +528,14 @@ async function loadFees(forceFetch = false) {
 }
 
 function changeFeesPage(page) {
-    const totalPages = Math.ceil(currentFees.length / FEES_PER_PAGE);
+    const totalPages = Math.ceil(filteredStudentFees.length / FEES_PER_PAGE);
     if (page < 1 || page > totalPages) return;
     feesCurrentPage = page;
-    loadFees(false);
+    renderStudentFees();
 }
 
 let currentIssues = [];
+let filteredStudentIssues = [];
 let issuesCurrentPage = 1;
 const ISSUES_PER_PAGE = 3;
 
@@ -509,57 +545,232 @@ async function loadIssues(forceFetch = false) {
         list.innerHTML = 'Loading issues...';
         try {
             currentIssues = await apiFetch('/issues/my');
-            issuesCurrentPage = 1;
+            filterStudentIssues();
         } catch (error) {
             list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
             return;
         }
+    } else {
+        filterStudentIssues();
     }
+}
 
-    if (currentIssues && currentIssues.length > 0) {
+window.filterStudentIssues = function() {
+    const filterValue = document.getElementById('studentIssueFilter') ? document.getElementById('studentIssueFilter').value : '';
+    
+    if (!filterValue) {
+        filteredStudentIssues = [...currentIssues];
+    } else {
+        filteredStudentIssues = currentIssues.filter(issue => issue.Status === filterValue);
+    }
+    
+    issuesCurrentPage = 1;
+    renderStudentIssues();
+}
+
+function renderStudentIssues() {
+    const list = document.getElementById('issuesList');
+
+    if (filteredStudentIssues && filteredStudentIssues.length > 0) {
+
         const startIndex = (issuesCurrentPage - 1) * ISSUES_PER_PAGE;
         const endIndex = startIndex + ISSUES_PER_PAGE;
-        const issuesToShow = currentIssues.slice(startIndex, endIndex);
+        const issuesToShow = filteredStudentIssues.slice(startIndex, endIndex);
 
-        list.innerHTML = issuesToShow.map(issue => `
-            <div style="border: 1px solid var(--card-border); padding: 10px; margin-bottom: 10px; border-radius: 5px;">
-                <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                    <strong style="font-size: 1.1em;">${issue.IssueTitle.charAt(0).toUpperCase() + issue.IssueTitle.slice(1)}</strong>
-                    <span style="font-size: 0.95em; color: var(--text-secondary);">${new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</span>
-                </div>
-                <div style="font-size: 1em; color: var(--text-secondary); margin-top: 5px;">${issue.Description}</div>
-                <div style="margin-top: 5px; display: flex; justify-content: space-between; align-items: center;">
-                    <div><strong>Status:</strong> <span style="color: ${issue.Status === 'Resolved' ? 'var(--success-color)' : (issue.Status === 'In Progress' ? 'var(--warning-color)' : 'var(--error-color)')}; font-weight: 600;">${issue.Status}</span></div>
-                    ${issue.Status === 'Resolved' ? `<button onclick="deleteIssue('${issue._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--error-color); color: var(--error-color); border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
-                </div>
-                ${issue.AdminResponse ? `<div style="margin-top: 8px; background: var(--bg-color); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border); border-left: 3px solid var(--primary-color);"><strong>Admin Reply:</strong> ${issue.AdminResponse}</div>` : ''}
-            </div>
-        `).join('');
+        list.innerHTML = issuesToShow.map(issue => {
 
-        const totalPages = Math.ceil(currentIssues.length / ISSUES_PER_PAGE);
+            const title = issue.IssueTitle
+                ? issue.IssueTitle.charAt(0).toUpperCase() + issue.IssueTitle.slice(1)
+                : '';
+                
+           const rawTitle = issue.IssueTitle || '';
+           const maintitle = rawTitle.trim().split(/\s+/);
+           const shortTitle = maintitle.length > 2 
+            ? maintitle.slice(0,2).join(' ') + '...' 
+            : rawTitle;
+
+            const words = issue.Description ? issue.Description.trim().split(/\s+/) : [];
+            const shortDesc = words.slice(0, 6).join(' ');
+            const hasMore = words.length > 6;
+
+            const statusColor =
+                issue.Status === 'Resolved'
+                    ? 'var(--success-color)'
+                    : issue.Status === 'In Progress'
+                        ? 'var(--warning-color)'
+                        : issue.Status === 'Seen by Admin'
+                            ? '#38BDF8'
+                            : 'var(--error-color)';
+
+            return `
+
+<div style="border-bottom:2px solid red; padding:12px; margin-bottom:10px; border-radius:6px;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+
+        <div style="display:flex; align-items:center; gap:10px">
+
+            
+            <strong style="font-size:1.05em;" title="${title}">
+                ${shortTitle}
+            </strong>
+
+            ${issue.Status === 'Resolved' ? `
+            <button onclick="deleteIssue('${issue._id}')"
+            style="padding:3px 8px;
+            border:1px solid var(--error-color);
+            color:var(--error-color);
+            border-radius:4px;
+            font-size:0.8em;
+            background:transparent;
+            cursor:pointer;">
+            <i class="fa-solid fa-trash"></i>
+            </button>` : ''}
+
+        </div>
+
+        <span style="font-size:0.85em; color:var(--text-secondary);">
+        ${new Date(issue.createdAt)
+            .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            .replace(/ /g, '-')}
+        </span>
+
+    </div>
+
+    <!-- Short Description -->
+    <div style="font-size:0.95em; margin-top:6px; word-break:break-word;">
+        <span style="color:var(--text-secondary);">
+            ${shortDesc}${hasMore ? '...' : ''}
+        </span>
+
+        ${hasMore ? `
+        <span onclick="openIssueModal('${issue._id}')"
+        style="cursor:pointer; color:var(--primary-color); font-weight:600; margin-left:6px;">
+        View
+        </span>` : ''}
+    </div>
+
+    <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+
+        <span style="
+        font-size:0.85em;
+        padding:4px 10px;
+        border-radius:12px;
+        border:1px solid currentColor;
+        background:var(--bg-color);
+        color:${statusColor};
+        font-weight:600;">
+        ${issue.Status}
+        </span>
+
+    </div>
+
+    ${issue.AdminResponse ? `
+    <div style="margin-top:8px;">
+        <span onclick="openIssueModal('${issue._id}')"
+        style="
+        cursor:pointer;
+        font-size:0.95em;
+        color:var(--primary-color);
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        font-weight:600;
+        background:var(--bg-color);
+        padding:4px 10px;
+        border-radius:6px;
+        border-left:3px solid var(--primary-color);
+        border1px solid var(--card-border);
+        ">
+            <i class="fa-solid fa-comment"></i> Admin remarks
+        </span>
+    </div>` : ''}
+
+</div>
+
+`;
+
+        }).join('');
+
+        const totalPages = Math.ceil(filteredStudentIssues.length / ISSUES_PER_PAGE);
         const paginationContainer = document.getElementById('issuesPagination');
+
         if (totalPages > 1) {
-            let paginationHTML = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
-            paginationHTML += `<button onclick="changeIssuesPage(${issuesCurrentPage - 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${issuesCurrentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>`;
-            paginationHTML += `<span style="font-weight: 500; color: var(--text-secondary); padding: 0 5px;">${issuesCurrentPage} / ${totalPages}</span>`;
-            paginationHTML += `<button onclick="changeIssuesPage(${issuesCurrentPage + 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${issuesCurrentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>`;
+
+            let paginationHTML = '<div style="display:flex; align-items:center; gap:0.5rem; font-size:0.9em;">';
+
+            paginationHTML += `
+            <button onclick="changeIssuesPage(${issuesCurrentPage - 1})"
+            class="btn-outline"
+            style="padding:0.2rem 0.5rem; border-radius:6px;"
+            ${issuesCurrentPage === 1 ? 'disabled' : ''}>
+            <i class="fa-solid fa-chevron-left"></i>
+            </button>`;
+
+            paginationHTML += `
+            <span style="font-weight:500; color:var(--text-secondary); padding:0 5px;">
+            ${issuesCurrentPage} / ${totalPages}
+            </span>`;
+
+            paginationHTML += `
+            <button onclick="changeIssuesPage(${issuesCurrentPage + 1})"
+            class="btn-outline"
+            style="padding:0.2rem 0.5rem; border-radius:6px;"
+            ${issuesCurrentPage === totalPages ? 'disabled' : ''}>
+            <i class="fa-solid fa-chevron-right"></i>
+            </button>`;
+
             paginationHTML += '</div>';
+
             paginationContainer.innerHTML = paginationHTML;
+
         } else {
             if (paginationContainer) paginationContainer.innerHTML = '';
         }
+
     } else {
+
         list.innerHTML = '<p>No issues reported.</p>';
+
         const paginationContainer = document.getElementById('issuesPagination');
         if (paginationContainer) paginationContainer.innerHTML = '';
+
     }
 }
 
 function changeIssuesPage(page) {
-    const totalPages = Math.ceil(currentIssues.length / ISSUES_PER_PAGE);
+    const totalPages = Math.ceil(filteredStudentIssues.length / ISSUES_PER_PAGE);
     if (page < 1 || page > totalPages) return;
     issuesCurrentPage = page;
-    loadIssues(false);
+    renderStudentIssues();
+}
+
+window.openIssueModal = function(id) {
+    const issue = currentIssues.find(i => i._id === id);
+    if (!issue) return;
+
+    document.getElementById('issueModalTitle').textContent = issue.IssueTitle;
+    document.getElementById('issueModalDate').textContent = new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-') + ' | ' + new Date(issue.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    
+    const statusEl = document.getElementById('issueModalStatus');
+    statusEl.textContent = issue.Status;
+    statusEl.style.color = issue.Status === 'Resolved' ? 'var(--success-color)' : (issue.Status === 'In Progress' ? 'var(--warning-color)' : (issue.Status === 'Seen by Admin' ? '#38BDF8' : 'var(--error-color)'));
+
+    document.getElementById('issueModalDesc').textContent = issue.Description || 'No description provided.';
+
+    const replyContainer = document.getElementById('issueModalAdminReplyContainer');
+    if (issue.AdminResponse) {
+        document.getElementById('issueModalAdminReply').textContent = issue.AdminResponse;
+        replyContainer.style.display = 'block';
+    } else {
+        replyContainer.style.display = 'none';
+    }
+
+    document.getElementById('issueModal').style.display = 'block';
+}
+
+window.closeIssueModal = function() {
+    document.getElementById('issueModal').style.display = 'none';
 }
 
 
@@ -838,6 +1049,27 @@ async function handleFeeSubmit(e) {
     }
 }
 
+window.prepareReupload = function(month) {
+    const feeMonthInput = document.getElementById('feeMonth');
+    if (feeMonthInput) feeMonthInput.value = month;
+    
+    if (window.innerWidth <= 768) {
+        const container = document.getElementById('feeFormContainer');
+        const header = document.querySelector('.mobile-collapse-header');
+        if (container && !container.classList.contains('expanded')) {
+            container.classList.add('expanded');
+            const icon = header.querySelector('i.desktop-hidden');
+            if (icon) icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        }
+    }
+    
+    const fileInput = document.getElementById('feeReceipt');
+    if (fileInput) fileInput.click();
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    validateFeeForm();
+}
+
 async function handleIssueSubmit(e) {
     e.preventDefault();
     const btn = document.getElementById('issueSubmitBtn');
@@ -1085,7 +1317,7 @@ function injectCustomUI() {
         div.innerHTML = `
             <div class="custom-box">
                 <h3 id="customModalTitle">Confirm</h3>
-                <p id="customModalMessage"></p>
+                <p id="customModalMessage" style="white-space: pre-wrap; margin-bottom: 15px; line-height: 1.4;"></p>
                 <div class="custom-actions">
                     <button id="customModalCancel" class="btn btn-cancel">Cancel</button>
                     <button id="customModalConfirm" class="btn">Confirm</button>

@@ -11,6 +11,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <meta charset="UTF-8">
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- <link rel="stylesheet" href="../css/style.css"> -->
@@ -179,7 +180,13 @@
             <!-- Students View -->
             <div id="view-students" class="view-section" style="display: none;">
                 <div class="card">
-                    <h3>Manage Students</h3>
+                   <div style="display:flex; align-items:center; gap:10px;">
+                        <h3 style="margin:0;">Manage Students</h3>
+
+                        <a href="#search" onclick="closeSidebar()" style="text-decoration:none;">
+                        <u><i class="fa-solid fa-magnifying-glass"></i> Quick Search</a></u>
+                        </a>
+                   </div><br>
                     <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                         <input type="text" id="studentSearch" placeholder="Search by Name, Library ID, Contact, or Aadhar..." onkeyup="filterStudents()" style="padding: 10px; flex: 1; min-width: 200px;">
                         <select id="filterStudentStatus" onchange="filterStudents()" style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg);">
@@ -232,26 +239,38 @@
             <!-- Announcements View -->
             <div id="view-announcements" class="view-section" style="display: none;">
                 <div class="card">
-                    <h3>Announcements</h3>
-                    <form id="announcementForm" class="mb-4" onsubmit="createAnnouncement(event)">
-                        <div class="form-group">
-                            <label>Title</label>
-                            <input type="text" id="announcementTitle" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Message Content</label>
-                            <textarea id="announcementContent" rows="4" required
-                                style="width: 100%; border: 1px solid var(--input-border); border-radius: 8px; padding: 12px; font-family: inherit; font-size: 1em;"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Image (Optional)</label>
-                            <input type="file" id="announcementImage" accept="image/*">
-                        </div>
-                        <button type="submit" class="btn">Post Announcement</button>
-                    </form>
-                    <hr style="border: 0; border-top: 1px solid var(--card-border); margin: 20px 0;">
-                    <h4>Previous Announcements</h4>
-                    <div id="announcementsList" class="mt-4">Loading...</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">Announcements</h3>
+                        <button onclick="toggleAnnouncementForm()" class="btn" id="toggleAnnBtn" style="padding: 0.4rem 0.8rem; font-size: 0.9em;"><i class="fa-solid fa-plus"></i> New Post</button>
+                    </div>
+                    
+                    <div id="announcementFormContainer" style="display: none; background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--card-border); margin-bottom: 20px;">
+                        <h4 style="margin-top: 0; margin-bottom: 15px;">Create Announcement</h4>
+                        <form id="announcementForm" onsubmit="createAnnouncement(event)">
+                            <div class="form-group">
+                                <label>Title</label>
+                                <input type="text" id="announcementTitle" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Message Content</label>
+                                <textarea id="announcementContent" rows="4" required
+                                    style="width: 100%; border: 1px solid var(--input-border); border-radius: 8px; padding: 12px; font-family: inherit; font-size: 1em;"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Image (Optional)</label>
+                                <input type="file" id="announcementImage" accept="image/*">
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="submit" class="btn">Post Announcement</button>
+                                <button type="button" class="btn-outline" onclick="toggleAnnouncementForm()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; margin-bottom: 15px;">
+                        <h4 style="margin: 0;">Previous Announcements</h4>
+                    </div>
+                    <div id="announcementsList">Loading...</div>
                 </div>
             </div>
 

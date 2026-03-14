@@ -229,18 +229,127 @@ function renderStudents() {
                 </div>
             </div>
             <div style="font-size: 0.95em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; padding-top: 12px; border-top: 1px solid var(--card-border);">
-                <div><i class="fa-solid fa-phone" style="width: 16px; color: var(--text-muted);"></i> ${student.Contact || 'N/A'}</div>
+                <div>
+                <i class="fa-solid fa-phone" style="width:16px; color:var(--text-muted);"></i>
+                ${student.Contact || 'N/A'}
+
+                ${student.Contact ? `
+                <i class="fa-brands fa-whatsapp"
+                style="margin-left:8px; color:#25D366; cursor:pointer;"
+                onclick="sendWhatsApp('${student._id}')"
+                title="Send WhatsApp Message">
+                </i>
+
+                <i class="fa-solid fa-message"
+                style="margin-left:8px; color:#0ea5e9; cursor:pointer;"
+                onclick="sendSMS('${student._id}')"
+                title="Send SMS">
+                </i>
+                ` : ''}
+
+                </div>
                 <div><i class="fa-solid fa-envelope" style="width: 16px; color: var(--text-muted);"></i> ${student.Email || 'N/A'}</div>
                 <div><i class="fa-solid fa-chair" style="width: 16px; color: var(--text-muted);"></i> Seat: ${student.SeatNo || 'Unassigned'}</div>
                 <div><i class="fa-solid fa-layer-group" style="width: 16px; color: var(--text-muted);"></i> ${student.planDuration || 'N/A'} (${student.batchType || 'N/A'})</div>
                 <div><i class="fa-solid fa-clock" style="width: 16px; color: var(--text-muted);"></i> ${student.batchTiming || 'N/A'}</div>
-                <div><i class="fa-solid fa-indian-rupee-sign" style="width: 16px; color: var(--text-muted);"></i> ${student.amount || 0}</div>
+
             </div>
         </div>
     `).join('');
 
     renderStudentsPagination();
 }
+
+function sendWhatsApp(studentId){
+
+    const student = currentStudents.find(s => s._id === studentId);
+    if (!student) return;
+
+    const name = student.FirstName ;
+    const libraryId = student.LibraryID || 'N/A';
+    const batchTiming = student.batchTiming || 'N/A';
+    const planDuration = student.planDuration || 'N/A';
+    const batchType = student.batchType || 'N/A';
+    const seatNo = student.SeatNo || 'N/A';
+    const joiningDate = new Date(student.JoiningDate).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Kolkata'
+    });
+
+
+   
+    const msg = `Hello ${name},
+
+    Welcome to *Knowledge Nook Library*!
+
+    Your seat has been successfully confirmed. Here are your details:
+
+    Library ID: ${libraryId}
+    Seat No: ${seatNo}
+    Batch Type: ${batchType}
+    Timing: ${batchTiming}
+    Plan: ${planDuration}
+    Joining Date: ${joiningDate}
+
+    Please follow the library rules and maintain a peaceful study environment.
+
+    If you need any assistance, feel free to contact us.
+
+    Happy Studying!
+    — Knowledge Nook Library`;
+
+    const url = `https://wa.me/91${student.Contact}?text=${encodeURIComponent(msg)}`;
+
+    window.open(url, "_blank");
+}
+
+
+
+function sendSMS(studentId){
+
+const student = currentStudents.find(s => s._id === studentId);
+if(!student) return;
+
+    const name = student.FullName || (student.FirstName + ' ' + (student.LastName || ''));
+    const libraryId = student.LibraryID || 'N/A';
+    const batchTiming = student.batchTiming || 'N/A';
+    const planDuration = student.planDuration || 'N/A';
+    const batchType = student.batchType || 'N/A';
+    const seatNo = student.SeatNo || 'N/A';
+    const joiningDate = new Date(student.JoiningDate).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Kolkata'
+    });
+
+    const msg = `Hello ${name},
+
+    Welcome to Knowledge Nook Library!
+
+    Your seat has been successfully confirmed. Here are your details:
+
+    Library ID: ${libraryId}
+    Seat No: ${seatNo}
+    Batch Type: ${batchType}
+    Timing: ${batchTiming}
+    Plan: ${planDuration}
+    Joining Date: ${joiningDate}
+
+    Please follow the library rules and maintain a peaceful study environment.
+
+    If you need any assistance, feel free to contact us.
+
+    Happy Studying!
+    — Knowledge Nook Library`;
+
+const url = `sms:${student.Contact}?body=${encodeURIComponent(msg)}`;
+
+window.open(url);
+}
+
 
 function renderStudentsPagination() {
     const pagination = document.getElementById('studentsPagination');
@@ -747,9 +856,12 @@ function renderFees() {
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <strong>${fee.StudentId ? `${fee.StudentId.FullName} (ID: ${fee.StudentId.LibraryID || 'N/A'})` : 'Unknown Student'}</strong>
-                        <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${fee.Status === 'Approved' || fee.Status === 'Paid' ? 'var(--success-color)' : (fee.Status === 'Pending' ? 'var(--warning-color)' : 'var(--error-color)')}; font-weight: 600;">
-                            ${fee.Status}
-                        </span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${fee.isResubmitted && fee.Status === 'Pending' ? `<span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; background: var(--primary-light); color: var(--primary-color); font-weight: 600;"><i class="fa-solid fa-rotate-right"></i> Resubmitted</span>` : ''}
+                            <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${fee.Status === 'Approved' || fee.Status === 'Paid' ? 'var(--success-color)' : (fee.Status === 'Pending' ? 'var(--warning-color)' : 'var(--error-color)')}; font-weight: 600;">
+                                ${fee.Status}
+                            </span>
+                        </div>
                     </div>
                     <div style="font-size: 0.95em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 15px; padding-top: 10px; border-top: 1px solid var(--card-border);">
                         <div><strong>Month:</strong> ${fee.Month || 'N/A'}</div>
@@ -763,16 +875,41 @@ function renderFees() {
                         <div><strong>Amount:</strong> ₹${fee.Amount || 0}</div>
                     </div>
                     <div style="margin-bottom: 15px;">
-                        <a href="${fee.ProofImageURL}" target="_blank" style="font-size: 0.85em; color: var(--primary-color);">
-                            <i class="fa-solid fa-image"></i> View Receipt Image
-                        </a>
+                        ${fee.ProofImageURL ? `
+                            <a href="${fee.ProofImageURL}" target="_blank" style="font-size: 0.85em; color: var(--primary-color); margin-right: 15px;">
+                                <i class="fa-solid fa-image"></i> View Receipt Image
+                            </a>
+                            ${fee.Status !== 'Pending' ? `
+                                <button onclick="deleteReceiptImage('${fee._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--error-color); color: var(--error-color); border-radius: 4px; font-size: 0.85em;" title="Delete Receipt">
+                                    <i class="fa-solid fa-trash"></i> Delete Receipt
+                                </button>
+                            ` : ''}
+                        ` : `
+                            <span style="font-size: 0.85em; color: var(--text-secondary);">
+                                <i class="fa-solid fa-image-slash"></i> Receipt Image Deleted
+                            </span>
+                        `}
                     </div>
 
                         ${fee.Status === 'Rejected' && fee.AdminNote ? `
                         <div style="margin-top:8px; margin-bottom:10px;">
-                            <span style="display:inline-block; padding:6px 12px; background: var(--bg-color); border: 1px solid var(--error-color); border-radius:8px; font-size:0.85em; color:var(--error-color);">
-                                <strong>Reason:</strong> ${fee.AdminNote}
+                            <span onclick="const el = document.getElementById('reject-details-${fee._id}'); el.style.display = el.style.display === 'none' ? 'inline-block' : 'none';" style="cursor: pointer; font-size: 0.85em; color: var(--error-color); display: inline-flex; align-items: center; gap: 5px; font-weight: 600;">
+                                <i class="fa-solid fa-circle-info"></i> Rejection Reason
                             </span>
+                            <div id="reject-details-${fee._id}" style="display: none; margin-top: 5px; padding:6px 12px; background: var(--bg-color); border: 1px dashed var(--error-color); border-radius:8px; font-size:0.85em; color:var(--error-color);">
+                                ${fee.AdminNote}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        ${fee.Status === 'Paid' && fee.AdminNote ? `
+                        <div style="margin-top:8px; margin-bottom:10px;">
+                            <span onclick="const el = document.getElementById('details-${fee._id}'); el.style.display = el.style.display === 'none' ? 'inline-block' : 'none';" style="cursor: pointer; font-size: 0.85em; color: var(--success-color); display: inline-flex; align-items: center; gap: 5px; font-weight: 600;">
+                                <i class="fa-solid fa-circle-info"></i> Payment Details
+                            </span>
+                            <div id="details-${fee._id}" style="display: none; margin-top: 5px; padding:6px 12px; background: var(--bg-color); border: 1px dashed var(--success-color); border-radius:8px; font-size:0.85em; color:var(--success-color);">
+                                ${fee.AdminNote}
+                            </div>
                         </div>
                         ` : ''}
 
@@ -833,6 +970,30 @@ async function updateFeeStatus(id, newStatus) {
             return;
         }
         payload.AdminNote = note.trim();
+        payload.deleteReceipt = true; // Flag for backend to delete image file
+    } else if (newStatus === 'Paid') {
+        const transId = await showPrompt('Please enter the Transaction ID:');
+        if (transId === null) {
+            loadFees();
+            return;
+        }
+        if (!transId.trim()) {
+            showToast('Transaction ID is required to mark as Paid.', 'warning');
+            loadFees();
+            return;
+        }
+        const transDate = await showPrompt('Please enter the Payment Date:');
+        if (transDate === null) {
+            loadFees();
+            return;
+        }
+        if (!transDate.trim()) {
+            showToast('Payment Date is required.', 'warning');
+            loadFees();
+            return;
+        }
+        payload.AdminNote = `Txn ID: ${transId.trim()} | Date: ${transDate.trim()}`;
+        payload.deleteReceipt = true; // Flag for backend to delete image file
     } else {
         if (!await showConfirm(`Are you sure you want to mark this payment as ${newStatus}?`)) {
             loadFees(); // Revert dropdown
@@ -849,6 +1010,19 @@ async function updateFeeStatus(id, newStatus) {
     } catch (error) {
         showToast('Error updating fee status: ' + error.message, 'error');
         loadFees();
+    }
+}
+
+async function deleteReceiptImage(id) {
+    if (!await showConfirm('Are you sure you want to delete this receipt image? This cannot be undone.')) return;
+    try {
+        await apiFetch('/fees/' + id + '/receipt', {
+            method: 'DELETE'
+        });
+        showToast('Receipt image deleted successfully', 'success');
+        loadFees();
+    } catch (error) {
+        showToast('Error deleting receipt: ' + error.message, 'error');
     }
 }
 
@@ -870,14 +1044,12 @@ async function updateRemark(id) {
             })
         });
 
-        alert("Remark updated");
         showToast("Remark updated", "success");
 
         loadFees();
 
     } catch (err) {
 
-        alert("Error updating remark");
         showToast("Error updating remark", "error");
 
     }
@@ -999,6 +1171,26 @@ async function loadAnnouncements() {
     }
 }
 
+window.toggleAnnouncementForm = function() {
+    const container = document.getElementById('announcementFormContainer');
+    const btn = document.getElementById('toggleAnnBtn');
+    
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Close';
+            btn.classList.replace('btn', 'btn-outline');
+        }
+    } else {
+        container.style.display = 'none';
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-plus"></i> New Post';
+            btn.classList.replace('btn-outline', 'btn');
+        }
+        document.getElementById('announcementForm').reset();
+    }
+}
+
 async function createAnnouncement(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
@@ -1027,6 +1219,7 @@ async function createAnnouncement(e) {
         document.getElementById('announcementContent').value = '';
         document.getElementById('announcementImage').value = '';
         showToast('Announcement posted successfully!', 'success');
+        toggleAnnouncementForm(); // Auto-collapse the form after successful post
         loadAnnouncements();
     } catch (error) {
         showToast('Error posting announcement: ' + error.message, 'error');
@@ -1105,7 +1298,7 @@ function renderIssues() {
     const paginatedIssues = filteredIssues.slice(startIndex, endIndex);
 
     list.innerHTML = paginatedIssues.map(issue => `
-                <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 15px; border-radius: 8px; background: var(--input-bg);">
+                <div style="border-bottom: 1px solid red; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <div>
                             <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);">${issue.IssueTitle}</div>
@@ -1116,10 +1309,27 @@ function renderIssues() {
                             <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${issue.Status === 'Resolved' ? 'var(--success-color)' : (issue.Status === 'Pending' ? 'var(--error-color)' : 'var(--warning-color)')}; font-weight: 600;">
                                 ${issue.Status}
                             </span>
+                            <button onclick="replyToIssue('${issue._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-reply"></i> Reply</button>
                             ${issue.Status === 'Resolved' ? `<button onclick="deleteIssue('${issue._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--error-color); color: var(--error-color); border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
                         </div>
                     </div>
-                    <div style="margin-bottom: 15px; font-size: 0.95em; white-space: pre-wrap;">${issue.Description}</div>
+                    <div style="margin-bottom: 15px; font-size: 0.95em; white-space: pre-wrap; word-break: break-word;">${issue.Description}</div>
+                    ${issue.AdminResponse ? `
+                    <div style="
+                    margin-bottom:15px;
+                    font-size:0.9em;
+                    background:var(--bg-color);
+                    padding:10px;
+                    border-radius:6px;
+                    border-left:3px solid var(--primary-color);
+                    border-right:3px solid var(--primary-color);
+                    color:var(--primary-color);
+                    word-break:break-word;
+                    display:inline-block;
+                    ">
+                    <strong><i class="fa-solid fa-reply"></i></strong> ${issue.AdminResponse}
+                    </div>
+                    ` : ''}
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <label for="status-${issue._id}" style="font-size: 0.85em; font-weight: 600;">Status:</label>
                         <select id="status-${issue._id}" onchange="updateIssueStatus('${issue._id}', this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); cursor: pointer; width: auto;" ${issue.Status === 'Resolved' ? 'disabled' : ''}>
@@ -1174,6 +1384,22 @@ async function updateIssueStatus(id, newStatus) {
     }
 }
 
+async function replyToIssue(id) {
+    const reply = await showPrompt('Enter your reply/note for this issue (students will see this):');
+    if (reply === null) return;
+
+    try {
+        await apiFetch('/issues/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({ AdminResponse: reply })
+        });
+        showToast('Reply saved successfully', 'success');
+        loadIssues();
+    } catch (error) {
+        showToast('Error saving reply: ' + error.message, 'error');
+    }
+}
+
 async function deleteIssue(id) {
     if (!await showConfirm('Are you sure you want to delete this resolved issue?')) return;
     try {
@@ -1200,9 +1426,10 @@ function injectCustomUI() {
         div.innerHTML = `
             <div class="custom-box">
                 <h3 id="customModalTitle">Confirm</h3>
-                <p id="customModalMessage"></p>
+                <p id="customModalMessage" style="white-space: pre-wrap; margin-bottom: 15px; line-height: 1.4;"></p>
                 <div id="customModalInputContainer" style="display:none; margin-bottom: 1rem;">
                     <input type="text" id="customModalInput" style="width: 100%; padding: 0.5rem; border: 1px solid var(--input-border); border-radius: 4px; font-size: 1rem; background: var(--input-bg); color: var(--text-primary);">
+
                 </div>
                 <div class="custom-actions">
                     <button id="customModalCancel" class="btn btn-cancel">Cancel</button>
@@ -1236,7 +1463,8 @@ function showConfirm(message) {
     return showPrompt(message, false);
 }
 
-function showPrompt(message, isPrompt = true) {
+
+function showPrompt(message, isPrompt = true, defaultValue = '') {
     return new Promise((resolve) => {
         const overlay = document.getElementById('customModalOverlay');
         const inputContainer = document.getElementById('customModalInputContainer');
@@ -1246,6 +1474,7 @@ function showPrompt(message, isPrompt = true) {
         document.getElementById('customModalMessage').textContent = message;
         inputContainer.style.display = isPrompt ? 'block' : 'none';
         input.value = '';
+        input.value = defaultValue;
 
         const confirmBtn = document.getElementById('customModalConfirm');
         const cancelBtn = document.getElementById('customModalCancel');

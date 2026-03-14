@@ -30,8 +30,11 @@ const feeSchema = new mongoose.Schema({
         type: String, // Reason for rejection or other notes
     },
     ProofImageURL: {
-        type: String,
-        required: true, // Cloudinary URL
+        type: String
+    },
+    isResubmitted: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

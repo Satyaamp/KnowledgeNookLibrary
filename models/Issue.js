@@ -21,6 +21,9 @@ const issueSchema = new mongoose.Schema({
         type: String,
         enum: ['Pending', 'Seen by Admin', 'In Progress', 'Resolved'],
         default: 'Pending',
+    },
+    AdminResponse: {
+        type: String
     }
 }, { timestamps: true });
 

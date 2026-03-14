@@ -61,6 +61,9 @@ const updateIssueStatus = async (req, res) => {
 
         if (issue) {
             issue.Status = req.body.Status || issue.Status;
+            if (req.body.AdminResponse !== undefined) {
+                issue.AdminResponse = req.body.AdminResponse;
+            }
             const updatedIssue = await issue.save();
             res.json(updatedIssue);
         } else {
@@ -106,6 +109,7 @@ const deleteIssue = async (req, res) => {
             IssueTitle: issue.IssueTitle,
             Message: issue.Description,
             Status: issue.Status,
+            AdminResponse: issue.AdminResponse,
             OriginalCreatedAt: issue.createdAt,
             DeletedByRole: req.user.role // 'student' or 'admin'
         });

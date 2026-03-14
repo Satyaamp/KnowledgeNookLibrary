@@ -67,6 +67,7 @@
   --input-focus:     var(--primary-glow);
   --error-color:     var(--danger);
   --success-color:   var(--success);
+  
 }
 
 /* ── RESET ─────────────────────────────────────────────────── */

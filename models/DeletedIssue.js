@@ -24,6 +24,9 @@ const deletedIssueSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    AdminResponse: {
+        type: String
+    },
     OriginalCreatedAt: {
         type: Date,
         required: true,
