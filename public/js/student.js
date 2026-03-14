@@ -117,6 +117,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Form Validation Listeners
+    const feeMonth = document.getElementById('feeMonth');
+    const feeReceipt = document.getElementById('feeReceipt');
+    if (feeMonth) feeMonth.addEventListener('input', validateFeeForm);
+    if (feeReceipt) feeReceipt.addEventListener('change', validateFeeForm);
+
+    const issueTitle = document.getElementById('issueTitle');
+    const issueDesc = document.getElementById('issueDesc');
+    if (issueTitle) issueTitle.addEventListener('input', validateIssueForm);
+    if (issueDesc) issueDesc.addEventListener('input', validateIssueForm);
+
     // Handle routing
     window.addEventListener('hashchange', handleRoute);
 
@@ -136,6 +147,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initial route
     handleRoute();
 });
+
+function validateFeeForm() {
+    const feeMonth = document.getElementById('feeMonth');
+    const feeReceipt = document.getElementById('feeReceipt');
+    const feeSubmitBtn = document.getElementById('feeSubmitBtn');
+
+    if (feeMonth && feeReceipt && feeSubmitBtn) {
+        if (feeMonth.value.trim() !== '' && feeReceipt.files.length > 0) {
+            feeSubmitBtn.disabled = false;
+            feeSubmitBtn.style.opacity = '1';
+            feeSubmitBtn.style.cursor = 'pointer';
+        } else {
+            feeSubmitBtn.disabled = true;
+            feeSubmitBtn.style.opacity = '0.5';
+            feeSubmitBtn.style.cursor = 'not-allowed';
+        }
+    }
+}
+
+function validateIssueForm() {
+    const issueTitle = document.getElementById('issueTitle');
+    const issueDesc = document.getElementById('issueDesc');
+    const issueSubmitBtn = document.getElementById('issueSubmitBtn');
+
+    if (issueTitle && issueDesc && issueSubmitBtn) {
+        if (issueTitle.value.trim() !== '' && issueDesc.value.trim() !== '') {
+            issueSubmitBtn.disabled = false;
+            issueSubmitBtn.style.opacity = '1';
+            issueSubmitBtn.style.cursor = 'pointer';
+        } else {
+            issueSubmitBtn.disabled = true;
+            issueSubmitBtn.style.opacity = '0.5';
+            issueSubmitBtn.style.cursor = 'not-allowed';
+        }
+    }
+}
 
 window.navigateBanners = function(direction) {
     if (activeBanners.length <= 1) return;
@@ -781,6 +828,7 @@ async function handleFeeSubmit(e) {
         document.getElementById('feeReceipt').value = '';
 
         loadFees(true); // Force fetch and refresh list
+        validateFeeForm(); // Reset button state
     } catch (error) {
         msg.style.color = 'red';
         msg.textContent = error.message;
@@ -792,7 +840,7 @@ async function handleFeeSubmit(e) {
 
 async function handleIssueSubmit(e) {
     e.preventDefault();
-    const btn = e.target.querySelector('button');
+    const btn = document.getElementById('issueSubmitBtn');
     const msg = document.getElementById('issueMsg');
 
     if (originalProfileData.AccountStatus === 'Inactive') {
@@ -818,6 +866,7 @@ async function handleIssueSubmit(e) {
         msg.textContent = 'Issue reported successfully!';
         document.getElementById('issueForm').reset();
         loadIssues(true); // Force fetch new issue and reset pagination
+        validateIssueForm(); // Reset button state
     } catch (error) {
         msg.style.color = 'red';
         msg.textContent = error.message;

@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login to your Knowledge Nook Library account. Access your student dashboard to manage your profile, view fees, or access the admin portal.">
     <title>Login - Knowledge Nook Library</title>
+    <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 
@@ -41,6 +43,31 @@
 
     <script src="/js/api.js"></script>
     <script src="/js/auth.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker Registered!', reg))
+                    .catch(err => console.error('Service Worker Registration Failed!', err));
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            if (typeof showToast === 'function') {
+                showToast('App installed successfully!', 'success');
+            } else {
+                const toast = document.createElement('div');
+                toast.innerHTML = '<i class="fa-solid fa-circle-check"></i> App installed successfully!';
+                Object.assign(toast.style, {
+                    position: 'fixed', bottom: '20px', right: '20px', background: '#10B981', color: 'white',
+                    padding: '12px 24px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    zIndex: '9999', transition: 'opacity 0.5s', fontFamily: 'inherit', display: 'flex', gap: '8px', alignItems: 'center'
+                });
+                document.body.appendChild(toast);
+                setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000);
+            }
+        });
+    </script>
 </body>
 
 </html>

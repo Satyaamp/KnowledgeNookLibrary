@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="description" content="Knowledge Nook Library Student Dashboard. View your profile, track fee payments, submit issues, and stay updated with the latest library announcements.">
     <title>Student Dashboard</title>
+    <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,6 +81,67 @@
             background-color: var(--input-bg) !important;
             color: var(--text-primary) !important;
             border-color: var(--input-border) !important;
+        }
+
+        /* --- Mobile Collapse Panels --- */
+        .desktop-hidden { display: none; }
+        @media (max-width: 768px) {
+            .mobile-collapse-content { display: none; }
+            .mobile-collapse-content.expanded { display: block; }
+            .mobile-collapse-header {
+                display: flex; justify-content: space-between; align-items: center;
+                cursor: pointer; padding-bottom: 10px; border-bottom: 1px solid var(--card-border); margin-bottom: 15px;
+            }
+            .desktop-hidden { display: block; color: var(--text-secondary); }
+            .mobile-collapse-header h4 { margin: 0 !important; }
+        }
+        @media (min-width: 769px) {
+            .mobile-collapse-header { margin-bottom: 15px; }
+            .mobile-collapse-header h4 { margin: 0 !important; }
+        }
+
+        /* --- PWA Popup Styles --- */
+        .pwa-desktop-text { display: inline; }
+        .pwa-mobile-text { display: none; }
+        .pwa-popup {
+            display: none;
+            position: fixed;
+            left: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--primary-color);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            z-index: 10000;
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+        }
+        @media (min-width: 769px) {
+            .pwa-popup {
+                top: 80px;
+                bottom: auto;
+                transform: translate(-50%, -20px);
+                opacity: 0;
+                animation: pwaSlideDown 0.4s ease forwards;
+            }
+            @keyframes pwaSlideDown {
+                to { transform: translate(-50%, 0); opacity: 1; }
+            }
+        }
+        @media (max-width: 768px) {
+            .pwa-desktop-text { display: none; }
+            .pwa-mobile-text { display: inline; }
+            .pwa-popup {
+                bottom: 85px;
+                top: auto;
+                transform: translate(-50%, 20px);
+                opacity: 0;
+                animation: pwaSlideUp 0.4s ease forwards;
+            }
+            @keyframes pwaSlideUp {
+                to { transform: translate(-50%, 0); opacity: 1; }
+            }
         }
     </style>
 </head>
@@ -201,11 +264,14 @@
             <!-- Fees View -->
             <div id="view-fees" class="view-section" style="display: none;">
                 <div class="card">
-                    <h4>Upload Receipt</h4>
                     <div class="grid-2 mt-2">
                         <div>
-                      
-                            <form id="feeForm" class="mt-1">
+                            <div class="mobile-collapse-header" onclick="toggleMobileCollapse('feeFormContainer', this)">
+                                <h4>Upload Receipt</h4>
+                                <i class="fa-solid fa-chevron-down desktop-hidden"></i>
+                            </div>
+                            <div id="feeFormContainer" class="mobile-collapse-content">
+                                <form id="feeForm" class="mt-1">
                                 <div class="form-group">
                                     <label>Library ID</label>
                                     <input type="text" id="feeLibraryID" readonly disabled style="background: var(--bg-color); cursor: not-allowed; color: var(--text-secondary);">
@@ -215,25 +281,26 @@
                                     <input type="text" id="feeBatch" readonly disabled style="background: var(--bg-color); cursor: not-allowed; color: var(--text-secondary);">
                                 </div>
                                 <div class="form-group">
-                                    <label>Month & Year</label>
+                                    <label>Month & Year <span style="color: #ef4444;">*</span></label>
                                     <input type="text" id="feeMonth" required placeholder="e.g. October 2026">
                                 </div>
                                 <div class="form-group">
-                                    <label>Amount</label>
+                                    <label>Amount <span style="color: #ef4444;"></span></label>
                                     <input type="number" id="feeAmount" required readonly style="background: var(--bg-color); cursor: not-allowed; color: var(--text-secondary);">
                                 </div>
                                 <div class="form-group">
-                                    <label>Receipt Image</label>
+                                    <label>Receipt Image <span style="color: #ef4444;">*</span></label>
                                     <input type="file" id="feeReceipt" accept="image/*" required>
 
-                                    <small style="color: black; font-size:0.85em;">
+                                    <small style="color: var(--text-secondary); font-size:0.85em;">
                                         Upload a clear receipt image showing the <strong>Transaction ID, Date & Time, and Sender details</strong>. 
                                         Unclear or incomplete receipts may be rejected.
                                     </small>
                                 </div>
-                                <button type="submit" class="btn" id="feeSubmitBtn">Upload Receipt</button>
+                                <button type="submit" class="btn" id="feeSubmitBtn" disabled style="opacity: 0.5; cursor: not-allowed;">Upload Receipt</button>
                             </form>
                             <p id="feeMsg" class="mt-1 font-small"></p>
+                            </div>
                         </div>
                         <div>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 0.5rem;">
@@ -249,26 +316,30 @@
             <!-- Issues View -->
             <div id="view-issues" class="view-section" style="display: none;">
                 <div class="card">
-                    <h4>Report Issue</h4>
                     <div class="grid-2 mt-2">
                         <div>
-                            
-                            <form id="issueForm" class="mt-1">
+                            <div class="mobile-collapse-header" onclick="toggleMobileCollapse('issueFormContainer', this)">
+                                <h4>Report Issue</h4>
+                                <i class="fa-solid fa-chevron-down desktop-hidden"></i>
+                            </div>
+                            <div id="issueFormContainer" class="mobile-collapse-content">
+                                <form id="issueForm" class="mt-1">
                                 <div class="form-group">
                                     <label>Student ID</label>
                                     <input type="text" id="issueLibraryID" readonly disabled style="background: var(--bg-color); cursor: not-allowed; color: var(--text-secondary);">
                                 </div>
                                 <div class="form-group">
-                                    <label>Issue</label>
+                                    <label>Issue <span style="color: #ef4444;">*</span></label>
                                       <input type="text" id="issueTitle" placeholder="Wi-Fi not working in reading area"" required>
                                   </div>
                                   <div class="form-group">
-                                      <label>Description</label>
+                                      <label>Description <span style="color: #ef4444;">*</span></label>
                                       <textarea id="issueDesc" rows="4" placeholder="Describe the issue in detail (where it happened, when it started, and what problem you are facing)" required></textarea>
                                 </div>
-                                <button type="submit" class="btn">Submit Issue</button>
+                                <button type="submit" class="btn" id="issueSubmitBtn" disabled style="opacity: 0.5; cursor: not-allowed;">Submit Issue</button>
                             </form>
                             <p id="issueMsg" class="mt-1 font-small"></p>
+                            </div>
                         </div>
                         <div>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 0.5rem;">
@@ -366,6 +437,16 @@
         </div>
     </div>
 
+    <!-- PWA Install Popup -->
+    <div id="pwaInstallPopup" class="pwa-popup">
+        <h4 style="margin-bottom: 10px; color: var(--text-primary); font-family: 'Bricolage Grotesque', sans-serif;"><i class="fa-solid fa-desktop pwa-desktop-text"></i><i class="fa-solid fa-mobile-screen pwa-mobile-text"></i> <span class="pwa-desktop-text">Install Web App</span><span class="pwa-mobile-text">Install App</span></h4>
+        <p style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 15px;"><span class="pwa-desktop-text">Get quick access to your dashboard directly from your device!</span><span class="pwa-mobile-text">Get quick access directly from your home screen!</span></p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="pwaCloseBtn" class="btn-outline" style="padding: 6px 12px; font-size: 0.9em; border-color: var(--text-secondary); color: var(--text-secondary);">Later</button>
+            <button id="pwaInstallBtn" class="btn" style="padding: 6px 12px; font-size: 0.9em;"><i class="fa-solid fa-download"></i> <span class="pwa-desktop-text">Install Web App</span><span class="pwa-mobile-text">Install as App</span></button>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="/js/api.js"></script>
     <script src="/js/student.js"></script>
@@ -405,7 +486,78 @@
       }
       syncActive();
       window.addEventListener('hashchange', syncActive);
+
+      window.toggleMobileCollapse = function(id, el) {
+          if (window.innerWidth > 768) return; // Ignore on desktop
+          const content = document.getElementById(id);
+          const icon = el.querySelector('i.desktop-hidden');
+          content.classList.toggle('expanded');
+          if (content.classList.contains('expanded')) {
+              icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+          } else {
+              icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+          }
+      };
     })();
+    </script>
+    <script>
+        let deferredPrompt;
+        const pwaPopup = document.getElementById('pwaInstallPopup');
+        const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+        const pwaCloseBtn = document.getElementById('pwaCloseBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Check localStorage, and if not installed, trigger the 5-second delay
+            if (localStorage.getItem('pwaInstalled') !== '1') {
+                setTimeout(() => {
+                    if (deferredPrompt && pwaPopup) pwaPopup.style.display = 'block';
+                }, 5000);
+            }
+        });
+
+        if (pwaCloseBtn) pwaCloseBtn.addEventListener('click', () => pwaPopup.style.display = 'none');
+
+        if (pwaInstallBtn) {
+            pwaInstallBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    pwaPopup.style.display = 'none';
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') localStorage.setItem('pwaInstalled', '1');
+                    deferredPrompt = null;
+                }
+            });
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker Registered!', reg))
+                    .catch(err => console.error('Service Worker Registration Failed!', err));
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            localStorage.setItem('pwaInstalled', '1');
+            if (pwaPopup) pwaPopup.style.display = 'none';
+            deferredPrompt = null;
+            if (typeof showToast === 'function') {
+                showToast('App installed successfully!', 'success');
+            } else {
+                const toast = document.createElement('div');
+                toast.innerHTML = '<i class="fa-solid fa-circle-check"></i> App installed successfully!';
+                Object.assign(toast.style, {
+                    position: 'fixed', bottom: '20px', right: '20px', background: '#10B981', color: 'white',
+                    padding: '12px 24px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    zIndex: '9999', transition: 'opacity 0.5s', fontFamily: 'inherit', display: 'flex', gap: '8px', alignItems: 'center'
+                });
+                document.body.appendChild(toast);
+                setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000);
+            }
+        });
     </script>
 </body>
 </html>

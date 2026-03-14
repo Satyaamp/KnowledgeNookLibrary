@@ -4,9 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Discover Knowledge Nook Library - A peaceful and productive study environment designed for focused learning. Enjoy high-speed Wi-Fi, comfortable seating, and 24/7 access. Read more...">
   <title>Knowledge Nook Library - Peaceful Learning Environment</title>
   <link rel="stylesheet" href="/css/landing.css">
   <link rel="manifest" href="/manifest.json">
+  <link rel="shortcut icon" href="./images/favicon/home.png" type="image/png">
   <!-- Google Fonts for typography -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- FontAwesome for Icons -->
@@ -54,6 +56,9 @@
       <li><a href="#contact">Contact</a></li>
       <li><a href="/login.html">Student Login</a></li>
       <li><a href="/login.html">Admin Login</a></li>
+      <li id="installAppContainer" style="display: none; padding: 0.5rem;">
+        <button id="installAppBtn" class="btn-primary" style="width: 100%; border: none; font-size: 1.1rem; padding: 0.8rem; border-radius: 6px; cursor: pointer;"><i class="fa-solid fa-download" style="margin-right: 5px;"></i> Install as App</button>
+      </li>
     </ul>
   </div>
 
@@ -511,6 +516,57 @@
   </footer>
 
   <script src="/js/landing.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('Service Worker Registered!', reg))
+          .catch(err => console.error('Service Worker Registration Failed!', err));
+      });
+    }
+
+    let deferredPrompt;
+    const installAppContainer = document.getElementById('installAppContainer');
+    const installAppBtn = document.getElementById('installAppBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent Chrome from automatically showing the prompt
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      deferredPrompt = e;
+      // Show the install button in the mobile menu
+      if (installAppContainer) installAppContainer.style.display = 'block';
+    });
+
+    if (installAppBtn) {
+      installAppBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          deferredPrompt = null;
+          if (installAppContainer) installAppContainer.style.display = 'none';
+        }
+      });
+    }
+
+    window.addEventListener('appinstalled', () => {
+      if (installAppContainer) installAppContainer.style.display = 'none';
+      deferredPrompt = null;
+      if (typeof showToast === 'function') {
+        showToast('App installed successfully!', 'success');
+      } else {
+        const toast = document.createElement('div');
+        toast.innerHTML = '<i class="fa-solid fa-circle-check"></i> App installed successfully!';
+        Object.assign(toast.style, {
+          position: 'fixed', bottom: '20px', right: '20px', background: '#10B981', color: 'white',
+          padding: '12px 24px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          zIndex: '9999', transition: 'opacity 0.5s', fontFamily: 'inherit', display: 'flex', gap: '8px', alignItems: 'center'
+        });
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000);
+      }
+    });
+  </script>
 </body>
 
 </html>
