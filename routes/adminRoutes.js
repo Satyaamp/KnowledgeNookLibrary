@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { addStudent, getStudents, updateStudent, getProfileRequests, approveProfileRequest, rejectProfileRequest, getDashboardStats, getInterestedStudents, markInterestedStudentReviewed, rejectInterestedStudent, convertInterestedStudent, updateProfileRequestStatus, verifyAadhar } = require('../controllers/adminController');
+const { addStudent, getStudents, updateStudent, getProfileRequests, approveProfileRequest, rejectProfileRequest, getDashboardStats, getInterestedStudents, markInterestedStudentReviewed, rejectInterestedStudent, convertInterestedStudent, updateProfileRequestStatus, verifyAadhar, bulkUploadStudents} = require('../controllers/adminController');
 const { authGuard } = require('../middleware/authGuard');
 const { adminGuard } = require('../middleware/adminGuard');
+const upload = require('../utils/upload');
+
 
 // Protect all admin routes
 router.use(authGuard, adminGuard);
@@ -13,6 +15,10 @@ router.route('/dashboard-stats')
 router.route('/students')
     .post(addStudent)
     .get(getStudents);
+
+router.route('/students/bulk-upload')
+    .post(bulkUploadStudents);
+
 
 router.route('/students/:id')
     .put(updateStudent);

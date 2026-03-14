@@ -383,8 +383,127 @@ const convertInterestedStudent = async (req, res) => {
     }
 };
 
+
+// @desc    Bulk upload students via JSON array
+// @route   POST /api/admin/students/bulk-upload
+// @access  Private/Admin
+const bulkUploadStudents = async (req, res) => {
+    try {
+        const studentsData = req.body.students;
+
+        if (!studentsData || !Array.isArray(studentsData) || studentsData.length === 0) {
+            return res.status(400).json({ message: 'No valid students provided for upload.' });
+        }
+        
+        // Hash the default password once for performance
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('library@123', salt);
+
+        const pricingGrid = {
+            "Monthly": { "Basic": 500, "Fundamental": 600, "Standard": 1000, "Officer's": 1400 },
+            "Quarterly": { "Basic": 1197, "Fundamental": 1497, "Standard": 2500, "Officer's": 3590 },
+            "Half-Yearly": { "Basic": 2300, "Fundamental": 2800, "Standard": 4800, "Officer's": 6900 },
+            "Yearly": { "Basic": 4600, "Fundamental": 5600, "Standard": 9348, "Officer's": 13464 }
+        };
+
+        const studentsToInsert = [];
+
+        for (const studentData of studentsData) {
+            if (!studentData.FirstName || !studentData.Contact) {
+                continue;
+            }
+
+            // Auto-calculate the amount based on the plan and batch
+            let calcAmount = undefined;
+            if (studentData.planDuration && studentData.batchType) {
+                if (pricingGrid[studentData.planDuration] && pricingGrid[studentData.planDuration][studentData.batchType]) {
+                    calcAmount = pricingGrid[studentData.planDuration][studentData.batchType];
+                }
+            }
+
+            // Safely parse Dates from Excel
+            let joiningDate = new Date();
+            if (studentData.JoiningDate) {
+                const parts = studentData.JoiningDate.split('/');
+                if (parts.length === 3) {
+                    joiningDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`); // Handles DD/MM/YYYY
+                } else {
+                    const parsed = Date.parse(studentData.JoiningDate);
+                    if (!isNaN(parsed)) joiningDate = new Date(parsed);
+                }
+            }
+
+            // Safely parse DOB from Excel
+            let dobDate = undefined;
+            if (studentData.DOB) {
+                const parts = studentData.DOB.split('/');
+                if (parts.length === 3) {
+                    dobDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`); // Handles DD/MM/YYYY
+                } else {
+                    const parsed = Date.parse(studentData.DOB);
+                    if (!isNaN(parsed)) dobDate = new Date(parsed);
+                }
+            }
+
+            // Explicitly build FullName and FullAddress since insertMany bypasses save hooks
+            const firstName = studentData.FirstName.trim().replace(/\s+/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+            const lastName = studentData.LastName ? studentData.LastName.trim().replace(/\s+/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : '';
+            const fullName = lastName ? `${firstName} ${lastName}` : firstName;
+
+            const fatherName = studentData.FatherName ? studentData.FatherName.trim().replace(/\s+/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : undefined;
+
+            const area = studentData.Area ? studentData.Area.trim() : '';
+            const city = studentData.City ? studentData.City.trim() : '';
+            const pincode = studentData.Pincode ? String(studentData.Pincode).trim() : '';
+            
+            let fullAddress = '';
+            const addressParts = [];
+            if (area) addressParts.push(area);
+            if (city) addressParts.push(city);
+            fullAddress = addressParts.join(', ');
+            if (pincode) fullAddress += fullAddress ? ` - ${pincode}` : pincode;
+
+            studentsToInsert.push({
+                FirstName: firstName,
+                LastName: lastName || undefined,
+                FullName: fullName,
+                DOB: dobDate,
+                Gender: studentData.Gender || undefined,
+                Email: studentData.Email || undefined,
+                Contact: studentData.Contact,
+                FatherName: fatherName,
+                City: city || undefined,
+                Pincode: pincode || undefined,
+                Area: area || undefined,
+                FullAddress: fullAddress || undefined,
+                AadharNumber: studentData.AadharNumber || undefined,
+                JoiningDate: joiningDate,
+                LibraryID: studentData.LibraryID || undefined,
+                SeatNo: studentData.SeatNo || undefined,
+                planDuration: studentData.planDuration || undefined,
+                batchType: studentData.batchType || undefined,
+                amount: calcAmount,
+                Password: hashedPassword,
+                AccountStatus: 'Active',
+                mustChangePassword: studentData.mustChangePassword ? String(studentData.mustChangePassword).toLowerCase() !== 'false' : true
+            });
+        }
+
+        // Insert documents. ordered: false allows it to skip duplicates safely
+        if (studentsToInsert.length > 0) {
+            try { await Student.insertMany(studentsToInsert, { ordered: false }); } 
+            catch (err) { console.error('Bulk insert error:', err); }
+        }
+
+        res.status(201).json({ message: `Successfully processed batch. Check the list for newly added students. (Duplicate phone numbers or IDs were skipped).` });
+    } catch (error) {
+        res.status(500).json({ message: 'Error processing bulk upload', error: error.message });
+    }
+};
+
 module.exports = {
     addStudent,
+    bulkUploadStudents,
     getStudents,
     updateStudent,
     getProfileRequests,

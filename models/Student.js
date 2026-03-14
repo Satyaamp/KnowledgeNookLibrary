@@ -32,8 +32,29 @@ const studentSchema = new mongoose.Schema({
 
 // Pre-save hook to generate FullName and FullAddress
 studentSchema.pre('save', function (next) {
-    this.FullName = `${this.FirstName} ${this.LastName}`;
-    this.FullAddress = `${this.Area}, ${this.City} - ${this.Pincode}`;
+    // Auto-format Names (Capitalize first letter of each word)
+    if (this.FirstName) {
+        this.FirstName = this.FirstName.trim().replace(/\s+/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    }
+    if (this.LastName) {
+        this.LastName = this.LastName.trim().replace(/\s+/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    }
+    if (this.FatherName) {
+        this.FatherName = this.FatherName.trim().replace(/\s+/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    this.FullName = this.LastName ? `${this.FirstName} ${this.LastName}` : this.FirstName;
+    
+    let addressParts = [];
+    if (this.Area) addressParts.push(this.Area);
+    if (this.City) addressParts.push(this.City);
+    
+    let address = addressParts.join(', ');
+    if (this.Pincode) {
+        address += address ? ` - ${this.Pincode}` : this.Pincode;
+    }
+    this.FullAddress = address || undefined;
+
     if (typeof next === 'function') {
         next();
     }

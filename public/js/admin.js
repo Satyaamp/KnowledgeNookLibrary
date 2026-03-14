@@ -75,6 +75,280 @@ async function loadDashboardStats() {
     }
 }
 
+let bulkValidStudents = [];
+let bulkInvalidStudents = [];
+
+function handleBulkStudentUpload(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        processCSVData(e.target.result);
+        input.value = '';
+    };
+    reader.readAsText(file);
+}
+
+function processCSVData(csvText) {
+    const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
+    if (lines.length < 2) {
+        showToast('CSV is empty or missing headers.', 'error');
+        return;
+    }
+    
+    // Remove hidden BOM (Byte Order Mark) that Excel often adds, and strip quotes
+    const rawHeaderLine = lines[0].replace(/^\uFEFF/, '');
+    // const headers = rawHeaderLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.replace(/^"|"$/g, '').trim());
+    const rawHeaders = rawHeaderLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.replace(/^"|"$/g, '').trim());
+    
+    // Map headers to correct casing to prevent ALL CAPS from failing
+    const headerMap = {
+        'firstname': 'FirstName',
+        'lastname': 'LastName',
+        'dob': 'DOB',
+        'gender': 'Gender',
+        'email': 'Email',
+        'contact': 'Contact',
+        'fathername': 'FatherName',
+        "father's name": 'FatherName',
+        'city': 'City',
+        'pincode': 'Pincode',
+        'area': 'Area',
+        'aadharnumber': 'AadharNumber',
+        'joiningdate': 'JoiningDate',
+        'libraryid': 'LibraryID',
+        'seatno': 'SeatNo',
+        'planduration': 'planDuration',
+        'batchtype': 'batchType',
+        'currentbatch': 'batchType', // Automatically maps your CurrentBatch column!
+        'mustchangepassword': 'mustChangePassword'
+    };
+
+    const headers = rawHeaders.map(h => headerMap[h.toLowerCase()] || h);
+    bulkValidStudents = [];
+    bulkInvalidStudents = [];
+
+    for (let i = 1; i < lines.length; i++) {
+        // Regex to split by comma ignoring commas inside double quotes
+        const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+        const row = {};
+        headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
+        row._originalId = 'row_' + i;
+        
+        validateBulkRow(row);
+    }
+    
+    document.getElementById('bulkUploadInitial').style.display = 'none';
+    document.getElementById('bulkUploadPreview').style.display = 'block';
+    switchBulkTab('valid');
+}
+
+function validateBulkRow(row) {
+    let errors = [];
+    if (!row.FirstName || !row.FirstName.trim()) errors.push('Missing First Name');
+    
+    const contactClean = row.Contact ? row.Contact.replace(/\D/g,'') : '';
+    if (!contactClean) errors.push('Missing Contact');
+    else if (contactClean.length !== 10) errors.push('Contact must be 10 digits');
+    else row.Contact = contactClean;
+
+    if (row.Gender) {
+        const g = row.Gender.trim().toLowerCase();
+        if (g === 'male') row.Gender = 'Male';
+        else if (g === 'female') row.Gender = 'Female';
+        else if (g === 'other') row.Gender = 'Other';
+        else errors.push(`Invalid Gender (${row.Gender})`);
+    }
+
+    if (row.planDuration) {
+        const validPlans = ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'];
+        const planMatch = validPlans.find(p => p.toLowerCase() === row.planDuration.trim().toLowerCase());
+        if (planMatch) row.planDuration = planMatch;
+        else errors.push(`Invalid Plan (${row.planDuration})`);
+    }
+
+    if (row.batchType) {
+        const validBatches = ['Basic', 'Fundamental', 'Standard', "Officer's"];
+        const batchMatch = validBatches.find(b => b.toLowerCase() === row.batchType.trim().toLowerCase());
+        if (batchMatch) row.batchType = batchMatch;
+        else errors.push(`Invalid Batch (${row.batchType})`);
+    }
+    
+    if (errors.length === 0) {
+        bulkValidStudents.push(row);
+    } else {
+        row._errors = errors;
+        bulkInvalidStudents.push(row);
+    }
+}
+
+function switchBulkTab(tab) {
+    const validBtn = document.getElementById('bulkTabValidBtn');
+    const invalidBtn = document.getElementById('bulkTabInvalidBtn');
+    const validContent = document.getElementById('bulkValidContent');
+    const invalidContent = document.getElementById('bulkInvalidContent');
+
+    if (tab === 'valid') {
+        validBtn.className = 'btn'; validBtn.style.color = ''; validBtn.style.border = '';
+        invalidBtn.className = 'btn-outline'; invalidBtn.style.border = 'none'; invalidBtn.style.color = 'var(--text-secondary)';
+        validContent.style.display = 'block'; invalidContent.style.display = 'none';
+    } else {
+        invalidBtn.className = 'btn'; invalidBtn.style.color = ''; invalidBtn.style.border = '';
+        validBtn.className = 'btn-outline'; validBtn.style.border = 'none'; validBtn.style.color = 'var(--text-secondary)';
+        validContent.style.display = 'none'; invalidContent.style.display = 'block';
+    }
+    renderBulkLists();
+}
+
+function renderBulkLists() {
+    document.getElementById('bulkValidCount').textContent = bulkValidStudents.length;
+    document.getElementById('bulkSubmitCount').textContent = bulkValidStudents.length;
+    document.getElementById('bulkInvalidCount').textContent = bulkInvalidStudents.length;
+
+    const validList = document.getElementById('bulkValidList');
+    if (bulkValidStudents.length === 0) {
+        validList.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No passed students yet.</p>';
+    } else {
+        validList.innerHTML = bulkValidStudents.map(student => `
+            <div style="padding: 10px; border: 1px solid var(--card-border); border-radius: 6px; background: var(--card-bg); margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="color: var(--primary-color);">${student.FirstName} ${student.LastName || ''}</strong>
+                        <div style="font-size: 0.85em; color: var(--text-secondary);"><i class="fa-solid fa-phone"></i> ${student.Contact}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <i class="fa-solid fa-circle-info" onclick="const el = document.getElementById('bulk-valid-info-${student._originalId}'); el.style.display = el.style.display === 'none' ? 'block' : 'none';" style="cursor: pointer; color: var(--text-secondary); font-size: 1.2em;" title="View all details"></i>
+                        <span style="color: var(--success-color); font-weight: 600;"><i class="fa-solid fa-check-circle"></i> Passed</span>
+                    </div>
+                </div>
+                <div id="bulk-valid-info-${student._originalId}" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--card-border); font-size: 0.85em; color: var(--text-secondary);">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px;">
+                        ${Object.entries(student).filter(([k]) => !['_originalId', '_errors', 'FirstName', 'LastName', 'Contact'].includes(k)).map(([k, v]) => `<div><strong>${k}:</strong> <span style="color: var(--text-primary);">${v || '-'}</span></div>`).join('')}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    const invalidList = document.getElementById('bulkInvalidList');
+    if (bulkInvalidStudents.length === 0) {
+        invalidList.innerHTML = '<p style="color: var(--success-color); text-align: center; padding: 20px;"><i class="fa-solid fa-check-double"></i> All rows are valid!</p>';
+    } else {
+        invalidList.innerHTML = bulkInvalidStudents.map(student => `
+            <div style="padding: 15px; border: 1px solid var(--error-color); border-left: 4px solid var(--error-color); border-radius: 6px; background: var(--card-bg); margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div style="color: var(--error-color); font-size: 0.85em; font-weight: 600;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> ${student._errors.join(' | ')}
+                    </div>
+                    <i class="fa-solid fa-circle-info" onclick="const el = document.getElementById('bulk-invalid-info-${student._originalId}'); el.style.display = el.style.display === 'none' ? 'block' : 'none';" style="cursor: pointer; color: var(--text-secondary); font-size: 1.2em;" title="View all details"></i>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; align-items: end;">
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 0.8em;">First Name *</label>
+                        <input type="text" id="fix_fname_${student._originalId}" value="${student.FirstName || ''}" style="padding: 6px;">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 0.8em;">Contact (10 digits) *</label>
+                        <input type="text" id="fix_contact_${student._originalId}" value="${student.Contact || ''}" style="padding: 6px;">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 0.8em;">Gender</label>
+                        <select id="fix_gender_${student._originalId}" style="padding: 6px;">
+                            <option value="">None</option>
+                            <option value="Male" ${student.Gender === 'Male' ? 'selected' : ''}>Male</option>
+                            <option value="Female" ${student.Gender === 'Female' ? 'selected' : ''}>Female</option>
+                            <option value="Other" ${student.Gender === 'Other' ? 'selected' : ''}>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 0.8em;">Plan</label>
+                        <select id="fix_plan_${student._originalId}" style="padding: 6px;">
+                            <option value="">None</option>
+                            <option value="Monthly" ${student.planDuration === 'Monthly' ? 'selected' : ''}>Monthly</option>
+                            <option value="Quarterly" ${student.planDuration === 'Quarterly' ? 'selected' : ''}>Quarterly</option>
+                            <option value="Half-Yearly" ${student.planDuration === 'Half-Yearly' ? 'selected' : ''}>Half-Yearly</option>
+                            <option value="Yearly" ${student.planDuration === 'Yearly' ? 'selected' : ''}>Yearly</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 0.8em;">Batch</label>
+                        <select id="fix_batch_${student._originalId}" style="padding: 6px;">
+                            <option value="">None</option>
+                            <option value="Basic" ${student.batchType === 'Basic' ? 'selected' : ''}>Basic</option>
+                            <option value="Fundamental" ${student.batchType === 'Fundamental' ? 'selected' : ''}>Fundamental</option>
+                            <option value="Standard" ${student.batchType === 'Standard' ? 'selected' : ''}>Standard</option>
+                            <option value="Officer's" ${student.batchType === "Officer's" ? 'selected' : ''}>Officer's</option>
+                        </select>
+                    </div>
+                    <button class="btn" style="padding: 7px 12px; font-size: 0.85em; height: 35px;" onclick="fixBulkStudent('${student._originalId}')">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Push
+                    </button>
+                </div>
+                <div id="bulk-invalid-info-${student._originalId}" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--error-color); font-size: 0.85em; color: var(--text-secondary);">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px;">
+                        ${Object.entries(student).filter(([k]) => !['_originalId', '_errors', 'FirstName', 'Contact'].includes(k)).map(([k, v]) => `<div><strong>${k}:</strong> <span style="color: var(--text-primary);">${v || '-'}</span></div>`).join('')}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+function fixBulkStudent(originalId) {
+    const studentIndex = bulkInvalidStudents.findIndex(s => s._originalId === originalId);
+    if (studentIndex === -1) return;
+
+    const row = bulkInvalidStudents[studentIndex];
+    row.FirstName = document.getElementById(`fix_fname_${originalId}`).value;
+    row.Contact = document.getElementById(`fix_contact_${originalId}`).value;
+    row.Gender = document.getElementById(`fix_gender_${originalId}`).value || '';
+    row.planDuration = document.getElementById(`fix_plan_${originalId}`).value || '';
+    row.batchType = document.getElementById(`fix_batch_${originalId}`).value || '';
+
+    bulkInvalidStudents.splice(studentIndex, 1);
+    validateBulkRow(row);
+
+    if (bulkValidStudents.find(s => s._originalId === originalId)) {
+        showToast('Fixed and moved to Passed list!', 'success');
+    } else {
+        showToast('Still contains errors', 'warning');
+    }
+    renderBulkLists();
+}
+
+function resetBulkUpload() {
+    bulkValidStudents = [];
+    bulkInvalidStudents = [];
+    document.getElementById('bulkUploadInitial').style.display = 'block';
+    document.getElementById('bulkUploadPreview').style.display = 'none';
+}
+
+async function submitBulkStudents() {
+    if (bulkValidStudents.length === 0) {
+        showToast('No valid students to upload.', 'warning');
+        return;
+    }
+    if (!await showConfirm(`Upload ${bulkValidStudents.length} students to the database?`)) return;
+
+    showToast('Uploading and creating accounts... please wait.', 'info');
+    try {
+        const data = await apiFetch('/admin/students/bulk-upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ students: bulkValidStudents })
+        });
+        showToast(data.message, 'success');
+        resetBulkUpload();
+        window.location.hash = '#students';
+        loadStudents();
+        loadDashboardStats();
+    } catch (error) {
+        showToast('Bulk upload failed: ' + error.message, 'error');
+    }
+}
+
+
 async function loadStudents() {
     const list = document.getElementById('studentsList');
     list.innerHTML = 'Loading students...';
@@ -191,7 +465,26 @@ function renderStudents() {
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <img src="${student.ProfilePictureURL || '/img/default-avatar.png'}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--card-border); ${student.ProfilePictureURL ? 'cursor: pointer;' : ''}" ${student.ProfilePictureURL ? `onclick="window.open('${student.ProfilePictureURL}', '_blank')"` : ''} title="View Profile Picture">
                     <div>
-                        <strong style="font-size: 1.15em; color: var(--primary-color); display: block; line-height: 1.2;">${student.FullName || student.FirstName + ' ' + (student.LastName || '')}</strong>
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+
+                            <strong style="font-size:1.15em; color:var(--primary-color); line-height:1.2;">
+                            ${student.FullName || student.FirstName + ' ' + (student.LastName || '')}
+                            </strong>
+
+                            <span style="font-size:0.85em; color:var(--text-secondary);">
+                            <i class="fa-solid fa-cake-candles"></i> 
+                            ${student.DOB 
+                            ? new Date(student.DOB)
+                            .toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                            })
+                            .replace(/ /g,'-')
+                            : 'N/A'}
+                            </span>
+
+                        </div>
                         <span style="font-size: 0.85em; color: var(--text-secondary);">ID: ${student.LibraryID || 'Not Assigned'}</span>
                     </div>
                 </div>
@@ -1153,12 +1446,28 @@ async function loadAnnouncements() {
         const data = await apiFetch('/announcements');
         if (data && data.length > 0) {
             list.innerHTML = data.map(ann => `
-                <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
+                <div style="border-bottom: 2px solid black; padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px;">
-                        <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);">${ann.Title}</div>
-                        <button onclick="deleteAnnouncement('${ann._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #ef4444; color: #ef4444; border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>
+                        <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);"><i class="fa-solid fa-tag"></i> ${ann.Title}</div>
+                        <button onclick="deleteAnnouncement('${ann._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #ef4444; color: #ef4444; border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> </button>
                     </div>
-                    <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 10px;">Posted ${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} at ${new Date(ann.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                    <div style="font-size:0.9em; color:var(--text-secondary); margin-bottom:10px; display:flex; align-items:center; gap:12px;">
+                        
+                        <span>
+                            <i class="fa-solid fa-calendar-days" style="margin-right:4px;"></i>
+                            ${new Date(ann.createdAt)
+                            .toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})
+                            .replace(/ /g,'-')}
+                        </span>
+
+                        <span>
+                            <i class="fa-solid fa-clock" style="margin-right:4px;"></i>
+                            ${new Date(ann.createdAt)
+                            .toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}
+                        </span>
+                        
+
+                    </div>
                     <div style="white-space: pre-wrap;">${ann.Message}</div>
                     ${ann.ImageURL ? `<div style="margin-top: 10px;"><img src="${ann.ImageURL}" style="max-width: 100%; max-height: 200px; border-radius: 8px; cursor: pointer; border: 1px solid var(--card-border);" onclick="openImageModal('${ann.ImageURL}')"></div>` : ''}
                 </div>

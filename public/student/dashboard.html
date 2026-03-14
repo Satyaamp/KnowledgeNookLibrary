@@ -154,11 +154,11 @@
                 <i class="fa-solid fa-book-open-reader"></i> <span class="logo-text">Knowledge Nook Library</span>
             </div>
             <ul class="dashboard-nav-links">
-                <li><a href="#home"><i class="fa-solid fa-bullhorn"></i> Notifications</a></li>
+                <li><a href="#home"><i class="fa-solid fa-bell"></i> Notifications</a></li>
                 <li><a href="#profile"><i class="fa-solid fa-id-card"></i> Profile</a></li>
                 <li><a href="#fees"><i class="fa-solid fa-indian-rupee-sign"></i> Fees</a></li>
                 <li><a href="#requests"><i class="fa-solid fa-clock-rotate-left"></i> My Requests</a></li>
-                <li><a href="#issues"><i class="fa-solid fa-triangle-exclamation"></i> Issues</a></li>
+                <li><a href="#issues"><i class="fa-solid fa-circle-exclamation"></i> Issues</a></li>
             </ul>
             <div class="nav-actions">
                 <button onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; margin-right: 15px; color: inherit;" title="Toggle Dark Mode">
@@ -233,7 +233,7 @@
             <div id="view-home" class="view-section">
                 <div class="card" id="announcementsSection">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="margin: 0;">Notifications</h3>
+                        <h3 style="margin: 0;"><i class="fa-solid fa-bell"></i> Notifications </h3>
                         <div style="display: flex; gap: 5px; background: var(--input-bg); padding: 4px; border-radius: 20px; border: 1px solid var(--card-border);">
                             <button id="tabBtnUnread" onclick="switchAnnouncementTab('unread')" class="btn" style="padding: 4px 12px; border-radius: 16px; font-size: 0.95em;">Unread</button>
                             <button id="tabBtnRead" onclick="switchAnnouncementTab('read')" class="btn-outline" style="padding: 4px 12px; border-radius: 16px; font-size: 0.95em; border: none; color: var(--text-secondary);">Read</button>
@@ -254,7 +254,7 @@
             <div id="view-profile" class="view-section" style="display: none;">
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3>My Profile</h3>
+                        <h3><i class="fa-solid fa-user-circle"></i> My Profile</h3>
                         <button onclick="showUpdateProfileModal()" class="btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.95em;"><i class="fa-solid fa-pen-to-square"></i> Request Update</button>
                     </div>
                     <div id="profileContent">Loading profile...</div>
@@ -267,7 +267,7 @@
                     <div class="grid-2 mt-2">
                         <div>
                             <div class="mobile-collapse-header" onclick="toggleMobileCollapse('feeFormContainer', this)">
-                                <h4>Upload Receipt</h4>
+                                <h4><i class="fa-solid fa-file-arrow-up"></i> Upload Receipt</h4>
                                 <i class="fa-solid fa-chevron-down desktop-hidden"></i>
                             </div>
                             <div id="feeFormContainer" class="mobile-collapse-content">
@@ -305,7 +305,7 @@
                         <div>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 0.5rem;">
                                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                    <h4 style="margin: 0;">Payment History</h4>
+                                    <h4 style="margin: 0;"><i class="fa-solid fa-receipt"></i> Payment History  </h4>
                                     <div style="display: inline-flex; align-items: center; gap: 5px;">
                                         <i class="fa-solid fa-filter" style="color: var(--primary-color); font-size: 0.9em;" title="Filter Fees"></i>
                                         <select id="studentFeeFilter" onchange="filterStudentFees()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); font-size: 0.85em; cursor: pointer; width: auto;">
@@ -331,7 +331,7 @@
                     <div class="grid-2 mt-2">
                         <div>
                             <div class="mobile-collapse-header" onclick="toggleMobileCollapse('issueFormContainer', this)">
-                                <h4>Report Issue</h4>
+                                <h4><i class="fa-solid fa-triangle-exclamation"></i> Report Issue</h4>
                                 <i class="fa-solid fa-chevron-down desktop-hidden"></i>
                             </div>
                             <div id="issueFormContainer" class="mobile-collapse-content">
@@ -356,7 +356,7 @@
                         <div>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 0.5rem;">
                                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                    <h4 style="margin: 0;">My Issues</h4>
+                                    <h4 style="margin: 0;"><i class="fa-solid fa-circle-exclamation"></i> My Issues </h4>
                                     <div style="display: inline-flex; align-items: center; gap: 5px;">
                                         <i class="fa-solid fa-filter" style="color: var(--primary-color); font-size: 0.9em;" title="Filter Issues"></i>
                                         <select id="studentIssueFilter" onchange="filterStudentIssues()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); font-size: 0.85em; cursor: pointer; width: auto;">
@@ -379,7 +379,7 @@
             <!-- My Requests History View -->
             <div id="view-requests" class="view-section" style="display: none;">
                 <div class="card">
-                    <h3>My Update Requests</h3>
+                    <h3><i class="fa-solid fa-paper-plane"></i> My Requests</h3>
                     <p style="color: var(--text-secondary); font-size: 1em; margin-bottom: 15px;">History of changes you requested for your profile.</p>
                     <div id="requestsActions" style="display: none; margin-bottom: 15px; align-items: center; gap: 15px; padding: 10px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px;">
                         <label style="display: flex; align-items: center; gap: 8px; font-size: 1em; cursor: pointer; font-weight: 500;"><input type="checkbox" id="selectAllRequests" onchange="toggleSelectAllRequests()"> Select All</label>
