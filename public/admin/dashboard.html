@@ -278,25 +278,44 @@
                                 <u><i class="fa-solid fa-magnifying-glass"></i> Quick Search</a></u>
                             </a>
                         </div><br>
-                        <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div class="form-group" style="margin-bottom: 15px;">
                             <input type="text" id="studentSearch"
                                 placeholder="Search by Name, Library ID, Contact, or Aadhar..."
-                                onkeyup="filterStudents()" style="padding: 10px; flex: 1; min-width: 200px;">
-                            <select id="filterStudentGender" onchange="filterStudents()"
-                                style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg);">
-                                <option value="">All Genders</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                                <option value="Not Specified">Not Specified</option>
-                            </select>
-                            <select id="filterStudentStatus" onchange="filterStudents()"
-                                style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg);">
-                                <option value="">All Statuses</option>
-                                <option value="Active">Active</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Inactive">Inactive</option>
-                            </select>
+                                onkeyup="filterStudents()" style="padding: 10px; width: 100%; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); box-sizing: border-box;">
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+                                <select id="filterStudentGender" onchange="filterStudents()"
+                                    style="padding: 10px; width: 100%; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); box-sizing: border-box;">
+                                    <option value="">All Genders</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                    <option value="Not Specified">Not Specified</option>
+                                </select>
+                                <select id="filterStudentBatch" onchange="filterStudents()"
+                                    style="padding: 10px; width: 100%; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); box-sizing: border-box;">
+                                    <option value="">All Batches</option>
+                                    <option value="Basic">Basic</option>
+                                    <option value="Fundamental">Fundamental</option>
+                                    <option value="Standard">Standard</option>
+                                    <option value="Officer's">Officer's</option>
+                                </select>
+                                <select id="filterStudentPlan" onchange="filterStudents()"
+                                    style="padding: 10px; width: 100%; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); box-sizing: border-box;">
+                                    <option value="">All Plans</option>
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Quarterly">Quarterly</option>
+                                    <option value="Half-Yearly">Half-Yearly</option>
+                                    <option value="Yearly">Yearly</option>
+                                </select>
+                                <select id="filterStudentStatus" onchange="filterStudents()"
+                                    style="padding: 10px; width: 100%; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); box-sizing: border-box;">
+                                    <option value="">All Statuses</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
                         </div>
                         <div id="studentsList">Loading...</div>
                         <div id="studentsPagination"

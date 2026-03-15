@@ -67,13 +67,13 @@ async function loadDashboardStats() {
         if (stats.distribution && stats.distribution.length > 0) {
             distContainer.innerHTML = stats.distribution.map(d => `
                 <div style="border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; background: var(--card-bg);">
-                    <div style="background: var(--bg-color); padding: 12px 15px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="background: var(--bg-color); padding: 12px 15px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s;" onclick="showStudentsByBatchPlan('${d.batch}', '')" onmouseover="this.style.background='var(--input-bg)'" onmouseout="this.style.background='var(--bg-color)'" title="View all ${d.batch} students">
                         <strong style="color: var(--primary-color); font-size: 1.05em;">${d.batch}</strong>
                         <span style="font-size: 0.8em; background: var(--primary-light); color: var(--primary-color); padding: 2px 8px; border-radius: 10px; font-weight: 600;">Total: ${d.total}</span>
                     </div>
                     <div style="padding: 12px 15px;">
                         ${d.plans.map(p => `
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--card-border);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--card-border); cursor: pointer; transition: transform 0.2s;" onclick="showStudentsByBatchPlan('${d.batch}', '${p.name}')" onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='none'" title="View ${d.batch} - ${p.name} students">
                                 <span style="font-size: 0.9em; color: var(--text-secondary);">${p.name}</span>
                                 <span style="font-weight: 600; font-size: 0.95em; ${p.count > 0 ? 'color: var(--success-color);' : 'color: var(--text-secondary);'}">${p.count}</span>
                             </div>
@@ -418,6 +418,8 @@ function filterStudents(immediate = false) {
     const query = searchInput ? searchInput.value.toLowerCase() : '';
     const statusFilter = document.getElementById('filterStudentStatus') ? document.getElementById('filterStudentStatus').value : '';
     const genderFilter = document.getElementById('filterStudentGender') ? document.getElementById('filterStudentGender').value : '';
+    const batchFilter = document.getElementById('filterStudentBatch') ? document.getElementById('filterStudentBatch').value : '';
+    const planFilter = document.getElementById('filterStudentPlan') ? document.getElementById('filterStudentPlan').value : '';
 
     if (searchTimeout) clearTimeout(searchTimeout);
 
@@ -432,8 +434,10 @@ function filterStudents(immediate = false) {
             const matchesQuery = name.includes(query) || contact.includes(query) || email.includes(query) || libId.includes(query) || aadhar.includes(query);
             const matchesStatus = statusFilter === '' || student.AccountStatus === statusFilter;
             const matchesGender = genderFilter === '' || (student.Gender || 'Not Specified') === genderFilter;
+            const matchesBatch = batchFilter === '' || student.batchType === batchFilter;
+            const matchesPlan = planFilter === '' || student.planDuration === planFilter;
 
-            return matchesQuery && matchesStatus && matchesGender;
+            return matchesQuery && matchesStatus && matchesGender && matchesBatch && matchesPlan;
         });
         currentStudentsPage = 1;
         renderStudents();
@@ -502,8 +506,12 @@ function showActiveStudents() {
     window.location.hash = '#students';
     const dropdown = document.getElementById('filterStudentStatus');
     const genderDropdown = document.getElementById('filterStudentGender');
+    const batchDropdown = document.getElementById('filterStudentBatch');
+    const planDropdown = document.getElementById('filterStudentPlan');
     if (dropdown) dropdown.value = 'Active';
     if (genderDropdown) genderDropdown.value = '';
+    if (batchDropdown) batchDropdown.value = '';
+    if (planDropdown) planDropdown.value = '';
     if (currentStudents.length > 0) {
         filterStudents(true);
     }
@@ -513,8 +521,12 @@ function showInactiveStudents() {
     window.location.hash = '#students';
     const dropdown = document.getElementById('filterStudentStatus');
     const genderDropdown = document.getElementById('filterStudentGender');
+    const batchDropdown = document.getElementById('filterStudentBatch');
+    const planDropdown = document.getElementById('filterStudentPlan');
     if (dropdown) dropdown.value = 'Inactive';
     if (genderDropdown) genderDropdown.value = '';
+    if (batchDropdown) batchDropdown.value = '';
+    if (planDropdown) planDropdown.value = '';
     if (currentStudents.length > 0) {
         filterStudents(true);
     }
@@ -524,8 +536,12 @@ function showAllStudents() {
     window.location.hash = '#students';
     const dropdown = document.getElementById('filterStudentStatus');
     const genderDropdown = document.getElementById('filterStudentGender');
+    const batchDropdown = document.getElementById('filterStudentBatch');
+    const planDropdown = document.getElementById('filterStudentPlan');
     if (dropdown) dropdown.value = '';
     if (genderDropdown) genderDropdown.value = '';
+    if (batchDropdown) batchDropdown.value = '';
+    if (planDropdown) planDropdown.value = '';
     if (currentStudents.length > 0) {
         filterStudents(true);
     }
@@ -535,8 +551,12 @@ function showPendingApprovals() {
     window.location.hash = '#students';
     const dropdown = document.getElementById('filterStudentStatus');
     const genderDropdown = document.getElementById('filterStudentGender');
+    const batchDropdown = document.getElementById('filterStudentBatch');
+    const planDropdown = document.getElementById('filterStudentPlan');
     if (dropdown) dropdown.value = 'Pending';
     if (genderDropdown) genderDropdown.value = '';
+    if (batchDropdown) batchDropdown.value = '';
+    if (planDropdown) planDropdown.value = '';
     if (currentStudents.length > 0) {
         filterStudents(true);
     }
@@ -546,9 +566,30 @@ function showStudentsByGender(gender) {
     window.location.hash = '#students';
     const statusDropdown = document.getElementById('filterStudentStatus');
     const genderDropdown = document.getElementById('filterStudentGender');
+    const batchDropdown = document.getElementById('filterStudentBatch');
+    const planDropdown = document.getElementById('filterStudentPlan');
     
     if (statusDropdown) statusDropdown.value = 'Active'; // Stats only count active students
     if (genderDropdown) genderDropdown.value = gender;
+    if (batchDropdown) batchDropdown.value = '';
+    if (planDropdown) planDropdown.value = '';
+    
+    if (currentStudents.length > 0) {
+        filterStudents(true);
+    }
+}
+
+function showStudentsByBatchPlan(batch, plan) {
+    window.location.hash = '#students';
+    const statusDropdown = document.getElementById('filterStudentStatus');
+    const genderDropdown = document.getElementById('filterStudentGender');
+    const batchDropdown = document.getElementById('filterStudentBatch');
+    const planDropdown = document.getElementById('filterStudentPlan');
+    
+    if (statusDropdown) statusDropdown.value = 'Active'; // Stats only count active students
+    if (genderDropdown) genderDropdown.value = '';
+    if (batchDropdown) batchDropdown.value = batch;
+    if (planDropdown) planDropdown.value = plan;
     
     if (currentStudents.length > 0) {
         filterStudents(true);
