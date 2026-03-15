@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (profile.JoiningDate) {
             document.getElementById('studentJoinDate').innerHTML = `
             <i class="fa-solid fa-calendar-days" style="margin-right: 5px;"></i> 
-            ${new Date(profile.JoiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}`;
+            ${new Date(profile.JoiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-')}`;
         }
 
         // Save name to localStorage for future use (e.g., if profile fetch fails next time)
@@ -166,9 +166,37 @@ function validateFeeForm() {
     const feeMonth = document.getElementById('feeMonth');
     const feeReceipt = document.getElementById('feeReceipt');
     const feeSubmitBtn = document.getElementById('feeSubmitBtn');
+    const feeMsg = document.getElementById('feeMsg');
 
     if (feeMonth && feeReceipt && feeSubmitBtn) {
-        if (feeMonth.value.trim() !== '' && feeReceipt.files.length > 0) {
+        const rawMonth = feeMonth.value;
+        let enteredMonth = '';
+        if (rawMonth) {
+            const [y, m] = rawMonth.split('-');
+            const date = new Date(y, m - 1);
+            enteredMonth = date.toLocaleString('en-US', { month: 'long', year: 'numeric' }).toLowerCase();
+        }
+        let isDuplicate = false;
+
+        // Dynamic validation against history
+        if (enteredMonth && currentFees) {
+            const existing = currentFees.find(f => f.Month.toLowerCase() === enteredMonth);
+            if (existing) {
+                if (existing.Status === 'Paid' || existing.Status === 'Approved') {
+                    if (feeMsg) { feeMsg.innerHTML = `<div style="padding: 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success-color); color: var(--success-color); font-weight: 500;"><i class="fa-solid fa-circle-check"></i> Fee for <strong>${existing.Month}</strong> is already Paid.</div>`; }
+                    isDuplicate = true;
+                } else if (existing.Status === 'Pending') {
+                    if (feeMsg) { feeMsg.innerHTML = `<div style="padding: 10px; border-radius: 6px; background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning-color); color: var(--warning-color); font-weight: 500;"><i class="fa-solid fa-clock"></i> Receipt for <strong>${existing.Month}</strong> is currently under review.</div>`; }
+                    isDuplicate = true;
+                } else if (feeMsg && (feeMsg.innerHTML.includes('already Paid') || feeMsg.innerHTML.includes('under review'))) {
+                    feeMsg.innerHTML = ''; // Clear message because it's 'Rejected', so they CAN re-upload
+                }
+            } else if (feeMsg && (feeMsg.innerHTML.includes('already Paid') || feeMsg.innerHTML.includes('under review'))) {
+                feeMsg.innerHTML = ''; // Clear message
+            }
+        }
+
+        if (rawMonth !== '' && feeReceipt.files.length > 0 && !isDuplicate) {
             feeSubmitBtn.disabled = false;
             feeSubmitBtn.style.opacity = '1';
             feeSubmitBtn.style.cursor = 'pointer';
@@ -277,7 +305,7 @@ async function loadProfile() {
                         ? new Date(data.DOB)
                             .toLocaleDateString('en-GB',{
                                 day:'2-digit',
-                                month:'short',
+                                month:'long',
                                 year:'numeric'
                             })
                             .replace(/ /g,'-')
@@ -382,7 +410,7 @@ async function loadProfileRequestStatus() {
                                 You requested to update: <strong>${request.ProposedData ? Object.keys(request.ProposedData).join(', ') : ''}</strong>
                             </div>
                         </div>
-                        <span style="font-size: 0.9em; color: var(--text-secondary);">${new Date(request.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</span>
+                        <span style="font-size: 0.9em; color: var(--text-secondary);">${new Date(request.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-')}</span>
                     </div>`;
             } else if (request.Status === 'Approved') {
                 bannerHTML = `
@@ -482,7 +510,7 @@ function renderStudentFees() {
 
                     <div style="font-size: 0.95em; color: var(--text-secondary); margin-top: 4px;">
                     
-                    ${new Date(fee.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
+                    ${new Date(fee.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-')}
                     </div>
 
                     ${fee.Status === 'Rejected' && fee.AdminNote ? `
@@ -662,7 +690,7 @@ function renderStudentIssues() {
 
         <span style="font-size:0.85em; color:var(--text-secondary);">
         ${new Date(issue.createdAt)
-            .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            .toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
             .replace(/ /g, '-')}
         </span>
 
@@ -781,7 +809,7 @@ window.openIssueModal = function(id) {
     if (!issue) return;
 
     document.getElementById('issueModalTitle').textContent = issue.IssueTitle;
-    document.getElementById('issueModalDate').textContent = new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-') + ' | ' + new Date(issue.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    document.getElementById('issueModalDate').textContent = new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-') + ' | ' + new Date(issue.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     
     const statusEl = document.getElementById('issueModalStatus');
     statusEl.textContent = issue.Status;
@@ -847,7 +875,7 @@ async function loadRequestsHistory() {
                         </div>
                         <div style="display:flex; align-items:center; gap:10px;">
                             <span style="font-size: 0.9em; color: var(--text-secondary);">
-                                ${new Date(req.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
+                                ${new Date(req.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-')}
                             </span>
                         </div>
                     </div>
@@ -994,7 +1022,7 @@ async function handleProfileUpdateSubmit(e) {
 
     btn.disabled = true;
     btn.textContent = 'Submitting...';
-    msg.textContent = '';
+    msg.innerHTML = '';
 
     const updatedData = {
         Email: document.getElementById('updateEmail').value,
@@ -1011,8 +1039,7 @@ async function handleProfileUpdateSubmit(e) {
     }
 
     if (Object.keys(proposedData).length === 0) {
-        msg.style.color = 'var(--text-secondary)';
-        msg.textContent = 'No changes were made.';
+        msg.innerHTML = `<div style="padding: 10px; border-radius: 6px; background: rgba(107, 114, 128, 0.1); border: 1px solid var(--text-secondary); color: var(--text-secondary); font-weight: 500;"><i class="fa-solid fa-circle-info"></i> No changes were made.</div>`;
         btn.disabled = false;
         btn.textContent = 'Submit Request';
         return;
@@ -1023,15 +1050,13 @@ async function handleProfileUpdateSubmit(e) {
             method: 'POST',
             body: JSON.stringify(proposedData)
         });
-        msg.style.color = 'var(--success-color)';
-        msg.textContent = 'Update request submitted successfully!';
+        msg.innerHTML = `<div style="padding: 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success-color); color: var(--success-color); font-weight: 500;"><i class="fa-solid fa-circle-check"></i> Update request submitted successfully!</div>`;
         setTimeout(() => {
             closeProfileUpdateModal();
             loadProfileRequestStatus(); // Refresh status
         }, 2000);
     } catch (error) {
-        msg.style.color = 'var(--error-color)';
-        msg.textContent = error.message;
+        msg.innerHTML = `<div style="padding: 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error-color); color: var(--error-color); font-weight: 500;"><i class="fa-solid fa-circle-exclamation"></i> ${error.message}</div>`;
     } finally {
         btn.disabled = false;
         btn.textContent = 'Submit Request';
@@ -1050,10 +1075,15 @@ async function handleFeeSubmit(e) {
 
     btn.disabled = true;
     btn.textContent = 'Uploading...';
-    msg.textContent = '';
+    msg.innerHTML = '';
+
+    const rawMonth = document.getElementById('feeMonth').value;
+    const [y, m] = rawMonth.split('-');
+    const date = new Date(y, m - 1);
+    const formattedMonth = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
 
     const formData = new FormData();
-    formData.append('Month', document.getElementById('feeMonth').value);
+    formData.append('Month', formattedMonth);
     formData.append('Amount', document.getElementById('feeAmount').value);
     formData.append('Batch', document.getElementById('feeBatch').value);
     formData.append('receipt', document.getElementById('feeReceipt').files[0]);
@@ -1063,8 +1093,7 @@ async function handleFeeSubmit(e) {
             method: 'POST',
             body: formData
         });
-        msg.style.color = 'green';
-        msg.textContent = 'Receipt uploaded successfully!';
+        msg.innerHTML = `<div style="padding: 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success-color); color: var(--success-color); font-weight: 500;"><i class="fa-solid fa-circle-check"></i> Receipt uploaded successfully!</div>`;
         document.getElementById('feeMonth').value = '';
         // document.getElementById('feeAmount').value = ''; // Keep amount fixed
         document.getElementById('feeReceipt').value = '';
@@ -1072,8 +1101,7 @@ async function handleFeeSubmit(e) {
         loadFees(true); // Force fetch and refresh list
         validateFeeForm(); // Reset button state
     } catch (error) {
-        msg.style.color = 'red';
-        msg.textContent = error.message;
+        msg.innerHTML = `<div style="padding: 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error-color); color: var(--error-color); font-weight: 500;"><i class="fa-solid fa-circle-exclamation"></i> ${error.message}</div>`;
     } finally {
         btn.disabled = false;
         btn.textContent = 'Upload Receipt';
@@ -1082,7 +1110,12 @@ async function handleFeeSubmit(e) {
 
 window.prepareReupload = function(month) {
     const feeMonthInput = document.getElementById('feeMonth');
-    if (feeMonthInput) feeMonthInput.value = month;
+    if (feeMonthInput) {
+        const date = new Date(month);
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        feeMonthInput.value = `${y}-${m}`;
+    }
     
     if (window.innerWidth <= 768) {
         const container = document.getElementById('feeFormContainer');
@@ -1113,7 +1146,7 @@ async function handleIssueSubmit(e) {
 
     btn.disabled = true;
     btn.textContent = 'Submitting...';
-    msg.textContent = '';
+    msg.innerHTML = '';
 
     const payload = {
         IssueTitle: document.getElementById('issueTitle').value,
@@ -1125,14 +1158,12 @@ async function handleIssueSubmit(e) {
             method: 'POST',
             body: JSON.stringify(payload)
         });
-        msg.style.color = 'green';
-        msg.textContent = 'Issue reported successfully!';
+        msg.innerHTML = `<div style="padding: 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success-color); color: var(--success-color); font-weight: 500;"><i class="fa-solid fa-circle-check"></i> Issue reported successfully!</div>`;
         document.getElementById('issueForm').reset();
         loadIssues(true); // Force fetch new issue and reset pagination
         validateIssueForm(); // Reset button state
     } catch (error) {
-        msg.style.color = 'red';
-        msg.textContent = error.message;
+        msg.innerHTML = `<div style="padding: 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error-color); color: var(--error-color); font-weight: 500;"><i class="fa-solid fa-circle-exclamation"></i> ${error.message}</div>`;
     } finally {
         btn.disabled = false;
         btn.textContent = 'Submit Issue';
@@ -1255,7 +1286,7 @@ function renderAnnList(listId, paginationId, items, page, isUnread) {
                 <strong style="font-size: 1.15em; display:block; margin-bottom:4px;">${ann.Title}</strong>
                 <p style="margin: 0 0 5px 0; color: var(--text-secondary); font-size: 1em; white-space: pre-wrap;">${shortMsg}</p>
                 <span style="font-size: 0.9em; color: #9CA3AF;">
-                    ${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} <span style="margin:0 5px; opacity:0.6">|</span> ${new Date(ann.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                    ${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-')} <span style="margin:0 5px; opacity:0.6">|</span> ${new Date(ann.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                 </span>
                 ${ann.ImageURL ? `<span style="margin-left: 10px; font-size: 0.85em; color: var(--primary-color);"><i class="fa-solid fa-image"></i> Attachment</span>` : ''}
             </div>
@@ -1309,7 +1340,7 @@ window.openAnnouncementModal = function(id) {
     if (!ann) return;
 
     document.getElementById('annModalTitle').textContent = ann.Title;
-    document.getElementById('annModalDate').textContent = `${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} | ${new Date(ann.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+    document.getElementById('annModalDate').textContent = `${new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-')} | ${new Date(ann.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
     document.getElementById('annModalMessage').textContent = ann.Message;
     
     const imgContainer = document.getElementById('annModalImageContainer');
@@ -1699,7 +1730,7 @@ function renderMsgList(listId, paginationId, items, page, isUnread) {
             ">
                 ${new Date(n.createdAt).toLocaleDateString('en-GB',{
                     day:'2-digit',
-                    month:'short',
+                    month:'long',
                     year:'numeric'
                 })}
                 •
@@ -1879,6 +1910,3 @@ async function subscribeToPushNotifications() {
         }
     }
 }
-
-
-

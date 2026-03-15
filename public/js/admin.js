@@ -621,7 +621,7 @@ function renderStudents() {
                                     ? new Date(student.DOB)
                                     .toLocaleDateString('en-GB', {
                                         day: '2-digit',
-                                        month: 'short',
+                                        month: 'long',
                                         year: 'numeric'
                                     })
                                     .replace(/ /g,'-')
@@ -878,7 +878,7 @@ function renderInterestedStudents() {
                             <span style="font-size: 0.85em; margin-left: 10px; padding: 3px 8px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${student.Status === 'Reviewed' ? 'var(--success-color)' : 'var(--warning-color)'}; font-weight: 600;">${student.Status}</span>
                         </div>
                         <div style="font-size: 0.85em; color: var(--text-light);">
-                            ${new Date(student.SubmittedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
+                            ${new Date(student.SubmittedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-')}
                         </div>
                     </div>
                     <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 8px;">
@@ -1291,7 +1291,7 @@ async function viewNotificationHistory(id) {
                 <div style="padding: 15px; border: 1px solid var(--card-border); margin-bottom: 10px; border-radius: 8px; background: var(--bg-color); border-left: 4px solid var(--primary-color);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                         <strong style="color: var(--primary-color); font-size: 1.05em;">${n.Title}</strong>
-                        <span style="font-size: 0.85em; color: var(--text-secondary);">${new Date(n.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                        <span style="font-size: 0.85em; color: var(--text-secondary);">${new Date(n.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                     </div>
                     <div style="font-size: 0.95em; color: var(--text-primary); margin-bottom: 8px;">${n.Message}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1436,7 +1436,7 @@ function renderFees() {
                         </div>
                     </div>
                     <div style="font-size: 0.95em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 15px; padding-top: 10px; border-top: 1px solid var(--card-border);">
-                        <div><strong>Month:</strong> ${fee.Month || 'N/A'}</div>
+                        <div><strong>Month:</strong> ${(fee.Month || 'N/A').charAt(0).toUpperCase() + (fee.Month || '').slice(1)}</div>
                         <div><strong>Batch:</strong> ${
                             fee.Batch || 
                             (fee.StudentId 
@@ -1803,7 +1803,7 @@ function renderAnnouncementsAdmin() {
                         <span>
                             <i class="fa-solid fa-calendar-days" style="margin-right:4px;"></i>
                             ${new Date(ann.createdAt)
-                            .toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})
+                            .toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})
                             .replace(/ /g,'-')}
                         </span>
 
@@ -2120,7 +2120,7 @@ function renderIssues() {
                         <div>
                             <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);">${issue.IssueTitle}</div>
                             <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px; display: flex; gap: 10px; flex-wrap: wrap;"><span><i class="fa-solid fa-user"></i> ${issue.StudentId ? `${issue.StudentId.FullName} (ID: ${issue.StudentId.LibraryID || 'N/A'})` : 'Unknown'}</span> <span><i class="fa-solid fa-phone"></i> ${issue.StudentId ? issue.StudentId.Contact : 'N/A'}</span> <span><i class="fa-solid fa-chair"></i> Seat: ${issue.StudentId ? issue.StudentId.SeatNo : 'N/A'}</span></div>
-                            <div style="font-size: 0.85em; color: var(--text-secondary);">${new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} <span style="margin:0 5px; opacity:0.6">|</span> ${new Date(issue.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                            <div style="font-size: 0.85em; color: var(--text-secondary);">${new Date(issue.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-')} <span style="margin:0 5px; opacity:0.6">|</span> ${new Date(issue.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${issue.Status === 'Resolved' ? 'var(--success-color)' : (issue.Status === 'Pending' ? 'var(--error-color)' : 'var(--warning-color)')}; font-weight: 600;">
@@ -2437,7 +2437,7 @@ function renderPaymentHistory() {
         // Format digital signature timestamp to IST
         const verifiedDate = new Date(fee.updatedAt).toLocaleString('en-IN', {
             timeZone: 'Asia/Kolkata',
-            day: '2-digit', month: 'short', year: 'numeric',
+            day: '2-digit', month: 'long', year: 'numeric',
             hour: '2-digit', minute: '2-digit', hour12: true
         });
 

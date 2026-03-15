@@ -27,14 +27,27 @@ const uploadFee = async (req, res) => {
             return res.status(403).json({ message: 'Account is inactive. You cannot perform this action.' });
         }
 
-        // Check if a Pending or Rejected fee already exists for this month
-        let fee = await Fee.findOne({ 
-            StudentId: req.user.id, 
-            Month: Month, 
-            Status: { $in: ['Pending', 'Rejected'] } 
+        // Format month strictly to ensure we catch variations like "march 2025" vs "March 2025"
+        const formattedMonth = Month.trim().replace(/\s+/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedMonth = escapeRegExp(formattedMonth);
+
+        // Check if ANY fee already exists for this month
+        let fee = await Fee.findOne({
+            StudentId: req.user.id,
+            Month: { $regex: new RegExp(`^${escapedMonth}$`, 'i') }
         });
 
         if (fee) {
+            // Prevent re-uploading if it's already Paid or Pending
+            if (fee.Status === 'Paid' || fee.Status === 'Approved') {
+                return res.status(400).json({ message: `Fee for ${formattedMonth} has already been marked as Paid.` });
+            }
+            if (fee.Status === 'Pending') {
+                return res.status(400).json({ message: `Receipt for ${formattedMonth} is already under review. Please wait for admin action.` });
+            }
+
+            // If it is 'Rejected', proceed with overwriting the image and marking it 'Pending' again
             // Delete old image from Cloudinary if it exists
             if (fee.ProofImageURL) {
                 try {
@@ -61,7 +74,7 @@ const uploadFee = async (req, res) => {
             fee = await Fee.create({
                 StudentId: req.user.id,
                 LibraryID: student ? student.LibraryID : undefined,
-                Month,
+                Month: formattedMonth,
                 Amount,
                 Batch,
                 ProofImageURL: result.secure_url,
