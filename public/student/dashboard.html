@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -156,7 +155,7 @@
             <ul class="dashboard-nav-links">
                 <li>
                     <a href="#home" style="display: flex; align-items: center; gap: 5px;">
-                        <i class="fa-solid fa-bullhorn"></i> Announcements
+                        <i class="fa-solid fa-bullhorn"></i> Notifications
                         <span class="announcement-badge" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span>
                     </a>
                 </li>
@@ -212,16 +211,23 @@
                 <li><a href="#issues" onclick="closeSidebar()"><i class="fa-solid fa-triangle-exclamation"></i> Issues</a></li>
             </ul>
         </div>
+        
+        <!-- Main Content -->
         <div class="main-content">
+
             <div class="navbar" style="align-items: flex-end;">
+
+                <!-- Student welcome section with plan, ID and join date -->
                 <h1 style="margin: 0;">Welcome, <span id="studentName"></span></h1>
                 <div style="font-size: 1em; color: #6B7280; font-weight: 500; padding-bottom: 5px;">
                     <span id="studentPlan" style="margin-right: 15px;"></span>
                     <span id="studentLibraryID" style="margin-right: 15px;"></span>
                     <span id="studentJoinDate"></span>
                 </div>
+
             </div>
 
+            <!-- Account status banners (inactive, pending approval, password update) -->
             <div id="bannerWrapper" style="position: relative; display: none; margin-bottom: 20px;">
                 <button onclick="navigateBanners(-1)" id="btnBannerPrev" style="position: absolute; left: -15px; top: 50%; transform: translateY(-50%); z-index: 10; width: 30px; height: 30px; border-radius: 50%; background: white; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; display: none; align-items: center; justify-content: center;">
                     <i class="fa-solid fa-chevron-left"></i>
@@ -257,11 +263,59 @@
             <div id="view-home" class="view-section">
                 <div class="card" id="announcementsSection">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="margin: 0;"><i class="fa-solid fa-bell"></i> Notifications </h3>
-                        <div style="display: flex; gap: 5px; background: var(--input-bg); padding: 4px; border-radius: 20px; border: 1px solid var(--card-border);">
-                            <button id="tabBtnUnread" onclick="switchAnnouncementTab('unread')" class="btn" style="padding: 4px 12px; border-radius: 16px; font-size: 0.95em;">Unread</button>
-                            <button id="tabBtnRead" onclick="switchAnnouncementTab('read')" class="btn-outline" style="padding: 4px 12px; border-radius: 16px; font-size: 0.95em; border: none; color: var(--text-secondary);">Read</button>
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                    
+                        <h3 style="margin:0; display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-bell" style="color:var(--primary-color);"></i>
+                            Notifications
+                        </h3>
+                    
+                        <div style="
+                                            display:flex;
+                                            gap:4px;
+                                            background:var(--input-bg);
+                                            padding:3px;
+                                            border-radius:20px;
+                                            border:1px solid var(--card-border);
+                                            flex-shrink:0;
+                                            ">
+                    
+                            <button id="tabBtnUnread" onclick="switchAnnouncementTab('unread')" class="btn" style="
+                                            padding:4px 10px;
+                                            border-radius:16px;
+                                            font-size:0.9em;
+                                            display:flex;
+                                            align-items:center;
+                                            gap:4px;
+                                            white-space:nowrap;
+                                            ">
+                    
+                                <i class="fa-solid fa-envelope" style="font-size:0.85em;"></i>
+                                Unread
+                    
+                            </button>
+                    
+                            <button id="tabBtnRead" onclick="switchAnnouncementTab('read')" class="btn-outline" style="
+                                            padding:4px 10px;
+                                            border-radius:16px;
+                                            font-size:0.9em;
+                                            border:none;
+                                            color:var(--text-secondary);
+                                            display:flex;
+                                            align-items:center;
+                                            gap:4px;
+                                            white-space:nowrap;
+                                            ">
+                    
+                                <i class="fa-solid fa-envelope-open" style="font-size:0.85em;"></i>
+                                Read
+                    
+                            </button>
+                    
                         </div>
+                    
+                    </div>
                     </div>
                     <!-- Notifications / Messages View -->
 
@@ -277,16 +331,37 @@
                 </div>
             </div>
 
-            <!-- Admin Messages / Notifications View -->
+            <!-- Admin Messages View -->
             <div id="view-notifications" class="view-section" style="display: none;">
                 <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="margin: 0;"><i class="fa-solid fa-envelope" style="color: var(--primary-color); margin-right: 8px;"></i> Admin Messages</h3>
-                        <!-- Mark all read at once -->
-                        <!-- <button onclick="markAllNotificationsRead()" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-check-double"></i> Mark All Read</button> -->
+
+                    <!-- Admin Message Header -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                        <h3 style="margin:0; display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-envelope" style="color:var(--primary-color);"></i>
+                            Admin Messages
+                        </h3>
+                        <div style="display:flex; gap:4px; background:var(--input-bg); padding:3px; border-radius:20px; border:1px solid var(--card-border); flex-shrink:0;">
+                            <button id="msgTabBtnUnread" onclick="switchMessageTab('unread')" class="btn" style="padding:4px 10px; border-radius:16px; font-size:0.9em; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+                                <i class="fa-solid fa-envelope" style="font-size:0.85em;"></i> Unread
+                            </button>
+                            <button id="msgTabBtnRead" onclick="switchMessageTab('read')" class="btn-outline" style="padding:4px 10px; border-radius:16px; font-size:0.9em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:4px; white-space:nowrap;">
+                                <i class="fa-solid fa-envelope-open" style="font-size:0.85em;"></i> Read
+                            </button>
+                        </div>
                     </div>
-                    <div id="notificationsList">Loading...</div>
-                    <div id="notificationsPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
+
+                    <!-- Unread Message List -->
+                    <div id="msgTabUnreadContent">
+                        <div id="messagesListUnread">Loading...</div>
+                        <div id="messagesPaginationUnread" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
+                    </div>
+
+                    <!-- Read Message List -->
+                    <div id="msgTabReadContent" style="display: none;">
+                        <div id="messagesListRead">Loading...</div>
+                        <div id="messagesPaginationRead" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -532,6 +607,7 @@
     <script src="/js/api.js"></script>
     <script src="/js/student.js"></script>
 
+
     <!-- Mobile Bottom Nav: injected by JS only on small screens -->
     <script>
     (function () {
@@ -589,6 +665,8 @@
       };
     })();
     </script>
+
+    <!-- PWA install prompt handling and service worker registration -->
     <script>
         let deferredPrompt;
         const pwaPopup = document.getElementById('pwaInstallPopup');

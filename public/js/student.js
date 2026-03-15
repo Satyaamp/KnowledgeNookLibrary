@@ -1148,7 +1148,7 @@ function closeSidebar() {
         overlay.classList.remove('active');
     }
 }
-
+// Notifications by Admin
 let allAnnouncements = [];
 let unreadAnnouncements = [];
 let readAnnouncements = [];
@@ -1569,114 +1569,235 @@ async function fetchNotificationCount() {
     }
 }
 
-let currentNotifications = [];
-let notificationsCurrentPage = 1;
-const NOTIFICATIONS_PER_PAGE = 3;
+
+// Admin Message
+let allMessages = [];
+let unreadMessages = [];
+let readMessages = [];
+let currentMsgTab = 'unread';
+let msgUnreadPage = 1;
+let msgReadPage = 1;
+const MESSAGES_PER_PAGE = 5;
 
 async function loadNotifications() {
-    const list = document.getElementById('notificationsList');
-    const paginationContainer = document.getElementById('notificationsPagination');
-    if (!list) return;
-    list.innerHTML = 'Loading messages...';
-    if (paginationContainer) paginationContainer.innerHTML = '';
     try {
         const notifications = await apiFetch('/students/notifications');
-        if (notifications && notifications.length > 0) {
-            currentNotifications = notifications;
-            notificationsCurrentPage = 1;
-            renderNotifications();
-        } else {
-            list.innerHTML = '<p style="color: var(--text-secondary);">No messages from Admin.</p>';
+        if (notifications) {
+            allMessages = notifications;
+            processMessages();
         }
     } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        const list = document.getElementById('messagesListUnread');
+        if (list) list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
     }
 }
 
-function renderNotifications() {
-    const list = document.getElementById('notificationsList');
-    const paginationContainer = document.getElementById('notificationsPagination');
+function processMessages() {
+    unreadMessages = allMessages.filter(n => !n.IsRead);
+    readMessages = allMessages.filter(n => n.IsRead);
 
-    const startIndex = (notificationsCurrentPage - 1) * NOTIFICATIONS_PER_PAGE;
-    const endIndex = startIndex + NOTIFICATIONS_PER_PAGE;
-    const msgsToShow = currentNotifications.slice(startIndex, endIndex);
+    const unreadCount = unreadMessages.length;
+    const badges = document.querySelectorAll('.notification-badge');
+    badges.forEach(badge => {
+        badge.textContent = unreadCount;
+        badge.style.display = unreadCount > 0 ? 'inline-flex' : 'none';
+    });
 
-    list.innerHTML = msgsToShow.map(n => `
-        <div style="border-left: 4px solid ${n.IsRead ? 'transparent' : 'var(--primary-color)'}; padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg); border-top: 1px solid var(--card-border); border-right: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border);">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
-                <strong style="${n.IsRead ? 'color: var(--text-primary);' : 'color: var(--primary-color);'}"><i class="fa-solid fa-envelope" style="margin-right:5px;"></i> ${n.Title}</strong>
-                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-                    <span style="font-size:0.85em; color:var(--text-secondary);">${new Date(n.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} | ${new Date(n.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
-                    <div style="display: flex; gap: 5px;">
-                        ${!n.IsRead ? `<button onclick="markNotificationRead('${n._id}')" class="btn-outline" style="padding: 2px 8px; font-size: 0.8em; border-radius: 4px; color: var(--success-color); border-color: var(--success-color);"><i class="fa-solid fa-check"></i> Mark Read</button>` : ''}
-                        <button onclick="deleteAdminMessage('${n._id}')" class="btn-outline" style="padding: 2px 8px; font-size: 0.8em; border-radius: 4px; color: var(--error-color); border-color: var(--error-color);"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div>
-            </div>
-            <div style="font-size:0.95em; color:var(--text-secondary); white-space:pre-wrap; word-break: break-word;">${n.Message}</div>
+    renderMessageTab();
+}
+
+window.switchMessageTab = function(tab) {
+    currentMsgTab = tab;
+    
+    const btnUnread = document.getElementById('msgTabBtnUnread');
+    const btnRead = document.getElementById('msgTabBtnRead');
+    
+    if (tab === 'unread') {
+        btnUnread.className = 'btn';
+        btnUnread.style.cssText = 'padding: 4px 10px; border-radius: 16px; font-size: 0.9em; display:flex; align-items:center; gap:4px; white-space:nowrap;';
+        btnRead.className = 'btn-outline';
+        btnRead.style.cssText = 'padding: 4px 10px; border-radius: 16px; font-size: 0.9em; border: none; color: var(--text-secondary); display:flex; align-items:center; gap:4px; white-space:nowrap;';
+        
+        document.getElementById('msgTabUnreadContent').style.display = 'block';
+        document.getElementById('msgTabReadContent').style.display = 'none';
+    } else {
+        btnRead.className = 'btn';
+        btnRead.style.cssText = 'padding: 4px 10px; border-radius: 16px; font-size: 0.9em; display:flex; align-items:center; gap:4px; white-space:nowrap;';
+        btnUnread.className = 'btn-outline';
+        btnUnread.style.cssText = 'padding: 4px 10px; border-radius: 16px; font-size: 0.9em; border: none; color: var(--text-secondary); display:flex; align-items:center; gap:4px; white-space:nowrap;';
+        
+        document.getElementById('msgTabUnreadContent').style.display = 'none';
+        document.getElementById('msgTabReadContent').style.display = 'block';
+    }
+    renderMessageTab();
+}
+
+function renderMessageTab() {
+    if (currentMsgTab === 'unread') {
+        renderMsgList('messagesListUnread', 'messagesPaginationUnread', unreadMessages, msgUnreadPage, true);
+    } else {
+        renderMsgList('messagesListRead', 'messagesPaginationRead', readMessages, msgReadPage, false);
+    }
+}
+// Render personalized notifications sent by the admin to individual students
+function renderMsgList(listId, paginationId, items, page, isUnread) {
+    const list = document.getElementById(listId);
+    const pagination = document.getElementById(paginationId);
+
+    if (!items || items.length === 0) {
+        list.innerHTML = `<p style="color: var(--text-secondary); padding: 10px; text-align:center;">No ${isUnread ? 'unread' : 'read'} messages.</p>`;
+        pagination.innerHTML = '';
+        return;
+    }
+
+    const start = (page - 1) * MESSAGES_PER_PAGE;
+    const paginatedItems = items.slice(start, start + MESSAGES_PER_PAGE);
+
+    list.innerHTML = paginatedItems.map(n => `
+    <div style="
+        border-left:4px solid ${n.IsRead ? 'transparent' : 'var(--primary-color)'};
+        padding:15px;
+        margin-bottom:12px;
+        border-radius:8px;
+        background:var(--input-bg);
+        border:1px solid var(--card-border);
+    ">
+
+        <!-- TITLE -->
+        <div style="
+            font-weight:600;
+            margin-bottom:6px;
+            ${n.IsRead ? 'color:var(--text-primary)' : 'color:var(--primary-color)'}
+        ">
+            <i class="fa-solid ${n.IsRead ? 'fa-envelope-open' : 'fa-envelope'}" style="margin-right:6px;"></i>
+            ${n.Title}
         </div>
+
+        <!-- DATE + ACTIONS -->
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:10px;
+            flex-wrap:wrap;
+            gap:6px;
+        ">
+
+            <!-- DATE -->
+            <span style="
+                font-size:0.85em;
+                color:var(--text-secondary);
+                white-space:nowrap;
+            ">
+                ${new Date(n.createdAt).toLocaleDateString('en-GB',{
+                    day:'2-digit',
+                    month:'short',
+                    year:'numeric'
+                })}
+                •
+                ${new Date(n.createdAt).toLocaleTimeString('en-US',{
+                    hour:'2-digit',
+                    minute:'2-digit',
+                    hour12:true
+                })}
+            </span>
+
+            <!-- ACTION BUTTONS -->
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+
+                ${
+                    !n.IsRead
+                    ? `
+                    <button 
+                        onclick="markNotificationRead('${n._id}')"
+                        class="btn-outline"
+                        style="
+                            padding:3px 8px;
+                            font-size:0.8em;
+                            border-radius:4px;
+                            color:var(--success-color);
+                            border-color:var(--success-color);
+                        ">
+                        <i class="fa-solid fa-check"></i> Mark Read
+                    </button>
+                    `
+                    : `
+                    <button 
+                        onclick="deleteAdminMessage('${n._id}')"
+                        class="btn-outline"
+                        style="
+                            padding:3px 8px;
+                            font-size:0.8em;
+                            border-radius:4px;
+                            color:var(--error-color);
+                            border-color:var(--error-color);
+                        ">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                    `
+                }
+
+            </div>
+
+        </div>
+
+        <!-- MESSAGE -->
+        <div style="
+            font-size:0.95em;
+            color:var(--text-secondary);
+            white-space:pre-wrap;
+            word-break:break-word;
+            line-height:1.5;
+        ">
+            ${n.Message}
+        </div>
+
+    </div>
     `).join('');
 
-    const totalPages = Math.ceil(currentNotifications.length / NOTIFICATIONS_PER_PAGE);
+    const totalPages = Math.ceil(items.length / MESSAGES_PER_PAGE);
     if (totalPages > 1) {
-        let paginationHTML = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
-        paginationHTML += `<button onclick="changeNotificationsPage(${notificationsCurrentPage - 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${notificationsCurrentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>`;
-        paginationHTML += `<span style="font-weight: 500; color: var(--text-secondary); padding: 0 5px;">${notificationsCurrentPage} / ${totalPages}</span>`;
-        paginationHTML += `<button onclick="changeNotificationsPage(${notificationsCurrentPage + 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${notificationsCurrentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>`;
-        paginationHTML += '</div>';
-        if (paginationContainer) paginationContainer.innerHTML = paginationHTML;
+        let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+        html += `<button onclick="changeMessagePage('${isUnread ? 'unread' : 'read'}', ${page - 1})" class="btn-outline" ${page === 1 ? 'disabled' : ''} style="padding: 2px 8px;"><i class="fa-solid fa-chevron-left"></i></button>`;
+        html += `<span style="font-size: 0.9em; padding: 0 10px; align-self:center;">${page} / ${totalPages}</span>`;
+        html += `<button onclick="changeMessagePage('${isUnread ? 'unread' : 'read'}', ${page + 1})" class="btn-outline" ${page === totalPages ? 'disabled' : ''} style="padding: 2px 8px;"><i class="fa-solid fa-chevron-right"></i></button>`;
+        html += '</div>';
+        pagination.innerHTML = html;
     } else {
-        if (paginationContainer) paginationContainer.innerHTML = '';
+        pagination.innerHTML = '';
     }
 }
 
-function changeNotificationsPage(page) {
-    const totalPages = Math.ceil(currentNotifications.length / NOTIFICATIONS_PER_PAGE);
-    if (page < 1 || page > totalPages) return;
-    notificationsCurrentPage = page;
-    renderNotifications();
+window.changeMessagePage = function(type, newPage) {
+    if (type === 'unread') msgUnreadPage = newPage;
+    else msgReadPage = newPage;
+    renderMessageTab();
 }
 
-async function markNotificationsAsRead() {
-    markAllNotificationsRead();
-}
-
-async function markAllNotificationsRead() {
-    try {
-        await apiFetch('/students/notifications/read', { 
-            method: 'PUT',
-            body: JSON.stringify({})
-        });
-        currentNotifications.forEach(n => n.IsRead = true);
-        renderNotifications();
-        fetchNotificationCount();
-    } catch (error) {
-        showToast('Error marking all as read: ' + error.message, 'error');
-    }
-}
-
+// Mark as read 
 async function markNotificationRead(id) {
     try {
         await apiFetch('/students/notifications/read', {
             method: 'PUT',
             body: JSON.stringify({ id })
         });
-        const notification = currentNotifications.find(n => n._id === id);
+        const notification = allMessages.find(n => n._id === id);
         if (notification) notification.IsRead = true;
-        renderNotifications();
-        fetchNotificationCount();
+        processMessages();
     } catch (error) {
         showToast('Error marking message as read: ' + error.message, 'error');
     }
 }
 
+// Allow deletion only for read messages and notify admin that the student deleted it
 async function deleteAdminMessage(id) {
     if (!await showConfirm('Are you sure you want to delete this message?')) return;
     try {
         await apiFetch('/students/notifications/' + id, { method: 'DELETE' });
         showToast('Message deleted', 'success');
-        loadNotifications(); // Refresh list
-        fetchNotificationCount(); // Update unread count if deleted an unread message
+        
+        allMessages = allMessages.filter(n => n._id !== id);
+        processMessages();
     } catch (error) {
         showToast('Error deleting message: ' + error.message, 'error');
     }
@@ -1750,3 +1871,6 @@ async function subscribeToPushNotifications() {
         }
     }
 }
+
+
+
