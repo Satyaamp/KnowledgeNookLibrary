@@ -1,6 +1,7 @@
 const Issue = require('../models/Issue');
 const Student = require('../models/Student');
 const DeletedIssue = require('../models/DeletedIssue');
+const { sendPushToStudent } = require('../utils/pushHelper');
 
 // @desc    Create an issue
 // @route   POST /api/issues/create
@@ -65,6 +66,22 @@ const updateIssueStatus = async (req, res) => {
                 issue.AdminResponse = req.body.AdminResponse;
             }
             const updatedIssue = await issue.save();
+
+            // Send notification to the student
+            let pushMessage = `Hi {FirstName}, your issue "${issue.IssueTitle}" has been updated to ${issue.Status}.`;
+            
+            if (req.body.AdminResponse !== undefined) {
+                pushMessage = `Hi {FirstName}, Admin replied to your issue "${issue.IssueTitle}": ${req.body.AdminResponse}`;
+            } else if (issue.Status === 'Resolved') {
+                pushMessage = `Hi {FirstName}, your issue "${issue.IssueTitle}" has been Resolved. Thank you!`;
+            }
+
+            await sendPushToStudent(issue.StudentId, {
+                title: 'Issue Update',
+                message: pushMessage,
+                url: '/student/dashboard.html#issues'
+            });
+
             res.json(updatedIssue);
         } else {
             res.status(404).json({ message: 'Issue not found' });

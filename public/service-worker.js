@@ -1,4 +1,4 @@
-const CACHE_NAME = "knowledgenook-v4"; // UPDATE THIS VERSION ON EVERY DEPLOY TO FORCE REFRESH
+const CACHE_NAME = "knowledgenook-v6"; // UPDATE THIS VERSION ON EVERY DEPLOY TO FORCE REFRESH
 
 const STATIC_ASSETS = [
   "/",
@@ -110,4 +110,37 @@ self.addEventListener("fetch", event => {
       })
     );
   }
+});
+
+/* ================================
+   PUSH NOTIFICATIONS
+================================ */
+self.addEventListener('push', event => {
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      const title = data.title || 'Knowledge Nook Library';
+      const options = {
+        body: data.message || 'You have a new notification.',
+        icon: '/images/icons/icon-192.png',
+        badge: '/images/icons/icon-72.png',
+        data: {
+          url: data.url || '/student/dashboard.html'
+        }
+      };
+      event.waitUntil(self.registration.showNotification(title, options));
+    } catch (e) {
+      console.error('Error parsing push data', e);
+    }
+  }
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(clientList => {
+      const urlToOpen = event.notification.data.url;
+      return clients.openWindow(urlToOpen);
+    })
+  );
 });

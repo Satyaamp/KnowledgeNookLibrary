@@ -1,6 +1,7 @@
 const Fee = require('../models/Fee');
 const Student = require('../models/Student');
 const cloudinary = require('../config/cloudinary');
+const { sendPushToStudent } = require('../utils/pushHelper');
 
 // @desc    Upload fee receipt
 // @route   POST /api/fees/upload
@@ -128,6 +129,22 @@ const verifyFee = async (req, res) => {
             }
 
             const updatedFee = await fee.save({ validateBeforeSave: false });
+
+            // Send push notification
+            let pushMessage = `Hi {FirstName}, your fee for ${fee.Month} was marked as ${fee.Status}.`;
+            
+            if (fee.Status === 'Rejected') {
+                const adminNoteText = fee.AdminNote ? ` Note: ${fee.AdminNote}` : '';
+                pushMessage += `${adminNoteText} Please re-upload a clear proof of payment from your dashboard.`;
+            } else if (fee.Status === 'Paid' || fee.Status === 'Approved') {
+                pushMessage += ' Thank you for your payment!';
+            }
+            await sendPushToStudent(fee.StudentId, {
+                title: `Fee Payment ${fee.Status}`,
+                message: pushMessage,
+                url: '/student/dashboard.html#fees'
+            });
+
             res.json(updatedFee);
         } else {
             res.status(404).json({ message: 'Fee record not found' });

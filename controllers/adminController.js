@@ -5,6 +5,8 @@ const Issue = require('../models/Issue');
 const InterestedStudent = require('../models/InterestedStudent');
 const RejectedStudent = require('../models/RejectedStudent');
 const bcrypt = require('bcryptjs');
+const Notification = require('../models/Notification');
+const { sendPushToStudent } = require('../utils/pushHelper');
 
 // @desc    Add new student
 // @route   POST /api/admin/students
@@ -119,9 +121,72 @@ const verifyAadhar = async (req, res) => {
         }
 
         await student.save();
+
+        let pushMessage = `Hi {FirstName}, your Aadhar proof was marked as ${status}.`;
+        
+        if (status === 'Rejected') {
+            const adminNoteText = student.AadharRejectionReason ? ` Note: ${student.AadharRejectionReason}` : '';
+            pushMessage += `${adminNoteText} Please re-upload a clear image from your profile.`;
+        } else if (status === 'Verified') {
+            pushMessage += ' Thank you!';
+        }
+
+        await sendPushToStudent(student._id, {
+            title: `Aadhar ${status}`,
+            message: pushMessage,
+            url: '/student/dashboard.html#profile'
+        });
+
         res.json({ message: `Aadhar marked as ${status}`, student });
     } catch (error) {
         res.status(500).json({ message: 'Error verifying Aadhar', error: error.message });
+    }
+};
+
+// @desc    Send manual push notification to a student
+// @route   POST /api/admin/students/:id/notify
+// @access  Private/Admin
+const sendManualNotification = async (req, res) => {
+    try {
+        const { type, customMessage } = req.body;
+        const student = await Student.findById(req.params.id);
+
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        let pushMessage = '';
+        let title = 'Library Update';
+
+        if (type === 'fee_reminder') {
+            title = 'Fee Reminder';
+            pushMessage = `Hi {FirstName}, your fee proof for this month is not updated. Please upload a clear proof from your dashboard to avoid rejection.`;
+        } else if (type === 'aadhar_reminder') {
+            title = 'Aadhar Verification Pending';
+            pushMessage = `Hi {FirstName}, your Aadhar verification is pending or was rejected. Please log in and re-upload a clear image of your Aadhar card.`;
+        } else if (type === 'custom') {
+            title = 'Message from Admin';
+            pushMessage = customMessage || 'You have a new message from the admin.';
+        } else {
+            return res.status(400).json({ message: 'Invalid notification type' });
+        }
+
+        await sendPushToStudent(student._id, { title, message: pushMessage, url: '/student/dashboard.html' });
+        res.json({ message: 'Notification sent successfully to student devices.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error sending notification', error: error.message });
+    }
+};
+
+// @desc    Get notification history for a student
+// @route   GET /api/admin/students/:id/notifications
+// @access  Private/Admin
+const getStudentNotifications = async (req, res) => {
+    try {
+        const notifications = await Notification.find({ StudentId: req.params.id }).sort({ createdAt: -1 });
+        res.json(notifications);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching notifications', error: error.message });
     }
 };
 
@@ -161,6 +226,12 @@ const approveProfileRequest = async (req, res) => {
         request.Status = 'Approved';
         await request.save();
 
+        await sendPushToStudent(request.StudentId, {
+            title: 'Profile Request Approved',
+            message: 'Hi {FirstName}, your requested profile changes have been successfully applied.',
+            url: '/student/dashboard.html#profile'
+        });
+
         res.json({ message: 'Profile request approved and applied', student });
     } catch (error) {
         res.status(500).json({ message: 'Error approving request', error: error.message });
@@ -181,6 +252,12 @@ const rejectProfileRequest = async (req, res) => {
         request.Status = 'Rejected';
         request.AdminNote = reason || 'No reason provided.';
         await request.save();
+
+        await sendPushToStudent(request.StudentId, {
+            title: 'Profile Request Rejected',
+            message: 'Hi {FirstName}, your profile update request was rejected. Check your requests history for details.',
+            url: '/student/dashboard.html#requests'
+        });
 
         res.json({ message: 'Profile request rejected' });
     } catch (error) {
@@ -515,5 +592,7 @@ module.exports = {
     rejectInterestedStudent,
     convertInterestedStudent,
     updateProfileRequestStatus,
-    verifyAadhar
+    verifyAadhar,
+    sendManualNotification,
+    getStudentNotifications
 };

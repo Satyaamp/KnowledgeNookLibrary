@@ -154,11 +154,19 @@
                 <i class="fa-solid fa-book-open-reader"></i> <span class="logo-text">Knowledge Nook Library</span>
             </div>
             <ul class="dashboard-nav-links">
-                <li><a href="#home"><i class="fa-solid fa-bell"></i> Notifications</a></li>
+                <li><a href="#home"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
+                <li>
+                    <a href="#notifications" style="display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-envelope"></i> Messages
+                        <span class="notification-badge" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span>
+                    </a>
+                </li>
                 <li><a href="#profile"><i class="fa-solid fa-id-card"></i> Profile</a></li>
                 <li><a href="#fees"><i class="fa-solid fa-indian-rupee-sign"></i> Fees</a></li>
                 <li><a href="#requests"><i class="fa-solid fa-clock-rotate-left"></i> My Requests</a></li>
                 <li><a href="#issues"><i class="fa-solid fa-circle-exclamation"></i> Issues</a></li>
+
+
             </ul>
             <div class="nav-actions">
                 <button onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; margin-right: 15px; color: inherit;" title="Toggle Dark Mode">
@@ -182,6 +190,12 @@
         <div class="sidebar">
             <ul>
                 <li><a href="#home" onclick="closeSidebar()"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
+                <li>
+                    <a href="#notifications" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fa-solid fa-envelope"></i> Messages</span>
+                        <span class="notification-badge" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
+                    </a>
+                </li>
                 <li><a href="#profile" onclick="closeSidebar()"><i class="fa-solid fa-id-card"></i> Profile</a></li>
                 <li><a href="#fees" onclick="closeSidebar()"><i class="fa-solid fa-file-invoice-dollar"></i> Fees</a></li>
                 <li><a href="#requests" onclick="closeSidebar()"><i class="fa-solid fa-clock-rotate-left"></i> My Requests</a></li>
@@ -239,6 +253,9 @@
                             <button id="tabBtnRead" onclick="switchAnnouncementTab('read')" class="btn-outline" style="padding: 4px 12px; border-radius: 16px; font-size: 0.95em; border: none; color: var(--text-secondary);">Read</button>
                         </div>
                     </div>
+                    <!-- Notifications / Messages View -->
+
+
                     <div id="tabUnreadContent">
                         <div id="announcementsListUnread">Loading...</div>
                         <div id="announcementsPaginationUnread" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
@@ -247,6 +264,15 @@
                         <div id="announcementsListRead">Loading...</div>
                         <div id="announcementsPaginationRead" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Admin Messages / Notifications View -->
+            <div id="view-notifications" class="view-section" style="display: none;">
+                <div class="card">
+                    <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-envelope" style="color: var(--primary-color); margin-right: 8px;"></i> Admin Messages</h3>
+                    <div id="notificationsList">Loading...</div>
+                    <div id="notificationsPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                 </div>
             </div>
 
@@ -499,6 +525,7 @@
 
       var items = [
         { hash: 'home',     icon: 'fa-bullhorn'    },
+        { hash: 'notifications', icon: 'fa-envelope' },
         { hash: 'profile',  icon: 'fa-id-card'},
         { hash: 'fees',     icon: 'fa-indian-rupee-sign'   },
         { hash: 'requests', icon: 'fa-clock-rotate-left' },

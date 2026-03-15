@@ -27,7 +27,16 @@ const studentSchema = new mongoose.Schema({
     amount: { type: Number },
     JoiningDate: { type: Date, default: Date.now },
     AccountStatus: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Active' },
-    LibraryID: { type: String, unique: true, sparse: true } // Unique Admin-assigned ID
+    LibraryID: { type: String, unique: true, sparse: true }, // Unique Admin-assigned ID
+
+    // Array to store multiple device push subscriptions
+    pushSubscriptions: [{
+        endpoint: String,
+        keys: {
+            p256dh: String,
+            auth: String
+        }
+    }]
 }, { timestamps: true });
 
 // Pre-save hook to generate FullName and FullAddress

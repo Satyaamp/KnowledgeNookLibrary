@@ -108,6 +108,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Save name to localStorage for future use (e.g., if profile fetch fails next time)
         localStorage.setItem('name', profile.FullName || 'Student');
+
+        // Prompt for Push Notifications slightly after loading so it isn't aggressive
+        setTimeout(subscribeToPushNotifications, 2000); 
+        
+        fetchNotificationCount();
     } catch (e) {
         document.getElementById('studentName').textContent = 'Student';
         // Fallback to localStorage if API fetch fails
@@ -237,6 +242,7 @@ function handleRoute() {
     if (hash === '#fees') loadFees();
     if (hash === '#issues') loadIssues();
     if (hash === '#requests') loadRequestsHistory();
+    if (hash === '#notifications') { loadNotifications(); markNotificationsAsRead(); }
 }
 
 async function loadProfile() {
@@ -1539,6 +1545,93 @@ async function handleAadharUpload(input) {
     }
 }
 
+// --- Notifications / Messages Logic ---
+async function fetchNotificationCount() {
+    try {
+        const notifications = await apiFetch('/students/notifications');
+        const unreadCount = notifications.filter(n => !n.IsRead).length;
+        const badges = document.querySelectorAll('.notification-badge');
+        badges.forEach(badge => {
+            badge.textContent = unreadCount;
+            badge.style.display = unreadCount > 0 ? 'inline-flex' : 'none';
+        });
+    } catch (error) {
+        console.error('Error fetching notification count:', error);
+    }
+}
+
+let currentNotifications = [];
+let notificationsCurrentPage = 1;
+const NOTIFICATIONS_PER_PAGE = 3;
+
+async function loadNotifications() {
+    const list = document.getElementById('notificationsList');
+    const paginationContainer = document.getElementById('notificationsPagination');
+    if (!list) return;
+    list.innerHTML = 'Loading messages...';
+    if (paginationContainer) paginationContainer.innerHTML = '';
+    try {
+        const notifications = await apiFetch('/students/notifications');
+        if (notifications && notifications.length > 0) {
+            currentNotifications = notifications;
+            notificationsCurrentPage = 1;
+            renderNotifications();
+        } else {
+            list.innerHTML = '<p style="color: var(--text-secondary);">No messages from Admin.</p>';
+        }
+    } catch (error) {
+        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+
+function renderNotifications() {
+    const list = document.getElementById('notificationsList');
+    const paginationContainer = document.getElementById('notificationsPagination');
+
+    const startIndex = (notificationsCurrentPage - 1) * NOTIFICATIONS_PER_PAGE;
+    const endIndex = startIndex + NOTIFICATIONS_PER_PAGE;
+    const msgsToShow = currentNotifications.slice(startIndex, endIndex);
+
+    list.innerHTML = msgsToShow.map(n => `
+        <div style="border-left: 4px solid ${n.IsRead ? 'transparent' : 'var(--primary-color)'}; padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg); border-top: 1px solid var(--card-border); border-right: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border);">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <strong style="${n.IsRead ? 'color: var(--text-primary);' : 'color: var(--primary-color);'}"><i class="fa-solid fa-bell" style="margin-right:5px;"></i> ${n.Title}</strong>
+                <span style="font-size:0.85em; color:var(--text-secondary);">${new Date(n.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} | ${new Date(n.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+            </div>
+            <div style="font-size:0.95em; color:var(--text-secondary); white-space:pre-wrap; word-break: break-word;">${n.Message}</div>
+        </div>
+    `).join('');
+
+    const totalPages = Math.ceil(currentNotifications.length / NOTIFICATIONS_PER_PAGE);
+    if (totalPages > 1) {
+        let paginationHTML = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+        paginationHTML += `<button onclick="changeNotificationsPage(${notificationsCurrentPage - 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${notificationsCurrentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>`;
+        paginationHTML += `<span style="font-weight: 500; color: var(--text-secondary); padding: 0 5px;">${notificationsCurrentPage} / ${totalPages}</span>`;
+        paginationHTML += `<button onclick="changeNotificationsPage(${notificationsCurrentPage + 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${notificationsCurrentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>`;
+        paginationHTML += '</div>';
+        if (paginationContainer) paginationContainer.innerHTML = paginationHTML;
+    } else {
+        if (paginationContainer) paginationContainer.innerHTML = '';
+    }
+}
+
+function changeNotificationsPage(page) {
+    const totalPages = Math.ceil(currentNotifications.length / NOTIFICATIONS_PER_PAGE);
+    if (page < 1 || page > totalPages) return;
+    notificationsCurrentPage = page;
+    renderNotifications();
+}
+
+async function markNotificationsAsRead() {
+    try {
+        await apiFetch('/students/notifications/read', { method: 'PUT' });
+        const badges = document.querySelectorAll('.notification-badge');
+        badges.forEach(badge => badge.style.display = 'none');
+    } catch (error) {
+        console.error('Error marking notifications as read:', error);
+    }
+}
+
 // --- Theme / Dark Mode Logic ---
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
@@ -1560,5 +1653,50 @@ window.toggleTheme = function() {
     } else {
         localStorage.setItem('theme', 'light');
         if (icon) icon.classList.replace('fa-sun', 'fa-moon');
+    }
+}
+
+// --- Push Notification Setup ---
+// Converts the Base64 VAPID key into a format the browser Push API requires
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+async function subscribeToPushNotifications() {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                const registration = await navigator.serviceWorker.ready;
+                let subscription = await registration.pushManager.getSubscription();
+                
+                if (!subscription) {
+                    const { publicKey } = await apiFetch('/students/vapid-public-key');
+                    const convertedVapidKey = urlBase64ToUint8Array(publicKey);
+                    subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: convertedVapidKey
+                    });
+                }
+                
+                await apiFetch('/students/subscribe', {
+                    method: 'POST',
+                    body: JSON.stringify(subscription)
+                });
+            }
+        } catch (error) {
+            console.error('Error subscribing to push notifications:', error);
+        }
     }
 }

@@ -1,6 +1,7 @@
 const Announcement = require('../models/Announcement');
 const DeletedAnnouncement = require('../models/DeletedAnnouncement');
 const cloudinary = require('../config/cloudinary');
+const { broadcastPush } = require('../utils/pushHelper');
 
 // @desc    Create an announcement
 // @route   POST /api/announcements
@@ -22,6 +23,13 @@ const createAnnouncement = async (req, res) => {
             Message,
             ImageURL,
             CreatedBy: req.user.id
+        });
+
+        // Broadcast push to all students
+        await broadcastPush({
+            title: 'New Announcement',
+            message: Title,
+            url: '/student/dashboard.html#home'
         });
 
         res.status(201).json(announcement);

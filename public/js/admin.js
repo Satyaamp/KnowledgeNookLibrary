@@ -518,6 +518,8 @@ function renderStudents() {
                             `<span style="font-size: 0.8em; color: var(--error-color); display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;" title="Proof not uploaded"><i class="fa-solid fa-circle-exclamation"></i> Pending Proof</span>` : ''}
                     </div>
 
+                    <button onclick="viewNotificationHistory('${student._id}')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--text-secondary); color: var(--text-secondary); border-radius: 6px; font-size: 0.85em;" title="Notification History"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                    <button onclick="openNotifyModal('${student._id}')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 6px; font-size: 0.85em;" title="Send Notification"><i class="fa-regular fa-bell"></i></button>
                     <button onclick="viewStudent('${student._id}')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
                 </div>
             </div>
@@ -1033,6 +1035,88 @@ function viewStudent(id, isReadOnly = false) {
 
 function closeStudentModal() {
     document.getElementById('studentModal').style.display = 'none';
+}
+
+// --- Manual Notification Logic ---
+function openNotifyModal(id) {
+    document.getElementById('notifyStudentId').value = id;
+    document.getElementById('notifyForm').reset();
+    document.getElementById('customMessageContainer').style.display = 'none';
+    document.getElementById('notifyStudentModal').style.display = 'block';
+}
+
+function closeNotifyModal() {
+    document.getElementById('notifyStudentModal').style.display = 'none';
+}
+
+function toggleCustomMessageField() {
+    const type = document.getElementById('notifyType').value;
+    const container = document.getElementById('customMessageContainer');
+    const customInput = document.getElementById('notifyCustomMessage');
+    if (type === 'custom') {
+        container.style.display = 'block';
+        customInput.required = true;
+    } else {
+        container.style.display = 'none';
+        customInput.required = false;
+    }
+}
+
+async function submitManualNotification(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Sending...';
+    btn.disabled = true;
+
+    try {
+        const payload = {
+            type: document.getElementById('notifyType').value,
+            customMessage: document.getElementById('notifyCustomMessage').value
+        };
+        const response = await apiFetch(`/admin/students/${document.getElementById('notifyStudentId').value}/notify`, {
+            method: 'POST', body: JSON.stringify(payload)
+        });
+        showToast(response.message, 'success');
+        closeNotifyModal();
+    } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function viewNotificationHistory(id) {
+    document.getElementById('notificationHistoryModal').style.display = 'block';
+    const list = document.getElementById('notificationHistoryList');
+    list.innerHTML = 'Loading history...';
+    
+    try {
+        const data = await apiFetch(`/admin/students/${id}/notifications`);
+        if (data && data.length > 0) {
+            list.innerHTML = data.map(n => `
+                <div style="padding: 15px; border: 1px solid var(--card-border); margin-bottom: 10px; border-radius: 8px; background: var(--bg-color); border-left: 4px solid var(--primary-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <strong style="color: var(--primary-color); font-size: 1.05em;">${n.Title}</strong>
+                        <span style="font-size: 0.85em; color: var(--text-secondary);">${new Date(n.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                    </div>
+                    <div style="font-size: 0.95em; color: var(--text-primary); margin-bottom: 8px;">${n.Message}</div>
+                    <div style="font-size: 0.85em; color: ${n.IsRead ? 'var(--success-color)' : 'var(--warning-color)'}; font-weight: 600;">
+                        <i class="fa-solid ${n.IsRead ? 'fa-check-double' : 'fa-check'}"></i> ${n.IsRead ? 'Read by Student' : 'Delivered (Unread)'}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No notifications sent to this student yet.</p>';
+        }
+    } catch (error) {
+        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+
+function closeNotificationHistoryModal() {
+    document.getElementById('notificationHistoryModal').style.display = 'none';
 }
 
 function calculateModalFee() {

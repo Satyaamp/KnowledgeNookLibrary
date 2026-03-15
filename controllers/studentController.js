@@ -1,6 +1,7 @@
 const Student = require('../models/Student');
 const ProfileUpdateRequest = require('../models/ProfileUpdateRequest');
 const InterestedStudent = require('../models/InterestedStudent');
+const Notification = require('../models/Notification');
 const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/cloudinary');
 
@@ -305,4 +306,61 @@ const changePassword = async (req, res) => {
     }
 };
 
-module.exports = { getProfile, requestProfileUpdate, submitInterested, changePassword, getMyProfileRequest, markRequestAsSeen, getAllMyProfileRequests, deleteProfileRequest, deleteManyProfileRequests, updateProfilePicture, updateAadhar };
+// @desc    Get VAPID Public Key
+// @route   GET /api/students/vapid-public-key
+// @access  Private/Student
+const getVapidPublicKey = (req, res) => {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+};
+
+// @desc    Save push subscription
+// @route   POST /api/students/subscribe
+// @access  Private/Student
+const savePushSubscription = async (req, res) => {
+    try {
+        const subscription = req.body;
+        const student = await Student.findById(req.user.id);
+        
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        // Check if subscription already exists to prevent duplicates on the same device
+        const exists = student.pushSubscriptions.find(sub => sub.endpoint === subscription.endpoint);
+        
+        if (!exists) {
+            student.pushSubscriptions.push(subscription);
+            await student.save();
+        }
+
+        res.status(201).json({ message: 'Subscription saved successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error saving subscription', error: error.message });
+    }
+};
+
+// @desc    Get my notifications
+// @route   GET /api/students/notifications
+// @access  Private/Student
+const getMyNotifications = async (req, res) => {
+    try {
+        const notifications = await Notification.find({ StudentId: req.user.id }).sort({ createdAt: -1 });
+        res.json(notifications);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching notifications', error: error.message });
+    }
+};
+
+// @desc    Mark notifications as read
+// @route   PUT /api/students/notifications/read
+// @access  Private/Student
+const markNotificationsAsRead = async (req, res) => {
+    try {
+        await Notification.updateMany({ StudentId: req.user.id, IsRead: false }, { IsRead: true });
+        res.json({ message: 'Notifications marked as read' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating notifications', error: error.message });
+    }
+};
+
+module.exports = { getProfile, requestProfileUpdate, submitInterested, changePassword, getMyProfileRequest, markRequestAsSeen, getAllMyProfileRequests, deleteProfileRequest, deleteManyProfileRequests, updateProfilePicture, updateAadhar, getVapidPublicKey, savePushSubscription, getMyNotifications, markNotificationsAsRead };
