@@ -1,3 +1,11 @@
+// Fees History: FEES_PER_PAGE
+// Student Issues: ISSUES_PER_PAGE
+// Profile Update Requests: REQUESTS_PER_PAGE
+// Announcements: ANNOUNCEMENTS_PER_PAGE
+// Admin Messages: MESSAGES_PER_PAGE
+
+
+
 // Auth Check
 if (!localStorage.getItem('token') || localStorage.getItem('role') !== 'student') {
     window.location.href = '/';

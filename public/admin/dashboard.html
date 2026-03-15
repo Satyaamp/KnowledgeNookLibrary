@@ -35,6 +35,7 @@
                     <li><a href="#bulk-students"><i class="fa-solid fa-file-csv"></i> Bulk Upload</a></li>
                     <li><a href="#interested"><i class="fa-solid fa-user-clock"></i> Leads</a></li>
                     <li><a href="#fees"><i class="fa-solid fa-indian-rupee-sign"></i> Fees</a></li>
+                    <li><a href="#payment-history"><i class="fa-solid fa-file-invoice-dollar"></i> History</a></li>
                     <li><a href="#issues"><i class="fa-solid fa-triangle-exclamation"></i> Issues</a></li>
                     <li><a href="#requests"><i class="fa-solid fa-id-card"></i> Requests</a></li>
                     <li><a href="#search"><i class="fa-solid fa-magnifying-glass"></i> Search</a></li>
@@ -82,6 +83,7 @@
                             Interested Students</a></li>
                     <li><a href="#fees" onclick="closeSidebar()"><i class="fa-solid fa-indian-rupee-sign"></i> Verify
                             Fees</a></li>
+                    <li><a href="#payment-history" onclick="closeSidebar()"><i class="fa-solid fa-indian-rupee-sign"></i> Fees History <i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i></a></li>
                     <li><a href="#issues" onclick="closeSidebar()"><i class="fa-solid fa-triangle-exclamation"></i>
                             Issues</a></li>
                     <li><a href="#requests" onclick="closeSidebar()"><i class="fa-solid fa-id-card"></i> Profile
@@ -326,6 +328,7 @@
                     <div class="card">
                         <h2><i class="fa-solid fa-user-plus"></i> Interested Students</h2><br><br>
                         <div id="interestedList">Loading...</div>
+                        <div id="interestedPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                     </div>
                 </div>
 
@@ -351,11 +354,45 @@
                     </div>
                 </div>
 
+                <!-- Payment History View -->
+                <div id="view-payment-history" class="view-section" style="display: none;">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                            <h3 style="margin: 0;"><i class="fa-solid fa-indian-rupee-sign" style="color: var(--success-color); margin-right: 8px;"></i> Verified Payment History</h3>
+                            <div class="search-bar" style="max-width: 300px; width: 100%; position: relative;">
+                                <i class="fa-solid fa-search search-icon" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                                <input type="text" id="paymentHistorySearch" placeholder="Search name, ID, txn, month..." onkeyup="filterPaymentHistory()" style="width: 100%; padding-left: 35px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                            </div>
+                        </div>
+                        
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95em;">
+                                <thead>
+                                    <tr style="background: var(--input-bg); border-top: 1px solid var(--card-border); border-bottom: 2px solid var(--card-border);">
+                                        <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Student</th>
+                                        <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Month</th>
+                                        <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Plan & Batch</th>
+                                        <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Amount</th>
+                                        <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Transaction Details</th>
+                                        <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Digital Signature</th>
+                                        <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600; text-align: center;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentHistoryList">
+                                    <!-- Content injected by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="paymentHistoryPagination" style="display: flex; gap: 5px; margin-top: 15px; justify-content: flex-end;"></div>
+                    </div>
+                </div>
+
                 <!-- Requests View -->
                 <div id="view-requests" class="view-section" style="display: none;">
                     <div class="card">
                         <h3><i class="fa-solid fa-user-check"></i> Profile Requests</h3>
                         <div id="requestsList">Loading...</div>
+                        <div id="requestsPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                     </div>
                 </div>
 
@@ -405,6 +442,7 @@
                             </h4>
                         </div>
                         <div id="announcementsList">Loading...</div>
+                        <div id="announcementsPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                     </div>
                 </div>
 
@@ -644,6 +682,7 @@
                 if (hash === '#students') loadStudents();
                 if (hash === '#interested') loadInterestedStudents();
                 if (hash === '#fees') loadFees();
+                if (hash === '#payment-history') loadPaymentHistory();
                 if (hash === '#issues') loadIssues();
                 if (hash === '#requests') loadRequests();
                 if (hash === '#search') {

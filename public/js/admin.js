@@ -1,19 +1,32 @@
+//  Manage Students: studentsPerPage
+// Verify Fees: feesPerPage
+// Manage Issues: issuesPerPage
+// Interested Students: interestedPerPage
+// Profile Requests: requestsPerPage
+// Announcements: announcementsAdminPerPage
+// Payment History: paymentHistoryPerPage
+
+
+
+
 // Auth Check
 if (!localStorage.getItem('token') || localStorage.getItem('role') !== 'admin') {
     window.location.href = '/';
 }
-
+// Students Paginations
 let currentStudents = [];
 let filteredStudents = [];
 let currentStudentsPage = 1;
 const studentsPerPage = 10;
 let searchTimeout = null;
 
+// Verify Fees Paginations
 let currentFees = [];
 let filteredFees = [];
 let currentFeesPage = 1;
 const feesPerPage = 10;
 
+// Issues Paginations
 let currentIssues = [];
 let filteredIssues = [];
 let currentIssuesPage = 1;
@@ -471,21 +484,23 @@ function renderStudents() {
                             ${student.FullName || student.FirstName + ' ' + (student.LastName || '')}
                             </strong>
 
-                            <span style="font-size:0.85em; color:var(--text-secondary);">
-                            <i class="fa-solid fa-cake-candles"></i> 
-                            ${student.DOB 
-                            ? new Date(student.DOB)
-                            .toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric'
-                            })
-                            .replace(/ /g,'-')
-                            : 'N/A'}
-                            </span>
+                          
+                                <span style="font-size:0.85em; color:var(--secondary-color); ">
+                                    <i class="fa-solid fa-cake-candles"></i>   
+                                    ${student.DOB 
+                                    ? new Date(student.DOB)
+                                    .toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    })
+                                    .replace(/ /g,'-')
+                                    : 'N/A'}
+                                </span>
+                            
 
                         </div>
-                        <span style="font-size: 0.85em; color: var(--text-secondary);">ID: ${student.LibraryID || 'Not Assigned'}</span>
+                        <strong><span style="font-size:0.85em; color:var(--secondary-color); font-size:1em"">ID: ${student.LibraryID || 'Not Assigned'}</span></strong>
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -718,6 +733,10 @@ function performGlobalSearch() {
         </div>
     `).join('');
 }
+// Interested Students Paginations Logic
+let currentInterested = [];
+let interestedPage = 1;
+const interestedPerPage = 10;
 
 async function loadInterestedStudents() {
     const list = document.getElementById('interestedList');
@@ -725,7 +744,25 @@ async function loadInterestedStudents() {
     try {
         const data = await apiFetch('/admin/interested-students');
         if (data && data.length > 0) {
-            list.innerHTML = data.map(student => `
+            currentInterested = data;
+            interestedPage = 1;
+            renderInterestedStudents();
+        } else {
+            list.innerHTML = '<p>No interested students found.</p>';
+            if (document.getElementById('interestedPagination')) document.getElementById('interestedPagination').innerHTML = '';
+        }
+    } catch (error) {
+        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+
+function renderInterestedStudents() {
+    const list = document.getElementById('interestedList');
+    const startIndex = (interestedPage - 1) * interestedPerPage;
+    const endIndex = startIndex + interestedPerPage;
+    const paginatedData = currentInterested.slice(startIndex, endIndex);
+
+    list.innerHTML = paginatedData.map(student => `
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--card-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <div>
@@ -751,12 +788,31 @@ async function loadInterestedStudents() {
                     </div>
                 </div>
             `).join('');
-        } else {
-            list.innerHTML = '<p>No interested students found.</p>';
-        }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+
+    renderInterestedPagination();
+}
+
+function renderInterestedPagination() {
+    const pagination = document.getElementById('interestedPagination');
+    if (!pagination) return;
+    const totalPages = Math.ceil(currentInterested.length / interestedPerPage);
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
     }
+    let html = '';
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${interestedPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeInterestedPage(${interestedPage - 1})"`}>Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${interestedPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeInterestedPage(${i})">${i}</button>`;
+    }
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${interestedPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeInterestedPage(${interestedPage + 1})"`}>Next</button>`;
+    pagination.innerHTML = html;
+}
+
+window.changeInterestedPage = function(page) {
+    if (page < 1 || page > Math.ceil(currentInterested.length / interestedPerPage)) return;
+    interestedPage = page;
+    renderInterestedStudents();
 }
 
 async function reviewInterestedStudent(id) {
@@ -1387,6 +1443,7 @@ async function updateFeeStatus(id, newStatus) {
             body: JSON.stringify(payload)
         });
         loadFees();
+        if (typeof loadPaymentHistory === 'function') loadPaymentHistory(); // Refresh the history table automatically
     } catch (error) {
         showToast('Error updating fee status: ' + error.message, 'error');
         loadFees();
@@ -1435,6 +1492,10 @@ async function updateRemark(id) {
     }
 
 }
+// Profile Update Req Paginations
+let currentRequests = [];
+let requestsPage = 1;
+const requestsPerPage = 10;
 
 async function loadRequests() {
     const list = document.getElementById('requestsList');
@@ -1442,7 +1503,25 @@ async function loadRequests() {
     try {
         const data = await apiFetch('/admin/profile-requests');
         if (data && data.length > 0) {
-            list.innerHTML = data.map(req => `
+            currentRequests = data;
+            requestsPage = 1;
+            renderRequests();
+        } else {
+            list.innerHTML = '<p>No active profile requests.</p>';
+            if (document.getElementById('requestsPagination')) document.getElementById('requestsPagination').innerHTML = '';
+        }
+    } catch (error) {
+        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+
+function renderRequests() {
+    const list = document.getElementById('requestsList');
+    const startIndex = (requestsPage - 1) * requestsPerPage;
+    const endIndex = startIndex + requestsPerPage;
+    const paginatedData = currentRequests.slice(startIndex, endIndex);
+
+    list.innerHTML = paginatedData.map(req => `
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <strong>Request from: ${req.StudentId ? `${req.StudentId.FullName} (ID: ${req.StudentId.LibraryID || 'N/A'})` : 'Unknown'}</strong>
@@ -1472,12 +1551,31 @@ async function loadRequests() {
                     </div>
                 </div>
             `).join('');
-        } else {
-            list.innerHTML = '<p>No active profile requests.</p>';
-        }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+
+    renderRequestsPagination();
+}
+
+function renderRequestsPagination() {
+    const pagination = document.getElementById('requestsPagination');
+    if (!pagination) return;
+    const totalPages = Math.ceil(currentRequests.length / requestsPerPage);
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
     }
+    let html = '';
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${requestsPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeRequestsPage(${requestsPage - 1})"`}>Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${requestsPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeRequestsPage(${i})">${i}</button>`;
+    }
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${requestsPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeRequestsPage(${requestsPage + 1})"`}>Next</button>`;
+    pagination.innerHTML = html;
+}
+
+window.changeRequestsPage = function(page) {
+    if (page < 1 || page > Math.ceil(currentRequests.length / requestsPerPage)) return;
+    requestsPage = page;
+    renderRequests();
 }
 
 async function handleRequestAction(id, action) {
@@ -1525,14 +1623,36 @@ async function rejectRequest(id) {
     }
 }
 
-// Announcements Logic
+// Announcements Logic & Paginations
+let currentAnnouncementsAdmin = [];
+let announcementsAdminPage = 1;
+const announcementsAdminPerPage = 5; // Smaller count since these are larger cards
+
 async function loadAnnouncements() {
     const list = document.getElementById('announcementsList');
     list.innerHTML = 'Loading announcements...';
     try {
         const data = await apiFetch('/announcements');
         if (data && data.length > 0) {
-            list.innerHTML = data.map(ann => `
+            currentAnnouncementsAdmin = data;
+            announcementsAdminPage = 1;
+            renderAnnouncementsAdmin();
+        } else {
+            list.innerHTML = '<p>No previous announcements.</p>';
+            if (document.getElementById('announcementsPagination')) document.getElementById('announcementsPagination').innerHTML = '';
+        }
+    } catch (error) {
+        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+
+function renderAnnouncementsAdmin() {
+    const list = document.getElementById('announcementsList');
+    const startIndex = (announcementsAdminPage - 1) * announcementsAdminPerPage;
+    const endIndex = startIndex + announcementsAdminPerPage;
+    const paginatedData = currentAnnouncementsAdmin.slice(startIndex, endIndex);
+
+    list.innerHTML = paginatedData.map(ann => `
                 <div style="border-bottom: 2px solid black; padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px;">
                         <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);"><i class="fa-solid fa-tag"></i> ${ann.Title}</div>
@@ -1559,12 +1679,31 @@ async function loadAnnouncements() {
                     ${ann.ImageURL ? `<div style="margin-top: 10px;"><img src="${ann.ImageURL}" style="max-width: 100%; max-height: 200px; border-radius: 8px; cursor: pointer; border: 1px solid var(--card-border);" onclick="openImageModal('${ann.ImageURL}')"></div>` : ''}
                 </div>
             `).join('');
-        } else {
-            list.innerHTML = '<p>No previous announcements.</p>';
-        }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+
+    renderAnnouncementsPagination();
+}
+
+function renderAnnouncementsPagination() {
+    const pagination = document.getElementById('announcementsPagination');
+    if (!pagination) return;
+    const totalPages = Math.ceil(currentAnnouncementsAdmin.length / announcementsAdminPerPage);
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
     }
+    let html = '';
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${announcementsAdminPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAnnouncementsPage(${announcementsAdminPage - 1})"`}>Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${announcementsAdminPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeAnnouncementsPage(${i})">${i}</button>`;
+    }
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${announcementsAdminPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAnnouncementsPage(${announcementsAdminPage + 1})"`}>Next</button>`;
+    pagination.innerHTML = html;
+}
+
+window.changeAnnouncementsPage = function(page) {
+    if (page < 1 || page > Math.ceil(currentAnnouncementsAdmin.length / announcementsAdminPerPage)) return;
+    announcementsAdminPage = page;
+    renderAnnouncementsAdmin();
 }
 
 window.toggleAnnouncementForm = function() {
@@ -1924,6 +2063,152 @@ function openImageModal(url) {
 window.closeImageModal = function() {
     document.getElementById('imageModal').style.display = 'none';
     document.getElementById('modalImage').src = '';
+}
+
+// --- Payment History Table Logic & Paginations ---
+let currentPaymentHistory = [];
+let filteredPaymentHistory = [];
+let paymentHistoryPage = 1;
+const paymentHistoryPerPage = 10;
+let paymentHistorySearchTimeout = null;
+
+window.loadPaymentHistory = async function() {
+    const list = document.getElementById('paymentHistoryList');
+    if (!list) return; 
+    list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Loading payment history...</td></tr>';
+    try {
+        const data = await apiFetch('/fees'); 
+        if (data && data.length > 0) {
+            // Filter only fees that are successfully paid/approved
+            currentPaymentHistory = data.filter(fee => fee.Status === 'Paid' || fee.Status === 'Approved');
+            filterPaymentHistory(true);
+        } else {
+            list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-secondary);">No payment history found.</td></tr>';
+            document.getElementById('paymentHistoryPagination').innerHTML = '';
+        }
+    } catch (error) {
+        list.innerHTML = `<tr><td colspan="7" style="color: red; text-align: center; padding: 20px;">Error: ${error.message}</td></tr>`;
+    }
+}
+
+window.filterPaymentHistory = function(immediate = false) {
+    const searchInput = document.getElementById('paymentHistorySearch');
+    const query = searchInput ? searchInput.value.toLowerCase() : '';
+
+    if (paymentHistorySearchTimeout) clearTimeout(paymentHistorySearchTimeout);
+
+    const executeFilter = () => {
+        filteredPaymentHistory = currentPaymentHistory.filter(fee => {
+            const studentName = fee.StudentId ? (fee.StudentId.FullName || '').toLowerCase() : '';
+            const libId = fee.StudentId ? (fee.StudentId.LibraryID || '').toLowerCase() : '';
+            const month = (fee.Month || '').toLowerCase();
+            const batch = (fee.Batch || (fee.StudentId?.batchType || '')).toLowerCase();
+            const amount = String(fee.Amount || '');
+            const note = (fee.AdminNote || '').toLowerCase();
+            
+            return studentName.includes(query) || libId.includes(query) || month.includes(query) || batch.includes(query) || amount.includes(query) || note.includes(query);
+        });
+        paymentHistoryPage = 1;
+        renderPaymentHistory();
+    };
+
+    if (immediate) executeFilter();
+    else paymentHistorySearchTimeout = setTimeout(executeFilter, 300);
+}
+
+function renderPaymentHistory() {
+    const list = document.getElementById('paymentHistoryList');
+    if (!list) return;
+
+    const startIndex = (paymentHistoryPage - 1) * paymentHistoryPerPage;
+    const endIndex = startIndex + paymentHistoryPerPage;
+    const paginatedHistory = filteredPaymentHistory.slice(startIndex, endIndex);
+
+    if (paginatedHistory.length === 0) {
+        list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-secondary);">No payment history matches your search.</td></tr>';
+        document.getElementById('paymentHistoryPagination').innerHTML = '';
+        return;
+    }
+
+    list.innerHTML = paginatedHistory.map(fee => {
+        const studentName = fee.StudentId ? fee.StudentId.FullName : 'Unknown';
+        const libId = fee.StudentId ? (fee.StudentId.LibraryID || 'N/A') : 'N/A';
+        const plan = fee.StudentId ? (fee.StudentId.planDuration || 'N/A') : 'N/A';
+        const batch = fee.Batch || (fee.StudentId ? fee.StudentId.batchType : 'N/A');
+        
+        // Parse the formatted AdminNote to cleanly extract Txn ID and Date
+        let txnId = 'N/A';
+        let userPaidDate = 'N/A';
+        if (fee.AdminNote) {
+            const parts = fee.AdminNote.split('|');
+            if (parts.length >= 2) {
+                txnId = parts[0].replace('Txn ID:', '').trim();
+                userPaidDate = parts[1].replace('Date:', '').trim();
+            } else {
+                txnId = fee.AdminNote; 
+            }
+        }
+
+        // Format digital signature timestamp to IST
+        const verifiedDate = new Date(fee.updatedAt).toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+
+        return `
+            <tr style="border-bottom: 1px solid var(--card-border); background: var(--card-bg);">
+                <td style="padding: 12px 15px;">
+                    <div style="font-weight: 600; color: var(--text-primary);">${studentName}</div>
+                    <div style="font-size: 0.85em; color: var(--text-secondary);">ID: ${libId}</div>
+                </td>
+                <td style="padding: 12px 15px; color: var(--text-primary);">${fee.Month}</td>
+                <td style="padding: 12px 15px; color: var(--text-secondary);">${plan} <br><span style="font-size: 0.9em;">(${batch})</span></td>
+                <td style="padding: 12px 15px; font-weight: 600; color: var(--text-primary);">₹${fee.Amount}</td>
+                <td style="padding: 12px 15px;">
+                    <div style="font-size: 0.95em; color: var(--text-primary);">${txnId}</div>
+                    <div style="font-size: 0.85em; color: var(--text-secondary);"><i class="fa-regular fa-calendar"></i> ${userPaidDate}</div>
+                </td>
+                <td style="padding: 12px 15px;">
+                    <div style="font-size: 0.85em; color: var(--success-color); font-family: monospace; display: flex; align-items: center; gap: 5px; font-weight: 600;">
+                        <i class="fa-solid fa-file-signature"></i> Verified by Admin
+                    </div>
+                    <div style="font-size: 0.8em; color: var(--text-secondary); margin-top: 2px;">${verifiedDate}</div>
+                </td>
+                <td style="padding: 12px 15px; text-align: center;">
+                    <i class="fa-solid fa-circle-check" style="color: var(--success-color); font-size: 1.5em;" title="Verified & Paid"></i>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    renderPaymentHistoryPagination();
+}
+
+function renderPaymentHistoryPagination() {
+    const pagination = document.getElementById('paymentHistoryPagination');
+    if (!pagination) return;
+    
+    const totalPages = Math.ceil(filteredPaymentHistory.length / paymentHistoryPerPage);
+
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${paymentHistoryPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changePaymentHistoryPage(${paymentHistoryPage - 1})"`}>Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${paymentHistoryPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changePaymentHistoryPage(${i})">${i}</button>`;
+    }
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${paymentHistoryPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changePaymentHistoryPage(${paymentHistoryPage + 1})"`}>Next</button>`;
+    pagination.innerHTML = html;
+}
+
+window.changePaymentHistoryPage = function(page) {
+    if (page < 1 || page > Math.ceil(filteredPaymentHistory.length / paymentHistoryPerPage)) return;
+    paymentHistoryPage = page;
+    renderPaymentHistory();
 }
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
