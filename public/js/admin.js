@@ -1102,8 +1102,11 @@ async function viewNotificationHistory(id) {
                         <span style="font-size: 0.85em; color: var(--text-secondary);">${new Date(n.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                     </div>
                     <div style="font-size: 0.95em; color: var(--text-primary); margin-bottom: 8px;">${n.Message}</div>
-                    <div style="font-size: 0.85em; color: ${n.IsRead ? 'var(--success-color)' : 'var(--warning-color)'}; font-weight: 600;">
-                        <i class="fa-solid ${n.IsRead ? 'fa-check-double' : 'fa-check'}"></i> ${n.IsRead ? 'Read by Student' : 'Delivered (Unread)'}
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 0.85em; color: ${n.IsRead ? 'var(--success-color)' : 'var(--warning-color)'}; font-weight: 600;">
+                            <i class="fa-solid ${n.IsRead ? 'fa-check-double' : 'fa-check'}"></i> ${n.IsRead ? 'Read by Student' : 'Delivered (Unread)'}
+                        </div>
+                        ${n.HiddenByStudent ? `<span style="font-size: 0.85em; color: var(--error-color); font-weight: 600;" title="Student deleted this message from their dashboard"><i class="fa-solid fa-trash-can"></i> Deleted by Student</span>` : ''}
                     </div>
                 </div>
             `).join('');

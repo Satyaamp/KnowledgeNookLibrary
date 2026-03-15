@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getProfile, requestProfileUpdate, submitInterested, changePassword, getMyProfileRequest, markRequestAsSeen, getAllMyProfileRequests, deleteProfileRequest, deleteManyProfileRequests, updateProfilePicture, updateAadhar, getVapidPublicKey, savePushSubscription, getMyNotifications, markNotificationsAsRead } = require('../controllers/studentController');
+const { getProfile, requestProfileUpdate, submitInterested, changePassword, getMyProfileRequest, markRequestAsSeen, getAllMyProfileRequests, deleteProfileRequest, deleteManyProfileRequests, updateProfilePicture, updateAadhar, getVapidPublicKey, savePushSubscription, getMyNotifications, markNotificationsAsRead, deleteNotification } = require('../controllers/studentController');
 const { authGuard } = require('../middleware/authGuard');
 const upload = require('../utils/upload');
 
@@ -15,6 +15,7 @@ router.get('/vapid-public-key', getVapidPublicKey);
 router.post('/subscribe', savePushSubscription);
 router.get('/notifications', getMyNotifications);
 router.put('/notifications/read', markNotificationsAsRead);
+router.delete('/notifications/:id', deleteNotification);
 router.post('/profile-update', requestProfileUpdate);
 router.get('/profile-update-request', getMyProfileRequest);
 router.post('/update-profile-pic', upload.single('profilePic'), updateProfilePicture);

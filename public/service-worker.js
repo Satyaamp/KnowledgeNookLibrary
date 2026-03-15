@@ -1,4 +1,4 @@
-const CACHE_NAME = "knowledgenook-v6"; // UPDATE THIS VERSION ON EVERY DEPLOY TO FORCE REFRESH
+const CACHE_NAME = "knowledgenook-v8"; // UPDATE THIS VERSION ON EVERY DEPLOY TO FORCE REFRESH
 
 const STATIC_ASSETS = [
   "/",
@@ -75,41 +75,25 @@ self.addEventListener("fetch", event => {
 
   const url = new URL(event.request.url);
 
-  // 1. Network First for HTML/Navigation (Ensures latest version)
-  if (event.request.mode === 'navigate' || url.pathname.indexOf('.') === -1) {
-    event.respondWith(
-      fetch(event.request)
-        .then(networkResponse => {
-          // Do not cache API calls to ensure dynamic backend data isn't trapped offline
-          if (url.pathname.startsWith('/api/')) return networkResponse;
-          
-          return caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          });
-        })
-        .catch(() => {
-          return caches.match(event.request); // Fallback to cache if offline
-        })
-    );
-  } else {
-    // 2. Cache First for Static Assets (Images, CSS, JS)
-    event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        return fetch(event.request).then(response => {
-          // Only cache valid local requests to prevent third-party CORS issues
-          if (response.status === 200 && event.request.url.startsWith(self.location.origin)) {
-            return caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, response.clone());
-              return response;
-            });
-          }
-          return response;
+  // 1. Always fetch API calls directly from the network (Never cache)
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // 2. Network First Strategy for all files (Ensures users never get stuck on old code)
+  event.respondWith(
+    fetch(event.request)
+      .then(networkResponse => {
+        return caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
         });
       })
-    );
-  }
+      .catch(() => {
+        return caches.match(event.request); // Fallback to cache if offline
+      })
+  );
 });
 
 /* ================================
@@ -125,7 +109,7 @@ self.addEventListener('push', event => {
         icon: '/images/icons/icon-192.png',
         badge: '/images/icons/icon-72.png',
         data: {
-          url: data.url || '/student/dashboard.html'
+          url: data.url || '/student/dashboard.html#notifications'
         }
       };
       event.waitUntil(self.registration.showNotification(title, options));

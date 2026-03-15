@@ -113,6 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTimeout(subscribeToPushNotifications, 2000); 
         
         fetchNotificationCount();
+        loadAnnouncements(); // Fetch announcements immediately to update unread badge globally
     } catch (e) {
         document.getElementById('studentName').textContent = 'Student';
         // Fallback to localStorage if API fetch fails
@@ -242,7 +243,7 @@ function handleRoute() {
     if (hash === '#fees') loadFees();
     if (hash === '#issues') loadIssues();
     if (hash === '#requests') loadRequestsHistory();
-    if (hash === '#notifications') { loadNotifications(); markNotificationsAsRead(); }
+    if (hash === '#notifications') { loadNotifications(); }
 }
 
 async function loadProfile() {
@@ -1179,6 +1180,14 @@ function processAnnouncements() {
     unreadAnnouncements = allAnnouncements.filter(a => !readIds.includes(a._id));
     readAnnouncements = allAnnouncements.filter(a => readIds.includes(a._id));
 
+    // Update Announcement Badges globally
+    const unreadCount = unreadAnnouncements.length;
+    const badges = document.querySelectorAll('.announcement-badge');
+    badges.forEach(badge => {
+        badge.textContent = unreadCount;
+        badge.style.display = unreadCount > 0 ? 'inline-flex' : 'none';
+    });
+
     renderAnnouncementTab();
 }
 
@@ -1594,9 +1603,15 @@ function renderNotifications() {
 
     list.innerHTML = msgsToShow.map(n => `
         <div style="border-left: 4px solid ${n.IsRead ? 'transparent' : 'var(--primary-color)'}; padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg); border-top: 1px solid var(--card-border); border-right: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border);">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <strong style="${n.IsRead ? 'color: var(--text-primary);' : 'color: var(--primary-color);'}"><i class="fa-solid fa-bell" style="margin-right:5px;"></i> ${n.Title}</strong>
-                <span style="font-size:0.85em; color:var(--text-secondary);">${new Date(n.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} | ${new Date(n.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                <strong style="${n.IsRead ? 'color: var(--text-primary);' : 'color: var(--primary-color);'}"><i class="fa-solid fa-envelope" style="margin-right:5px;"></i> ${n.Title}</strong>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                    <span style="font-size:0.85em; color:var(--text-secondary);">${new Date(n.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')} | ${new Date(n.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                    <div style="display: flex; gap: 5px;">
+                        ${!n.IsRead ? `<button onclick="markNotificationRead('${n._id}')" class="btn-outline" style="padding: 2px 8px; font-size: 0.8em; border-radius: 4px; color: var(--success-color); border-color: var(--success-color);"><i class="fa-solid fa-check"></i> Mark Read</button>` : ''}
+                        <button onclick="deleteAdminMessage('${n._id}')" class="btn-outline" style="padding: 2px 8px; font-size: 0.8em; border-radius: 4px; color: var(--error-color); border-color: var(--error-color);"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
             </div>
             <div style="font-size:0.95em; color:var(--text-secondary); white-space:pre-wrap; word-break: break-word;">${n.Message}</div>
         </div>
@@ -1623,12 +1638,47 @@ function changeNotificationsPage(page) {
 }
 
 async function markNotificationsAsRead() {
+    markAllNotificationsRead();
+}
+
+async function markAllNotificationsRead() {
     try {
-        await apiFetch('/students/notifications/read', { method: 'PUT' });
-        const badges = document.querySelectorAll('.notification-badge');
-        badges.forEach(badge => badge.style.display = 'none');
+        await apiFetch('/students/notifications/read', { 
+            method: 'PUT',
+            body: JSON.stringify({})
+        });
+        currentNotifications.forEach(n => n.IsRead = true);
+        renderNotifications();
+        fetchNotificationCount();
     } catch (error) {
-        console.error('Error marking notifications as read:', error);
+        showToast('Error marking all as read: ' + error.message, 'error');
+    }
+}
+
+async function markNotificationRead(id) {
+    try {
+        await apiFetch('/students/notifications/read', {
+            method: 'PUT',
+            body: JSON.stringify({ id })
+        });
+        const notification = currentNotifications.find(n => n._id === id);
+        if (notification) notification.IsRead = true;
+        renderNotifications();
+        fetchNotificationCount();
+    } catch (error) {
+        showToast('Error marking message as read: ' + error.message, 'error');
+    }
+}
+
+async function deleteAdminMessage(id) {
+    if (!await showConfirm('Are you sure you want to delete this message?')) return;
+    try {
+        await apiFetch('/students/notifications/' + id, { method: 'DELETE' });
+        showToast('Message deleted', 'success');
+        loadNotifications(); // Refresh list
+        fetchNotificationCount(); // Update unread count if deleted an unread message
+    } catch (error) {
+        showToast('Error deleting message: ' + error.message, 'error');
     }
 }
 

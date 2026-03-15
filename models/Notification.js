@@ -11,7 +11,8 @@ const notificationSchema = new mongoose.Schema({
     Title: { type: String, required: true },
     Message: { type: String, required: true },
     Url: { type: String },
-    IsRead: { type: Boolean, default: false }
+    IsRead: { type: Boolean, default: false },
+    HiddenByStudent: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Notification', notificationSchema);

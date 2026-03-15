@@ -53,7 +53,7 @@ const sendPushToStudent = async (studentId, payload) => {
                 StudentName: student.FullName || student.FirstName,
                 Title: personalizedPayload.title || 'Notification',
                 Message: personalizedPayload.message || 'You have a new message.',
-                Url: personalizedPayload.url || '/student/dashboard.html'
+                Url: personalizedPayload.url || '/student/dashboard.html#notifications'
             });
         } catch (dbErr) {
             console.error('Failed to save notification to DB:', dbErr);

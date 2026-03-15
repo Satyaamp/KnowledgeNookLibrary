@@ -344,7 +344,7 @@ const savePushSubscription = async (req, res) => {
 // @access  Private/Student
 const getMyNotifications = async (req, res) => {
     try {
-        const notifications = await Notification.find({ StudentId: req.user.id }).sort({ createdAt: -1 });
+        const notifications = await Notification.find({ StudentId: req.user.id, HiddenByStudent: { $ne: true } }).sort({ createdAt: -1 });
         res.json(notifications);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching notifications', error: error.message });
@@ -356,11 +356,35 @@ const getMyNotifications = async (req, res) => {
 // @access  Private/Student
 const markNotificationsAsRead = async (req, res) => {
     try {
-        await Notification.updateMany({ StudentId: req.user.id, IsRead: false }, { IsRead: true });
+        const { id } = req.body || {};
+        if (id) {
+            await Notification.updateOne({ _id: id, StudentId: req.user.id }, { IsRead: true });
+        } else {
+            await Notification.updateMany({ StudentId: req.user.id, IsRead: false }, { IsRead: true });
+        }
         res.json({ message: 'Notifications marked as read' });
     } catch (error) {
         res.status(500).json({ message: 'Error updating notifications', error: error.message });
     }
 };
 
-module.exports = { getProfile, requestProfileUpdate, submitInterested, changePassword, getMyProfileRequest, markRequestAsSeen, getAllMyProfileRequests, deleteProfileRequest, deleteManyProfileRequests, updateProfilePicture, updateAadhar, getVapidPublicKey, savePushSubscription, getMyNotifications, markNotificationsAsRead };
+// @desc    Hide (soft delete) a notification
+// @route   DELETE /api/students/notifications/:id
+// @access  Private/Student
+const deleteNotification = async (req, res) => {
+    try {
+        const notification = await Notification.findOne({ _id: req.params.id, StudentId: req.user.id });
+        if (!notification) {
+            return res.status(404).json({ message: 'Notification not found' });
+        }
+
+        notification.HiddenByStudent = true;
+        await notification.save();
+
+        res.json({ message: 'Message deleted' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting message', error: error.message });
+    }
+};
+
+module.exports = { getProfile, requestProfileUpdate, submitInterested, changePassword, getMyProfileRequest, markRequestAsSeen, getAllMyProfileRequests, deleteProfileRequest, deleteManyProfileRequests, updateProfilePicture, updateAadhar, getVapidPublicKey, savePushSubscription, getMyNotifications, markNotificationsAsRead, deleteNotification };

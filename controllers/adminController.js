@@ -171,7 +171,7 @@ const sendManualNotification = async (req, res) => {
             return res.status(400).json({ message: 'Invalid notification type' });
         }
 
-        await sendPushToStudent(student._id, { title, message: pushMessage, url: '/student/dashboard.html' });
+        await sendPushToStudent(student._id, { title, message: pushMessage, url: '/student/dashboard.html#notifications' });
         res.json({ message: 'Notification sent successfully to student devices.' });
     } catch (error) {
         res.status(500).json({ message: 'Error sending notification', error: error.message });

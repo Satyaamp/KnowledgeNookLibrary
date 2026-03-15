@@ -154,7 +154,12 @@
                 <i class="fa-solid fa-book-open-reader"></i> <span class="logo-text">Knowledge Nook Library</span>
             </div>
             <ul class="dashboard-nav-links">
-                <li><a href="#home"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
+                <li>
+                    <a href="#home" style="display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-bullhorn"></i> Announcements
+                        <span class="announcement-badge" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span>
+                    </a>
+                </li>
                 <li>
                     <a href="#notifications" style="display: flex; align-items: center; gap: 5px;">
                         <i class="fa-solid fa-envelope"></i> Messages
@@ -189,7 +194,12 @@
     <div class="dashboard-container">
         <div class="sidebar">
             <ul>
-                <li><a href="#home" onclick="closeSidebar()"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
+                <li>
+                    <a href="#home" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fa-solid fa-bullhorn"></i> Announcements</span>
+                        <span class="announcement-badge" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
+                    </a>
+                </li>
                 <li>
                     <a href="#notifications" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
                         <span><i class="fa-solid fa-envelope"></i> Messages</span>
@@ -270,7 +280,10 @@
             <!-- Admin Messages / Notifications View -->
             <div id="view-notifications" class="view-section" style="display: none;">
                 <div class="card">
-                    <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-envelope" style="color: var(--primary-color); margin-right: 8px;"></i> Admin Messages</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0;"><i class="fa-solid fa-envelope" style="color: var(--primary-color); margin-right: 8px;"></i> Admin Messages</h3>
+                        <button onclick="markAllNotificationsRead()" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-check-double"></i> Mark All Read</button>
+                    </div>
                     <div id="notificationsList">Loading...</div>
                     <div id="notificationsPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                 </div>
@@ -535,8 +548,15 @@
       var nav = document.createElement('nav');
       nav.id = 'mobileBottomNav';
       nav.innerHTML = items.map(function(it) {
-        return '<button class="mob-nav-item" data-hash="' + it.hash + '" onclick="mobileNavTo(\'' + it.hash + '\',this)">'
-             + '<i class="fa-solid ' + it.icon + '"></i></button>';
+        var badge = '';
+        if (it.hash === 'notifications') {
+            badge = '<span class="notification-badge" style="display: none; position: absolute; top: 4px; right: calc(50% - 18px); background: #EF4444; color: white; border-radius: 10px; padding: 2px 4px; font-size: 0.65em; font-weight: bold; min-width: 16px; height: 16px; align-items: center; justify-content: center;">0</span>';
+        }
+        if (it.hash === 'home') {
+            badge = '<span class="announcement-badge" style="display: none; position: absolute; top: 4px; right: calc(50% - 18px); background: #EF4444; color: white; border-radius: 10px; padding: 2px 4px; font-size: 0.65em; font-weight: bold; min-width: 16px; height: 16px; align-items: center; justify-content: center;">0</span>';
+        }
+        return '<button class="mob-nav-item" data-hash="' + it.hash + '" onclick="mobileNavTo(\'' + it.hash + '\',this)" style="position: relative;">'
+             + '<i class="fa-solid ' + it.icon + '"></i>' + badge + '</button>';
       }).join('');
       document.body.appendChild(nav);
 
