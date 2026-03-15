@@ -1,4 +1,5 @@
 //  Manage Students: studentsPerPage
+// Verify Aadhar: aadharPerPage
 // Verify Fees: feesPerPage
 // Manage Issues: issuesPerPage
 // Interested Students: interestedPerPage
@@ -36,17 +37,30 @@ async function loadDashboardStats() {
  
     try {
         const stats = await apiFetch('/admin/dashboard-stats');
-        document.getElementById('stat-total-students').textContent = stats.totalStudents || 0;
-        document.getElementById('stat-active-students').textContent = stats.activeStudents || 0;
-        document.getElementById('stat-inactive-students').textContent = stats.inactiveStudents || 0;
-        document.getElementById('stat-pending-students').textContent = stats.pendingStudents || 0;
-        document.getElementById('stat-pending-fees').textContent = stats.pendingFees || 0;
-        document.getElementById('stat-open-issues').textContent = stats.openIssues || 0;
-        document.getElementById('stat-pending-requests').textContent = stats.pendingProfileRequests || 0;
-        document.getElementById('stat-pending-leads').textContent = stats.pendingLeads || 0;
         
-        // Format revenue as currency
-        document.getElementById('stat-total-revenue').textContent = '₹' + (stats.totalRevenue || 0).toLocaleString('en-IN');
+        if (document.getElementById('stat-total-students')) {
+            document.getElementById('stat-total-students').textContent = stats.totalStudents || 0;
+            document.getElementById('stat-active-students').textContent = stats.activeStudents || 0;
+            document.getElementById('stat-inactive-students').textContent = stats.inactiveStudents || 0;
+            document.getElementById('stat-pending-students').textContent = stats.pendingStudents || 0;
+            document.getElementById('stat-pending-fees').textContent = stats.pendingFees || 0;
+            document.getElementById('stat-open-issues').textContent = stats.openIssues || 0;
+            document.getElementById('stat-pending-requests').textContent = stats.pendingProfileRequests || 0;
+            document.getElementById('stat-pending-leads').textContent = stats.pendingLeads || 0;
+            if (document.getElementById('stat-pending-aadhar')) document.getElementById('stat-pending-aadhar').textContent = stats.pendingAadhar || 0;
+            if (document.getElementById('stat-verified-aadhar')) document.getElementById('stat-verified-aadhar').textContent = stats.verifiedAadhar || 0;
+            if (document.getElementById('stat-notuploaded-aadhar')) document.getElementById('stat-notuploaded-aadhar').textContent = stats.notUploadedAadhar || 0;
+            document.getElementById('stat-total-revenue').textContent = '₹' + (stats.totalRevenue || 0).toLocaleString('en-IN');
+        }
+
+        // Global Nav Badges Update
+        updateNavBadge('students', stats.pendingStudents || 0);
+        updateNavBadge('aadhar', stats.pendingAadhar || 0);
+        updateNavBadge('leads', stats.pendingLeads || 0);
+        updateNavBadge('fees', stats.pendingFees || 0);
+        updateNavBadge('issues', stats.openIssues || 0);
+        updateNavBadge('requests', stats.pendingProfileRequests || 0);
+        
 
         // Distribution Stats (Batch & Plan)
         const distContainer = document.getElementById('distribution-stats-container');
@@ -74,12 +88,17 @@ async function loadDashboardStats() {
         // Gender Stats
         const genderContainer = document.getElementById('gender-stats-container');
         if (stats.genderStats && stats.genderStats.length > 0) {
-            genderContainer.innerHTML = stats.genderStats.map(g => `
-                <div style="flex: 1; border: 1px solid var(--card-border); padding: 15px; border-radius: 8px; text-align: center; background: var(--card-bg); min-width: 120px;">
+            genderContainer.innerHTML = stats.genderStats.map(g => {
+                const gId = g._id || 'Not Specified';
+                return `
+                <div style="flex: 1; border: 1px solid var(--card-border); padding: 15px; border-radius: 8px; text-align: center; background: var(--card-bg); min-width: 120px; cursor: pointer; transition: transform 0.2s;"
+                    onclick="showStudentsByGender('${gId}')"
+                    onmouseover="this.style.transform='scale(1.05)'"
+                    onmouseout="this.style.transform='scale(1)'">
                     <div style="font-size: 1.5em; font-weight: bold; color: var(--text-primary);">${g.count}</div>
-                    <div style="font-size: 0.9em; color: var(--text-secondary); margin-top: 5px;">${g._id || 'Not Specified'}</div>
+                    <div style="font-size: 0.9em; color: var(--text-secondary); margin-top: 5px;">${gId}</div>
                 </div>
-            `).join('');
+            `}).join('');
         } else {
             genderContainer.innerHTML = '<p style="width: 100%; text-align: center; color: var(--text-secondary);">No gender data available.</p>';
         }
@@ -87,6 +106,20 @@ async function loadDashboardStats() {
         console.error('Error loading dashboard stats:', error);
     }
 }
+
+window.updateNavBadge = function(type, count) {
+    const navBadge = document.getElementById(`nav-badge-${type}`);
+    const sideBadge = document.getElementById(`side-badge-${type}`);
+    
+    if (navBadge) {
+        navBadge.textContent = count;
+        navBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+    if (sideBadge) {
+        sideBadge.textContent = count;
+        sideBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+};
 
 let bulkValidStudents = [];
 let bulkInvalidStudents = [];
@@ -384,6 +417,7 @@ function filterStudents(immediate = false) {
     const searchInput = document.getElementById('studentSearch');
     const query = searchInput ? searchInput.value.toLowerCase() : '';
     const statusFilter = document.getElementById('filterStudentStatus') ? document.getElementById('filterStudentStatus').value : '';
+    const genderFilter = document.getElementById('filterStudentGender') ? document.getElementById('filterStudentGender').value : '';
 
     if (searchTimeout) clearTimeout(searchTimeout);
 
@@ -397,8 +431,9 @@ function filterStudents(immediate = false) {
             
             const matchesQuery = name.includes(query) || contact.includes(query) || email.includes(query) || libId.includes(query) || aadhar.includes(query);
             const matchesStatus = statusFilter === '' || student.AccountStatus === statusFilter;
+            const matchesGender = genderFilter === '' || (student.Gender || 'Not Specified') === genderFilter;
 
-            return matchesQuery && matchesStatus;
+            return matchesQuery && matchesStatus && matchesGender;
         });
         currentStudentsPage = 1;
         renderStudents();
@@ -419,6 +454,39 @@ function showPendingFees() {
     }
 }
 
+function showPendingAadhar() {
+    window.location.hash = '#aadhar';
+    const dropdown = document.getElementById('filterAadharStatus');
+    if (dropdown) {
+        dropdown.value = 'Pending';
+        if (currentAadharStudents && currentAadharStudents.length > 0) {
+            filterAadhar(true);
+        }
+    }
+}
+
+function showVerifiedAadhar() {
+    window.location.hash = '#aadhar';
+    const dropdown = document.getElementById('filterAadharStatus');
+    if (dropdown) {
+        dropdown.value = 'Verified';
+        if (currentAadharStudents && currentAadharStudents.length > 0) {
+            filterAadhar(true);
+        }
+    }
+}
+
+function showNotUploadedAadhar() {
+    window.location.hash = '#aadhar';
+    const dropdown = document.getElementById('filterAadharStatus');
+    if (dropdown) {
+        dropdown.value = 'Not Uploaded';
+        if (currentAadharStudents && currentAadharStudents.length > 0) {
+            filterAadhar(true);
+        }
+    }
+}
+
 function showOpenIssues() {
     window.location.hash = '#issues';
     const dropdown = document.getElementById('filterIssueStatus');
@@ -433,36 +501,57 @@ function showOpenIssues() {
 function showActiveStudents() {
     window.location.hash = '#students';
     const dropdown = document.getElementById('filterStudentStatus');
-    if (dropdown) {
-        dropdown.value = 'Active';
-        if (currentStudents.length > 0) {
-            filterStudents(true);
-        }
+    const genderDropdown = document.getElementById('filterStudentGender');
+    if (dropdown) dropdown.value = 'Active';
+    if (genderDropdown) genderDropdown.value = '';
+    if (currentStudents.length > 0) {
+        filterStudents(true);
     }
 }
 
 function showInactiveStudents() {
     window.location.hash = '#students';
     const dropdown = document.getElementById('filterStudentStatus');
-    if (dropdown) {
-        dropdown.value = 'Inactive';
-        if (currentStudents.length > 0) {
-            filterStudents(true);
-        }
+    const genderDropdown = document.getElementById('filterStudentGender');
+    if (dropdown) dropdown.value = 'Inactive';
+    if (genderDropdown) genderDropdown.value = '';
+    if (currentStudents.length > 0) {
+        filterStudents(true);
+    }
+}
+
+function showAllStudents() {
+    window.location.hash = '#students';
+    const dropdown = document.getElementById('filterStudentStatus');
+    const genderDropdown = document.getElementById('filterStudentGender');
+    if (dropdown) dropdown.value = '';
+    if (genderDropdown) genderDropdown.value = '';
+    if (currentStudents.length > 0) {
+        filterStudents(true);
     }
 }
 
 function showPendingApprovals() {
     window.location.hash = '#students';
-    // Set the dropdown to Pending. When loadStudents() runs (triggered by hash change),
-    // it will call filterStudents(), which will read this value.
     const dropdown = document.getElementById('filterStudentStatus');
-    if (dropdown) {
-        dropdown.value = 'Pending';
-        // If we were already on the students page, force a re-filter
-        if (currentStudents.length > 0) {
-            filterStudents(true);
-        }
+    const genderDropdown = document.getElementById('filterStudentGender');
+    if (dropdown) dropdown.value = 'Pending';
+    if (genderDropdown) genderDropdown.value = '';
+    if (currentStudents.length > 0) {
+        filterStudents(true);
+    }
+}
+
+function showStudentsByGender(gender) {
+    window.location.hash = '#students';
+    const statusDropdown = document.getElementById('filterStudentStatus');
+    const genderDropdown = document.getElementById('filterStudentGender');
+    
+    if (statusDropdown) statusDropdown.value = 'Active'; // Stats only count active students
+    if (genderDropdown) genderDropdown.value = gender;
+    
+    if (currentStudents.length > 0) {
+        filterStudents(true);
     }
 }
 
@@ -510,32 +599,10 @@ function renderStudents() {
                         <option value="Inactive" ${student.AccountStatus === 'Inactive' ? 'selected' : ''}>Inactive</option>
                     </select>
 
-                    <!-- Aadhar Verification Controls -->
-                    <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
-                        ${student.AadharProofURL ? 
-                            `<button onclick="window.open('${student.AadharProofURL}', '_blank')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: #6B7280; color: #6B7280; border-radius: 4px; font-size: 0.85em;" title="View Aadhar"><i class="fa-solid fa-address-card"></i></button>` 
-                            : ''
-                        }
-                        
-                        ${(student.AadharStatus === 'Pending' || student.AadharStatus === 'Not Uploaded' && student.AadharProofURL) ? 
-                            `<button onclick="verifyAadhar('${student._id}', 'Verified')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--success-color); color: var(--success-color); border-radius: 4px; font-size: 0.85em;" title="Approve Aadhar"><i class="fa-solid fa-check"></i></button>
-                             <button onclick="rejectAadhar('${student._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--error-color); color: var(--error-color); border-radius: 4px; font-size: 0.85em;" title="Reject Aadhar"><i class="fa-solid fa-xmark"></i></button>` 
-                            : ''
-                        }
-
-                        ${student.AadharStatus === 'Verified' ? 
-                            `<span style="font-size: 0.8em; color: var(--success-color); display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;" title="Aadhar Verified"><i class="fa-solid fa-shield-check"></i> Verified</span>` : ''}
-                        
-                        ${student.AadharStatus === 'Rejected' ? 
-                            `<span style="font-size: 0.8em; color: var(--error-color); display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;" title="Rejected: ${student.AadharRejectionReason || 'Invalid'}"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>` : ''}
-                        
-                        ${(!student.AadharProofURL) ? 
-                            `<span style="font-size: 0.8em; color: var(--error-color); display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;" title="Proof not uploaded"><i class="fa-solid fa-circle-exclamation"></i> Pending Proof</span>` : ''}
-                    </div>
-
                     <button onclick="viewNotificationHistory('${student._id}')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--text-secondary); color: var(--text-secondary); border-radius: 6px; font-size: 0.85em;" title="Notification History"><i class="fa-solid fa-clock-rotate-left"></i></button>
                     <button onclick="openNotifyModal('${student._id}')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 6px; font-size: 0.85em;" title="Send Notification"><i class="fa-regular fa-bell"></i></button>
-                    <button onclick="viewStudent('${student._id}')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                    <button onclick="viewStudent('${student._id}')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-pen-to-square"></i> </button>
+                    <button onclick="resetStudentPassword('${student._id}')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--warning-color); color: var(--warning-color); border-radius: 6px; font-size: 0.85em;" title="Reset Password"><i class="fa-solid fa-key"></i></button>
                 </div>
             </div>
             <div style="font-size: 0.95em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; padding-top: 12px; border-top: 1px solid var(--card-border);">
@@ -821,6 +888,7 @@ async function reviewInterestedStudent(id) {
         await apiFetch(`/admin/interested-students/${id}/review`, { method: 'PUT' });
         showToast('Student marked as reviewed successfully', 'success');
         loadInterestedStudents();
+        loadDashboardStats();
     } catch (error) {
         showToast('Error: ' + error.message, 'error');
     }
@@ -838,6 +906,7 @@ async function rejectInterestedStudent(id) {
         });
         showToast('Application rejected', 'success');
         loadInterestedStudents();
+        loadDashboardStats();
     } catch (error) {
         showToast('Error: ' + error.message, 'error');
     }
@@ -909,6 +978,7 @@ async function updateStudentStatus(id, status) {
         // Update local data to prevent it from reverting on next filter/sort.
         const student = currentStudents.find(s => s._id === id);
         if (student) student.AccountStatus = status;
+        loadDashboardStats();
     } catch (error) {
         showToast('Error updating status: ' + error.message, 'error');
         renderStudents(); // Re-render on error to show correct state
@@ -923,6 +993,7 @@ async function approveStudent(id) {
             body: JSON.stringify({ AccountStatus: 'Active' })
         });
         loadStudents();
+        loadDashboardStats();
     } catch (error) {
         showToast('Error approving student: ' + error.message, 'error');
     }
@@ -935,7 +1006,12 @@ async function verifyAadhar(id, status) {
             method: 'PUT',
             body: JSON.stringify({ status: 'Verified' })
         });
-        loadStudents();
+        if (window.location.hash === '#aadhar') {
+            loadAadhar();
+        } else {
+            loadStudents();
+        }
+        loadDashboardStats();
     } catch (error) {
         showToast('Error: ' + error.message, 'error');
     }
@@ -950,7 +1026,12 @@ async function rejectAadhar(id) {
             method: 'PUT',
             body: JSON.stringify({ status: 'Rejected', reason: reason || 'Invalid Document' })
         });
-        loadStudents();
+        if (window.location.hash === '#aadhar') {
+            loadAadhar();
+        } else {
+            loadStudents();
+        }
+        loadDashboardStats();
     } catch (error) {
         showToast('Error: ' + error.message, 'error');
     }
@@ -1087,6 +1168,20 @@ function viewStudent(id, isReadOnly = false) {
 
     document.getElementById('modalStudentId').value = student._id;
     modal.style.display = 'block';
+}
+
+async function resetStudentPassword(id) {
+    if (!await showConfirm('Are you sure you want to reset this student\'s password to the default ("library@123")?')) return;
+    
+    try {
+        await apiFetch('/admin/students/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({ ResetPassword: true })
+        });
+        showToast('Password reset to "library@123" successfully.', 'success');
+    } catch(e) {
+        showToast('Error resetting password: ' + e.message, 'error');
+    }
 }
 
 function closeStudentModal() {
@@ -1444,6 +1539,7 @@ async function updateFeeStatus(id, newStatus) {
         });
         loadFees();
         if (typeof loadPaymentHistory === 'function') loadPaymentHistory(); // Refresh the history table automatically
+        loadDashboardStats();
     } catch (error) {
         showToast('Error updating fee status: ' + error.message, 'error');
         loadFees();
@@ -1592,6 +1688,7 @@ async function handleRequestAction(id, action) {
                 body: JSON.stringify({ Status: 'Under Review' })
             });
             loadRequests();
+            loadDashboardStats();
         } catch (error) { showToast(error.message, 'error'); }
     }
 }
@@ -1601,6 +1698,7 @@ async function approveRequest(id) {
     try {
         await apiFetch('/admin/profile-requests/' + id + '/approve', { method: 'PUT' });
         loadRequests();
+        loadDashboardStats();
     } catch (error) {
         showToast('Error: ' + error.message, 'error');
     }
@@ -1618,6 +1716,7 @@ async function rejectRequest(id) {
             })
         });
         loadRequests();
+        loadDashboardStats();
     } catch (error) {
         showToast('Error: ' + error.message, 'error');
     }
@@ -1774,6 +1873,148 @@ async function deleteAnnouncement(id) {
     }
 }
 
+// --- Aadhar Verification Logic ---
+let currentAadharStudents = [];
+let filteredAadharStudents = [];
+let currentAadharPage = 1;
+const aadharPerPage = 10;
+let aadharSearchTimeout = null;
+
+async function loadAadhar() {
+    const list = document.getElementById('aadharList');
+    if (!list) return;
+    list.innerHTML = 'Loading Aadhar records...';
+    try {
+        const data = await apiFetch('/admin/students');
+        if (data && data.length > 0) {
+            currentAadharStudents = data;
+            filterAadhar(true);
+        } else {
+            list.innerHTML = '<p>No student records found.</p>';
+            document.getElementById('aadharPagination').innerHTML = '';
+        }
+    } catch (error) {
+        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+
+// Bulk Notify Not Uploaded
+async function bulkNotifyNotUploaded() {
+    if (!await showConfirm('Are you sure you want to send a push notification reminder to ALL students who have "Not Uploaded" their Aadhar?')) return;
+    
+    try {
+        showToast('Sending notifications...', 'info');
+        const res = await apiFetch('/admin/aadhar/notify-not-uploaded', { method: 'POST' });
+        showToast(res.message, 'success');
+    } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+    }
+}
+
+window.filterAadhar = function(immediate = false) {
+    const searchInput = document.getElementById('aadharSearch');
+    const query = searchInput ? searchInput.value.toLowerCase() : '';
+    const statusFilter = document.getElementById('filterAadharStatus') ? document.getElementById('filterAadharStatus').value : '';
+
+    if (aadharSearchTimeout) clearTimeout(aadharSearchTimeout);
+
+    const executeFilter = () => {
+        filteredAadharStudents = currentAadharStudents.filter(student => {
+            const name = (student.FullName || student.FirstName + ' ' + (student.LastName || '')).toLowerCase();
+            const contact = (student.Contact || '').toLowerCase();
+            const libId = (student.LibraryID || '').toLowerCase();
+            const aadhar = (student.AadharNumber || '').toLowerCase();
+            
+            const matchesQuery = name.includes(query) || contact.includes(query) || libId.includes(query) || aadhar.includes(query);
+            
+            const actualStatus = student.AadharStatus || 'Not Uploaded';
+            const matchesStatus = statusFilter === '' || actualStatus === statusFilter;
+
+            return matchesQuery && matchesStatus;
+        });
+        currentAadharPage = 1;
+        renderAadhar();
+    };
+
+    if (immediate) executeFilter();
+    else aadharSearchTimeout = setTimeout(executeFilter, 300);
+}
+
+function renderAadhar() {
+    const list = document.getElementById('aadharList');
+    if (!list) return;
+
+    const startIndex = (currentAadharPage - 1) * aadharPerPage;
+    const endIndex = startIndex + aadharPerPage;
+    const paginatedStudents = filteredAadharStudents.slice(startIndex, endIndex);
+
+    if (paginatedStudents.length === 0) {
+        list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No records match your search.</p>';
+        document.getElementById('aadharPagination').innerHTML = '';
+        return;
+    }
+
+    list.innerHTML = paginatedStudents.map(student => {
+        const status = student.AadharStatus || 'Not Uploaded';
+        return `
+        <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="${student.ProfilePictureURL || '/img/default-avatar.png'}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--card-border);">
+                    <div>
+                        <strong style="font-size: 1.05em; color: var(--primary-color);">${student.FullName || student.FirstName + ' ' + (student.LastName || '')}</strong>
+                        <div style="font-size: 0.85em; color: var(--text-secondary);">ID: ${student.LibraryID || 'N/A'} | Aadhar No: ${student.AadharNumber || 'N/A'}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    ${status === 'Verified' ? `<span style="font-size: 0.85em; color: var(--success-color); padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;"><i class="fa-solid fa-shield-check"></i> Verified</span>` : ''}
+                    ${status === 'Rejected' ? `<span style="font-size: 0.85em; color: var(--error-color); padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;" title="Reason: ${student.AadharRejectionReason || 'Invalid'}"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>` : ''}
+                    ${status === 'Pending' ? `<span style="font-size: 0.85em; color: var(--warning-color); padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;"><i class="fa-solid fa-clock"></i> Pending</span>` : ''}
+                    ${status === 'Not Uploaded' ? `<span style="font-size: 0.85em; color: var(--text-secondary); padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;"><i class="fa-solid fa-circle-exclamation"></i> Not Uploaded</span>` : ''}
+
+                    ${student.AadharProofURL ? 
+                        `<button onclick="window.open('${student.AadharProofURL}', '_blank')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: #6B7280; color: #6B7280; border-radius: 6px; font-size: 0.85em;" title="View Aadhar Document"><i class="fa-solid fa-file-image"></i> View Document</button>` 
+                        : ''
+                    }
+                    ${(status === 'Pending' || (status === 'Not Uploaded' && student.AadharProofURL)) ? 
+                        `<button onclick="verifyAadhar('${student._id}', 'Verified')" class="btn" style="padding: 0.3rem 0.6rem; background: var(--success-color); border-color: var(--success-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-check"></i> Approve</button>
+                        <button onclick="rejectAadhar('${student._id}')" class="btn" style="padding: 0.3rem 0.6rem; background: var(--error-color); border-color: var(--error-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-xmark"></i> Reject</button>` 
+                        : ''
+                    }
+                </div>
+            </div>
+            ${status === 'Rejected' && student.AadharRejectionReason ? `<div style="font-size: 0.85em; color: var(--error-color); margin-top: 5px; padding: 5px 10px; background: var(--bg-color); border-radius: 6px; border-left: 3px solid var(--error-color);"><strong>Reason for Rejection:</strong> ${student.AadharRejectionReason}</div>` : ''}
+        </div>
+    `}).join('');
+
+    renderAadharPagination();
+}
+
+function renderAadharPagination() {
+    const pagination = document.getElementById('aadharPagination');
+    if (!pagination) return;
+    const totalPages = Math.ceil(filteredAadharStudents.length / aadharPerPage);
+
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentAadharPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAadharPage(${currentAadharPage - 1})"`}>Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentAadharPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeAadharPage(${i})">${i}</button>`;
+    }
+    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentAadharPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAadharPage(${currentAadharPage + 1})"`}>Next</button>`;
+    pagination.innerHTML = html;
+}
+
+window.changeAadharPage = function(page) {
+    if (page < 1 || page > Math.ceil(filteredAadharStudents.length / aadharPerPage)) return;
+    currentAadharPage = page;
+    renderAadhar();
+}
+
 // Issues Logic
 async function loadIssues() {
     const list = document.getElementById('issuesList');
@@ -1913,6 +2154,7 @@ async function updateIssueStatus(id, newStatus) {
         // loadIssues(); // Optional: reload to refresh UI, or just trust the select change
         // We can reload to get correct styling on the badge
         loadIssues();
+        loadDashboardStats();
     } catch (error) {
         showToast('Error updating status: ' + error.message, 'error');
         loadIssues(); // reload to revert a failed change
@@ -1930,6 +2172,7 @@ async function replyToIssue(id) {
         });
         showToast('Reply saved successfully', 'success');
         loadIssues();
+        loadDashboardStats();
     } catch (error) {
         showToast('Error saving reply: ' + error.message, 'error');
     }
@@ -1940,6 +2183,7 @@ async function deleteIssue(id) {
     try {
         await apiFetch('/issues/' + id, { method: 'DELETE' });
         loadIssues();
+        loadDashboardStats();
     } catch (error) {
         showToast('Error deleting issue: ' + error.message, 'error');
     }

@@ -31,13 +31,14 @@
                 <ul class="dashboard-nav-links">
                     <li><a href="#home"><i class="fa-solid fa-home"></i> Home</a></li>
                     <li><a href="#announcements"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
-                    <li><a href="#students"><i class="fa-solid fa-users"></i> Students</a></li>
+                    <li><a href="#students" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-users"></i> Students <span id="nav-badge-students" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
+                    <li><a href="#aadhar" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-address-card"></i> Aadhar <span id="nav-badge-aadhar" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#bulk-students"><i class="fa-solid fa-file-csv"></i> Bulk Upload</a></li>
-                    <li><a href="#interested"><i class="fa-solid fa-user-clock"></i> Leads</a></li>
-                    <li><a href="#fees"><i class="fa-solid fa-indian-rupee-sign"></i> Fees</a></li>
+                    <li><a href="#interested" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-user-clock"></i> Leads <span id="nav-badge-leads" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
+                    <li><a href="#fees" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-indian-rupee-sign"></i> Fees <span id="nav-badge-fees" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#payment-history"><i class="fa-solid fa-file-invoice-dollar"></i> History</a></li>
-                    <li><a href="#issues"><i class="fa-solid fa-triangle-exclamation"></i> Issues</a></li>
-                    <li><a href="#requests"><i class="fa-solid fa-id-card"></i> Requests</a></li>
+                    <li><a href="#issues" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-triangle-exclamation"></i> Issues <span id="nav-badge-issues" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
+                    <li><a href="#requests" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-id-card"></i> Requests <span id="nav-badge-requests" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#search"><i class="fa-solid fa-magnifying-glass"></i> Search</a></li>
                 </ul>
                 <div class="nav-actions">
@@ -73,21 +74,47 @@
                     <li><a href="#home" onclick="closeSidebar()"><i class="fa-solid fa-home"></i> Dashboard</a></li>
                     <li><a href="#announcements" onclick="closeSidebar()"><i class="fa-solid fa-bullhorn"></i>
                             Announcements</a></li>
-                    <li><a href="#students" onclick="closeSidebar()"><i class="fa-solid fa-users"></i> Manage
-                            Students</a>
+                    <li><a href="#students" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-users"></i> Manage Students</span>
+                            <span id="side-badge-students" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
+                        </a>
                     </li>
+
+                    <li style="border-left: 3px solid green;">
+                        <a href="#aadhar" onclick="closeSidebar()"><i class="fa-solid fa-address-card"></i> Verify Aadhar
+                            <span id="side-badge-aadhar" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
+                        </a>
+                        
+                    </li>
+
                     <li><a href="#bulk-students" onclick="closeSidebar()"><i class="fa-solid fa-file-csv"></i> Bulk
                             Upload</a>
                     </li>
-                    <li><a href="#interested" onclick="closeSidebar()"><i class="fa-solid fa-user-clock"></i>
-                            Interested Students</a></li>
-                    <li><a href="#fees" onclick="closeSidebar()"><i class="fa-solid fa-indian-rupee-sign"></i> Verify
-                            Fees</a></li>
-                    <li><a href="#payment-history" onclick="closeSidebar()"><i class="fa-solid fa-indian-rupee-sign"></i> Fees History <i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i></a></li>
-                    <li><a href="#issues" onclick="closeSidebar()"><i class="fa-solid fa-triangle-exclamation"></i>
-                            Issues</a></li>
-                    <li><a href="#requests" onclick="closeSidebar()"><i class="fa-solid fa-id-card"></i> Profile
-                            Requests</a></li>
+                    <li><a href="#interested" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-user-clock"></i> Interested Students</span>
+                            <span id="side-badge-leads" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
+                        </a></li>
+
+                    <li><a href="#fees" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-indian-rupee-sign"></i> Verify Fees</span>
+                            <span id="side-badge-fees" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
+                        </a></li>
+
+
+                    <li style="border-left: 3px solid green;"><a href="#payment-history" onclick="closeSidebar()">
+                    <i class="fa-solid fa-indian-rupee-sign" style="color: var(--success-color)"></i> 
+                    Fees History 
+                    <i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i>
+                    </a>
+                    </li>
+                    <li><a href="#issues" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-triangle-exclamation"></i> Issues</span>
+                            <span id="side-badge-issues" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
+                        </a></li>
+                    <li><a href="#requests" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-id-card"></i> Profile Requests</span>
+                            <span id="side-badge-requests" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
+                        </a></li>
                     <!-- <li><a href="#search" onclick="closeSidebar()"><i class="fa-solid fa-magnifying-glass"></i> Quick Search</a></li> -->
                 </ul>
             </div>
@@ -108,20 +135,23 @@
 
                         </div>
                         <div id="dashboard-stats-grid">
-                            <div
-                                style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                            <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;"
+                                onclick="showAllStudents()" onmouseover="this.style.transform='scale(1.02)'"
+                                onmouseout="this.style.transform='scale(1)'">
                                 <div style="font-size: 2.5em; font-weight: bold; color: var(--primary-color);"
                                     id="stat-total-students">-</div>
                                 <div style="color: var(--text-secondary); margin-top: 5px;">Total Students</div>
                             </div>
-                            <div
-                                style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                            <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;"
+                                onclick="showActiveStudents()" onmouseover="this.style.transform='scale(1.02)'"
+                                onmouseout="this.style.transform='scale(1)'">
                                 <div style="font-size: 2.5em; font-weight: bold; color: var(--success-color);"
                                     id="stat-active-students">-</div>
                                 <div style="color: var(--text-secondary); margin-top: 5px;">Active Students</div>
                             </div>
-                            <div
-                                style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                            <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;"
+                                onclick="showInactiveStudents()" onmouseover="this.style.transform='scale(1.02)'"
+                                onmouseout="this.style.transform='scale(1)'">
                                 <div style="font-size: 2.5em; font-weight: bold; color: var(--text-primary);"
                                     id="stat-inactive-students">-</div>
                                 <div style="color: var(--text-secondary); margin-top: 5px;">Inactive Students</div>
@@ -157,8 +187,9 @@
                                     id="stat-pending-requests">-</div>
                                 <div style="color: var(--text-secondary); margin-top: 5px;">Profile Requests</div>
                             </div>
-                            <div
-                                style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg);">
+                            <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;"
+                                onclick="window.location.hash = '#payment-history'" onmouseover="this.style.transform='scale(1.02)'"
+                                onmouseout="this.style.transform='scale(1)'">
                                 <div style="font-size: 2.5em; font-weight: bold; color: #4F46E5;"
                                     id="stat-total-revenue">-</div>
                                 <div style="color: var(--text-secondary); margin-top: 5px;">Total Revenue</div>
@@ -169,7 +200,31 @@
                                 onmouseout="this.style.transform='scale(1)'">
                                 <div style="font-size: 2.5em; font-weight: bold; color: var(--primary-color);"
                                     id="stat-pending-leads">-</div>
-                                <div style="color: var(--text-secondary); margin-top: 5px;">New Leads</div>
+                                <div style="color: var(--text-secondary); margin-top: 5px;">New Register</div>
+                            </div>
+                            <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;"
+                                onclick="showPendingAadhar()"
+                                onmouseover="this.style.transform='scale(1.02)'"
+                                onmouseout="this.style.transform='scale(1)'">
+                                <div style="font-size: 2.5em; font-weight: bold; color: var(--error-color);"
+                                    id="stat-pending-aadhar">-</div>
+                                <div style="color: var(--text-secondary); margin-top: 5px;">Pending Aadhar</div>
+                            </div>
+                            <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;"
+                                onclick="showVerifiedAadhar()"
+                                onmouseover="this.style.transform='scale(1.02)'"
+                                onmouseout="this.style.transform='scale(1)'">
+                                <div style="font-size: 2.5em; font-weight: bold; color: var(--success-color);"
+                                    id="stat-verified-aadhar">-</div>
+                                <div style="color: var(--text-secondary); margin-top: 5px;">Verified Aadhar</div>
+                            </div>
+                            <div style="border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; background: var(--input-bg); cursor: pointer; transition: transform 0.2s;"
+                                onclick="showNotUploadedAadhar()"
+                                onmouseover="this.style.transform='scale(1.02)'"
+                                onmouseout="this.style.transform='scale(1)'">
+                                <div style="font-size: 2.5em; font-weight: bold; color: var(--text-secondary);"
+                                    id="stat-notuploaded-aadhar">-</div>
+                                <div style="color: var(--text-secondary); margin-top: 5px;">Not Uploaded</div>
                             </div>
                         </div>
                     </div>
@@ -227,6 +282,14 @@
                             <input type="text" id="studentSearch"
                                 placeholder="Search by Name, Library ID, Contact, or Aadhar..."
                                 onkeyup="filterStudents()" style="padding: 10px; flex: 1; min-width: 200px;">
+                            <select id="filterStudentGender" onchange="filterStudents()"
+                                style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg);">
+                                <option value="">All Genders</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                                <option value="Not Specified">Not Specified</option>
+                            </select>
                             <select id="filterStudentStatus" onchange="filterStudents()"
                                 style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg);">
                                 <option value="">All Statuses</option>
@@ -238,6 +301,33 @@
                         <div id="studentsList">Loading...</div>
                         <div id="studentsPagination"
                             style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
+                    </div>
+                </div>
+
+                <!-- Aadhar View -->
+                <div id="view-aadhar" class="view-section" style="display: none;">
+                    <div class="card">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <h3 style="margin:0;"><i class="fa-solid fa-address-card" style="color:var(--primary-color);"></i> Verify Aadhar</h3>
+                        </div><br>
+                        <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                            <input type="text" id="aadharSearch"
+                                placeholder="Search by Name, Library ID, Contact..."
+                                onkeyup="filterAadhar()" style="padding: 10px; flex: 1; min-width: 200px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                            <select id="filterAadharStatus" onchange="filterAadhar()"
+                                style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg); color: var(--text-primary);">
+                                <option value="">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Verified">Verified</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Not Uploaded">Not Uploaded</option>
+                            </select>
+                            <button onclick="bulkNotifyNotUploaded()" class="btn-outline" style="padding: 10px 15px; border-radius: 8px; color: var(--error-color); border-color: var(--error-color); font-weight: bold; white-space: nowrap;">
+                                <i class="fa-solid fa-bell"></i> Remind Not Uploaded
+                            </button>
+                        </div>
+                        <div id="aadharList">Loading...</div>
+                        <div id="aadharPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                     </div>
                 </div>
 
@@ -651,6 +741,7 @@
 
             document.addEventListener('DOMContentLoaded', () => {
                 initTheme(); // Initialize Dark Mode Preference
+                loadDashboardStats(); // Load initial stats for badges
                 window.addEventListener('hashchange', handleRoute);
                 handleRoute();
             });
@@ -680,6 +771,7 @@
                 if (hash === '#home' || !window.location.hash) loadDashboardStats();
                 if (hash === '#announcements') loadAnnouncements();
                 if (hash === '#students') loadStudents();
+                if (hash === '#aadhar') loadAadhar();
                 if (hash === '#interested') loadInterestedStudents();
                 if (hash === '#fees') loadFees();
                 if (hash === '#payment-history') loadPaymentHistory();

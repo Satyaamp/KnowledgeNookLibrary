@@ -81,6 +81,12 @@ const updateStudent = async (req, res) => {
             student.LibraryID = req.body.LibraryID !== undefined ? req.body.LibraryID : student.LibraryID;
             student.batchTiming = req.body.batchTiming !== undefined ? req.body.batchTiming : student.batchTiming;
 
+            if (req.body.ResetPassword === true) {
+                const salt = await bcrypt.genSalt(10);
+                student.Password = await bcrypt.hash('library@123', salt);
+                student.mustChangePassword = true;
+            }
+
             const updatedStudent = await student.save();
             res.json(updatedStudent);
         } else {
@@ -175,6 +181,33 @@ const sendManualNotification = async (req, res) => {
         res.json({ message: 'Notification sent successfully to student devices.' });
     } catch (error) {
         res.status(500).json({ message: 'Error sending notification', error: error.message });
+    }
+};
+
+// @desc    Send bulk reminder notification to students who haven't uploaded Aadhar
+// @route   POST /api/admin/aadhar/notify-not-uploaded
+// @access  Private/Admin
+const notifyNotUploadedAadhar = async (req, res) => {
+    try {
+        const students = await Student.find({ AadharStatus: 'Not Uploaded' });
+
+        if (!students || students.length === 0) {
+            return res.status(400).json({ message: 'No students found with Not Uploaded status.' });
+        }
+
+        let notifiedCount = 0;
+        for (const student of students) {
+            await sendPushToStudent(student._id, {
+                title: 'Aadhar Upload Required',
+                message: `Hi {FirstName}, please log in and upload your Aadhar proof to complete your account verification.`,
+                url: '/student/dashboard.html#profile'
+            });
+            notifiedCount++;
+        }
+
+        res.json({ message: `Successfully queued reminders to ${notifiedCount} student(s).` });
+    } catch (error) {
+        res.status(500).json({ message: 'Error sending notifications', error: error.message });
     }
 };
 
@@ -296,6 +329,9 @@ const getDashboardStats = async (req, res) => {
         const pendingFees = await Fee.countDocuments({ Status: 'Pending' });
         const openIssues = await Issue.countDocuments({ Status: { $in: ['Pending', 'Seen by Admin', 'In Progress'] } });
         const pendingLeads = await InterestedStudent.countDocuments({ Status: 'Pending' });
+        const pendingAadhar = await Student.countDocuments({ AadharStatus: 'Pending' });
+        const verifiedAadhar = await Student.countDocuments({ AadharStatus: 'Verified' });
+        const notUploadedAadhar = await Student.countDocuments({ AadharStatus: 'Not Uploaded' });
 
         // Total Revenue (Approved Fees)
         const revenueResult = await Fee.aggregate([
@@ -337,6 +373,9 @@ const getDashboardStats = async (req, res) => {
             pendingFees,
             openIssues,
             pendingLeads,
+            pendingAadhar,
+            verifiedAadhar,
+            notUploadedAadhar,
             totalRevenue,
             distribution,
             genderStats
@@ -593,6 +632,7 @@ module.exports = {
     convertInterestedStudent,
     updateProfileRequestStatus,
     verifyAadhar,
+    notifyNotUploadedAadhar,
     sendManualNotification,
     getStudentNotifications
 };
