@@ -16,9 +16,11 @@ if (!process.env.GMAIL_PASS) {
 }
 
 const transporter = nodemailer.createTransport({
+    service: 'gmail',
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false, // true for 465, false for other ports (uses STARTTLS)
+    requireTLS: true,
     auth: {
         user: 'cbse821@gmail.com',
         pass: process.env.GMAIL_PASS // Ensure no quotes around this
