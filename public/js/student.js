@@ -320,7 +320,7 @@ async function loadProfile() {
                         <span id="emailVerifyContainer">
                             ${data.isEmailVerified 
                                 ? `<span style="color: var(--success-color); font-size: 0.9em; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-circle-check"></i> Verified</span>` 
-                                : `<button id="emailVerifyBtn" class="btn" style="padding: 4px 12px; font-size: 0.85em; border-radius: 6px;" onclick="openEmailOtpModal()">Verify</button>`
+                                : `<!-- <button id="emailVerifyBtn" class="btn" style="padding: 4px 12px; font-size: 0.85em; border-radius: 6px;" onclick="openEmailOtpModal()">Verify</button> -->`
                             }
                         </span>
                     </div>
