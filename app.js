@@ -6,6 +6,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const Otp = require('./models/EmailOtp');
+const PhoneOtp = require('./models/PhoneOtp');
 const Student = require('./models/Student');
 
 const app = express();
@@ -15,7 +16,9 @@ if (!process.env.GMAIL_PASS) {
 }
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: 'cbse821@gmail.com',
         pass: process.env.GMAIL_PASS // Ensure no quotes around this
@@ -136,6 +139,46 @@ app.post('/api/verify-otp', async (req, res) => {
         } else {
             res.status(400).json({ message: "Invalid OTP" });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// --- Phone OTP Verification Routes ---
+app.post('/api/log-phone-attempt', async (req, res) => {
+    const { libraryid, name, contact } = req.body;
+
+    try {
+        const today = new Date().setHours(0,0,0,0);
+        // Check how many times this number requested an OTP today
+        const dailyCount = await PhoneOtp.countDocuments({ 
+            contact, 
+            createddatetime: { $gte: today } 
+        });
+
+        if (dailyCount >= 5) {
+            return res.status(429).json({ message: "Daily SMS limit reached. Try again tomorrow." });
+        }
+
+        const newAttempt = new PhoneOtp({ 
+            libraryid: libraryid || "PENDING", 
+            name, 
+            contact, 
+            countlimit: dailyCount + 1 
+        });
+        await newAttempt.save();
+
+        res.status(200).json({ message: "Attempt logged" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+app.post('/api/verify-phone-success', async (req, res) => {
+    const { contact } = req.body;
+    try {
+        await Student.findOneAndUpdate({ Contact: contact }, { isContactVerified: true });
+        res.status(200).json({ message: "Phone verified successfully!" });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -11,6 +11,7 @@ const studentSchema = new mongoose.Schema({
     Gender: { type: String, enum: ['Male', 'Female', 'Other'] },
     Email: { type: String, unique: true, sparse: true }, // Made optional, sparse allows multiple nulls
     isEmailVerified: { type: Boolean, default: false },
+    isContactVerified: { type: Boolean, default: false },
     Contact: { type: String, required: true, unique: true },
     Password: { type: String, required: true },
     mustChangePassword: { type: Boolean, default: true },

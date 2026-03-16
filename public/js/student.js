@@ -327,7 +327,15 @@ async function loadProfile() {
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-phone" style="color:var(--primary-color); font-size:0.9em;"></i> Phone</div>
-                    <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.Contact}</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 5px; gap: 10px; flex-wrap: wrap;">
+                        <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; word-break: break-all;">${data.Contact}</div>
+                        <span id="phoneVerifyContainer">
+                            ${data.isContactVerified 
+                                ? `<span style="color: var(--success-color); font-size: 0.9em; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-circle-check"></i> Verified</span>` 
+                                : `<!-- <button id="phoneVerifyBtn" class="btn" style="padding: 4px 12px; font-size: 0.85em; border-radius: 6px;" onclick="openPhoneOtpModal()">Verify</button> -->`
+                            }
+                        </span>
+                    </div>
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1404,6 +1412,39 @@ function injectCustomUI() {
         `;
         document.body.appendChild(div);
     }
+    
+    // Phone OTP Modal
+    if (!document.getElementById('phoneOtpModal')) {
+        const div = document.createElement('div');
+        div.id = 'phoneOtpModal';
+        div.className = 'custom-modal-overlay';
+        div.style.display = 'none';
+        div.innerHTML = `
+            <div class="custom-box">
+                <h3 style="margin-bottom: 10px;">Phone Verification</h3>
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Enter the 6-digit code sent to your phone.</p>
+                <div style="margin-bottom: 15px;">
+                    <input type="number" id="phoneOtpInput" placeholder="123456" style="width: 100%; padding: 0.5rem; border: 1px solid var(--input-border); border-radius: 4px; font-size: 1.2rem; text-align: center; letter-spacing: 5px;">
+                </div>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <span id="phoneTimerText" style="color: var(--text-secondary); font-size: 0.9em;">Resend in <b id="phoneSeconds">60</b>s</span>
+                    <button id="resendPhoneBtn" onclick="resendPhoneOtp()" style="display:none; border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight: bold; width: 100%;">Resend SMS</button>
+                </div>
+                <div class="custom-actions">
+                    <button class="btn btn-cancel" onclick="closePhoneModal()">Cancel</button>
+                    <button id="phoneSubmitBtn" class="btn" onclick="confirmPhoneOtp()">Verify SMS</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(div);
+    }
+    
+    // Recaptcha Container for Firebase
+    if (!document.getElementById('recaptcha-container')) {
+        const div = document.createElement('div');
+        div.id = 'recaptcha-container';
+        document.body.appendChild(div);
+    }
 }
 
 function showToast(message, type = 'info') { // type: success, error, warning, info
@@ -1687,6 +1728,137 @@ window.closeEmailOtpModal = function() {
     clearInterval(otpTimer);
 }
 
+// --- Phone OTP Verification Logic (Firebase) ---
+const firebaseConfig = {
+    apiKey: "AIzaSyBdfBHTH7-xkI6O-cue5K2d5qXr4LIvSe4",
+    authDomain: "knowledgenooklibrarysms.firebaseapp.com",
+    projectId: "knowledgenooklibrarysms",
+    storageBucket: "knowledgenooklibrarysms.firebasestorage.app",
+    messagingSenderId: "411915565657",
+    appId: "1:411915565657:web:5e8da9578accfe785f0f48"
+};
+
+let phoneConfirmationResult = null;
+let phoneTimerInterval = null;
+
+window.openPhoneOtpModal = async function() {
+    if (typeof firebase === 'undefined') {
+        showToast('Firebase not loaded. Please add Firebase scripts to your HTML.', 'error');
+        return;
+    }
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    const contact = originalProfileData.Contact;
+    const name = originalProfileData.FirstName;
+    const libId = originalProfileData.LibraryID;
+    const phoneNumber = "+91" + contact; // Must include country code
+
+    try {
+        // Log attempt to enforce rate limiting
+        await apiFetch('/log-phone-attempt', {
+            method: 'POST',
+            body: JSON.stringify({ libraryid: libId, name, contact })
+        });
+    } catch (err) {
+        return showToast('Daily SMS limit reached. Try tomorrow.', 'error');
+    }
+
+    // Initialize Invisible Recaptcha
+    if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+            'size': 'invisible'
+        });
+    }
+
+    try {
+        showToast('Sending SMS...', 'info');
+        phoneConfirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
+        
+        document.getElementById('phoneOtpModal').style.display = 'flex';
+        startPhoneTimer();
+        showToast('SMS sent successfully!', 'success');
+    } catch (error) {
+        console.error("SMS Error:", error);
+        showToast('Failed to send SMS. Reload and try again.', 'error');
+        if(window.recaptchaVerifier) window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+        
+        // Completely recreate the DOM element so reCAPTCHA can safely re-initialize on the next click
+        const oldRecaptcha = document.getElementById('recaptcha-container');
+        if (oldRecaptcha) {
+            oldRecaptcha.remove();
+            const newRecaptcha = document.createElement('div');
+            newRecaptcha.id = 'recaptcha-container';
+            document.body.appendChild(newRecaptcha);
+        }
+    }
+}
+
+window.confirmPhoneOtp = async function() {
+    const code = document.getElementById('phoneOtpInput').value;
+    const contact = originalProfileData.Contact;
+    const btn = document.getElementById('phoneSubmitBtn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Verifying...';
+    btn.disabled = true;
+
+    try {
+        await phoneConfirmationResult.confirm(code);
+        await apiFetch('/verify-phone-success', {
+            method: 'POST',
+            body: JSON.stringify({ contact })
+        });
+
+        showToast('Phone Verified Successfully!', 'success');
+        closePhoneModal();
+
+        const container = document.getElementById('phoneVerifyContainer');
+        if (container) {
+            container.innerHTML = `<span style="color: var(--success-color); font-size: 0.9em; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-circle-check"></i> Verified</span>`;
+        }
+        originalProfileData.isContactVerified = true;
+    } catch (error) {
+        showToast('Invalid OTP code.', 'error');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+
+function startPhoneTimer() {
+    let seconds = 60;
+    const timerText = document.getElementById('phoneTimerText');
+    const resendBtn = document.getElementById('resendPhoneBtn');
+    const secondsEl = document.getElementById('phoneSeconds');
+    
+    timerText.style.display = 'block';
+    resendBtn.style.display = 'none';
+    secondsEl.textContent = seconds;
+    
+    if (phoneTimerInterval) clearInterval(phoneTimerInterval);
+    
+    phoneTimerInterval = setInterval(() => {
+        seconds--;
+        secondsEl.textContent = seconds;
+        if (seconds <= 0) {
+            clearInterval(phoneTimerInterval);
+            timerText.style.display = 'none';
+            resendBtn.style.display = 'inline-block';
+        }
+    }, 1000);
+}
+
+window.resendPhoneOtp = function() {
+    document.getElementById('phoneOtpModal').style.display = 'none';
+    openPhoneOtpModal();
+}
+
+window.closePhoneModal = function() {
+    document.getElementById('phoneOtpModal').style.display = 'none';
+    if (phoneTimerInterval) clearInterval(phoneTimerInterval);
+}
 window.resendEmailOtp = async function() {
     openEmailOtpModal(); 
 }
