@@ -61,6 +61,9 @@ const updateStudent = async (req, res) => {
         const student = await Student.findById(req.params.id);
 
         if (student) {
+                if (req.body.Email && req.body.Email !== student.Email) {
+                    student.isEmailVerified = false; // Reset verification on change
+                }
             // Update all fields if provided in body
             student.FirstName = req.body.FirstName || student.FirstName;
             student.LastName = req.body.LastName !== undefined ? req.body.LastName : student.LastName;
@@ -170,6 +173,9 @@ const sendManualNotification = async (req, res) => {
         } else if (type === 'aadhar_reminder') {
             title = 'Aadhar Verification Pending';
             pushMessage = `Hi {FirstName}, your Aadhar verification is pending or was rejected. Please log in and re-upload a clear image of your Aadhar card.`;
+        } else if (type === 'email_reminder') {
+            title = 'Email Verification Pending';
+            pushMessage = `Hi {FirstName}, your email address is not verified. Please log in to your dashboard and verify your email address to ensure you receive important updates.`;
         } else if (type === 'custom') {
             title = 'Message from Admin';
             pushMessage = customMessage || 'You have a new message from the admin.';
@@ -253,6 +259,9 @@ const approveProfileRequest = async (req, res) => {
         }
 
         // Apply proposed data
+            if (request.ProposedData.Email && request.ProposedData.Email !== student.Email) {
+                student.isEmailVerified = false; // Reset verification on change
+            }
         Object.assign(student, request.ProposedData);
         await student.save();
 

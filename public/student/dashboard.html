@@ -142,6 +142,25 @@
                 to { transform: translate(-50%, 0); opacity: 1; }
             }
         }
+
+        /* --- OTP Modal Specifics --- */
+        .otp-input-box {
+            display: flex; align-items: center; background: var(--input-bg);
+            border: 1px solid var(--input-border); border-radius: 8px; padding: 10px; margin: 15px 0;
+        }
+        .otp-prefix {
+            font-weight: bold; color: var(--primary-color); margin-right: 5px; font-size: 1.2rem;
+        }
+        #emailOtpInput {
+            border: none; background: transparent; outline: none; font-size: 1.2rem;
+            font-weight: bold; width: 100%; letter-spacing: 2px; color: var(--text-primary);
+        }
+        .timer-zone {
+            text-align: center; margin-top: 15px; font-size: 0.9em; color: var(--text-secondary);
+        }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
     </style>
 </head>
 
@@ -503,6 +522,24 @@
                     <div id="requestsHistoryList">Loading...</div>
                     <div id="requestsPagination" style="margin-top: 15px;"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email OTP Modal -->
+    <div id="emailOtpModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <span class="close-btn" onclick="closeEmailOtpModal()">&times;</span>
+            <h3 style="margin-bottom: 10px;">Email Verification</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95em;">A verification code has been sent to your email.</p>
+            <div class="otp-input-box">
+                <span class="otp-prefix">KNL</span>
+                <input type="number" id="emailOtpInput" placeholder="123456" oninput="if(this.value.length > 6) this.value = this.value.slice(0, 6);">
+            </div>
+            <button id="emailSubmitBtn" class="btn" style="width: 100%;" onclick="verifyEmailOtp()">Verify Code</button>
+            <div class="timer-zone">
+                <span id="otpTimerText">Resend code in <b id="otpSeconds">60</b>s</span>
+                <button id="resendOtpBtn" onclick="resendEmailOtp()" style="display:none; background:none; border:none; color:var(--primary-color); cursor:pointer; text-decoration:underline; font-weight: bold;">Resend OTP</button>
             </div>
         </div>
     </div>

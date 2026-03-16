@@ -602,7 +602,7 @@ function renderStudents() {
     const endIndex = startIndex + studentsPerPage;
     const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
 
-    list.innerHTML = paginatedStudents.map(student => `
+  list.innerHTML = paginatedStudents.map(student => `
         <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -615,7 +615,7 @@ function renderStudents() {
                             </strong>
 
                           
-                                <span style="font-size:0.85em; color:var(--secondary-color); ">
+                                <span style="font-size:1em; color:var(--secondary-color); ">
                                     <i class="fa-solid fa-cake-candles"></i>   
                                     ${student.DOB 
                                     ? new Date(student.DOB)
@@ -653,27 +653,36 @@ function renderStudents() {
 
                 ${student.Contact ? `
                 <i class="fa-brands fa-whatsapp"
-                style="margin-left:8px; color:#25D366; cursor:pointer;"
+                style="font-size:1.2em; margin-left:8px; color:#25D366; cursor:pointer;"
                 onclick="sendWhatsApp('${student._id}')"
                 title="Send WhatsApp Message">
                 </i>
 
+                <!--
                 <i class="fa-solid fa-message"
                 style="margin-left:8px; color:#0ea5e9; cursor:pointer;"
                 onclick="sendSMS('${student._id}')"
                 title="Send SMS">
-                </i>
+                </i> 
+                 -->
+
                 ` : ''}
 
                 </div>
-                <div><i class="fa-solid fa-envelope" style="width: 16px; color: var(--text-muted);"></i> ${student.Email || 'N/A'}</div>
-                <div><i class="fa-solid fa-chair" style="width: 16px; color: var(--text-muted);"></i> Seat: ${student.SeatNo || 'Unassigned'}</div>
-                <div><i class="fa-solid fa-layer-group" style="width: 16px; color: var(--text-muted);"></i> ${student.planDuration || 'N/A'} (${student.batchType || 'N/A'})</div>
-                <div><i class="fa-solid fa-clock" style="width: 16px; color: var(--text-muted);"></i> ${student.batchTiming || 'N/A'}</div>
+                <div style="display: flex; align-items: center; gap: 5px; min-width: 0;">
+                    <i class="fa-solid fa-envelope" style="width: 16px; color: var(--text-muted); flex-shrink: 0;"></i> 
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;" title="${student.Email || 'N/A'}">${student.Email || 'N/A'}</span>
+                    ${student.Email ? (student.isEmailVerified ? '<i class="fa-solid fa-circle-check" style="color: var(--success-color); flex-shrink: 0;" title="Email Verified"></i>' : `<i class="fa-solid fa-circle-exclamation" style="color: var(--warning-color); flex-shrink: 0;" title="Email Not Verified"></i><button onclick="event.stopPropagation(); sendEmailReminder('${student._id}')" class="btn-outline" style="padding: 2px 6px; font-size: 0.8em; margin-left: 5px; border-radius: 4px;" title="Send Reminder"><i class="fa-regular fa-bell" style="font-size:1.5em;  color: var(--warning-color);"></i> </button>`) : ''}
+                </div>
+
+                <div><i class="fa-solid fa-layer-group" style="width: 16px; color: var(--text-muted);"></i> ${student.planDuration || 'N/A'} (${student.batchType || 'N/A'} - <i class="fa-solid fa-chair" style="width: 16px; color: var(--text-muted);"></i> ${student.SeatNo || 'N/A'})</div>
+                
+                <!--<div><i class="fa-solid fa-clock" style="width: 16px; color: var(--text-muted);"></i> ${student.batchTiming || 'N/A'}</div> -->
 
             </div>
         </div>
     `).join('');
+
 
     renderStudentsPagination();
 }
@@ -723,50 +732,50 @@ function sendWhatsApp(studentId){
     window.open(url, "_blank");
 }
 
+// Personal SMS Confirmation
 
+// function sendSMS(studentId){
 
-function sendSMS(studentId){
+// const student = currentStudents.find(s => s._id === studentId);
+// if(!student) return;
 
-const student = currentStudents.find(s => s._id === studentId);
-if(!student) return;
+//     const name = student.FullName || (student.FirstName + ' ' + (student.LastName || ''));
+//     const libraryId = student.LibraryID || 'N/A';
+//     const batchTiming = student.batchTiming || 'N/A';
+//     const planDuration = student.planDuration || 'N/A';
+//     const batchType = student.batchType || 'N/A';
+//     const seatNo = student.SeatNo || 'N/A';
+//     const joiningDate = new Date(student.JoiningDate).toLocaleDateString('en-GB', {
+//         day: '2-digit',
+//         month: 'long',
+//         year: 'numeric',
+//         timeZone: 'Asia/Kolkata'
+//     });
 
-    const name = student.FullName || (student.FirstName + ' ' + (student.LastName || ''));
-    const libraryId = student.LibraryID || 'N/A';
-    const batchTiming = student.batchTiming || 'N/A';
-    const planDuration = student.planDuration || 'N/A';
-    const batchType = student.batchType || 'N/A';
-    const seatNo = student.SeatNo || 'N/A';
-    const joiningDate = new Date(student.JoiningDate).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        timeZone: 'Asia/Kolkata'
-    });
+//     const msg = `Hello ${name},
 
-    const msg = `Hello ${name},
+//     Welcome to Knowledge Nook Library!
 
-    Welcome to Knowledge Nook Library!
+//     Your seat has been successfully confirmed. Here are your details:
 
-    Your seat has been successfully confirmed. Here are your details:
+//     Library ID: ${libraryId}
+//     Seat No: ${seatNo}
+//     Batch Type: ${batchType}
+//     Timing: ${batchTiming}
+//     Plan: ${planDuration}
+//     Joining Date: ${joiningDate}
 
-    Library ID: ${libraryId}
-    Seat No: ${seatNo}
-    Batch Type: ${batchType}
-    Timing: ${batchTiming}
-    Plan: ${planDuration}
-    Joining Date: ${joiningDate}
+//     Please follow the library rules and maintain a peaceful study environment.
 
-    Please follow the library rules and maintain a peaceful study environment.
+//     If you need any assistance, feel free to contact us.
 
-    If you need any assistance, feel free to contact us.
+//     Happy Studying!
+//     — Knowledge Nook Library`;
 
-    Happy Studying!
-    — Knowledge Nook Library`;
+// const url = `sms:${student.Contact}?body=${encodeURIComponent(msg)}`;
 
-const url = `sms:${student.Contact}?body=${encodeURIComponent(msg)}`;
-
-window.open(url);
-}
+// window.open(url);
+// }
 
 
 function renderStudentsPagination() {
@@ -834,7 +843,12 @@ function performGlobalSearch() {
             </div>
             <div style="font-size: 0.95em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding-top: 10px; border-top: 1px solid var(--card-border);">
                 <div><i class="fa-solid fa-phone" style="width: 16px;"></i> ${student.Contact || 'N/A'}</div>
-                <div><i class="fa-solid fa-envelope" style="width: 16px;"></i> ${student.Email || 'N/A'}</div>
+                <div style="display: flex; align-items: center; gap: 5px; min-width: 0;">
+                    <i class="fa-solid fa-envelope" style="width: 16px; flex-shrink: 0;"></i> 
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;" title="${student.Email || 'N/A'}">${student.Email || 'N/A'}</span>
+                    ${student.Email ? (student.isEmailVerified ? '<i class="fa-solid fa-circle-check" style="color: var(--success-color); flex-shrink: 0;" title="Email Verified"></i>' : '<i class="fa-solid fa-circle-exclamation" style="color: var(--warning-color); flex-shrink: 0;" title="Email Not Verified"></i>') : ''}
+                    ${student.Email ? (student.isEmailVerified ? '<i class="fa-solid fa-circle-check" style="color: var(--success-color); flex-shrink: 0;" title="Email Verified"></i>' : `<i class="fa-solid fa-circle-exclamation" style="color: var(--warning-color); flex-shrink: 0;" title="Email Not Verified"></i><button onclick="event.stopPropagation(); sendEmailReminder('${student._id}')" class="btn-outline" style="padding: 2px 6px; font-size: 0.8em; margin-left: 5px; border-radius: 4px;" title="Send Reminder"><i class="fa-regular fa-bell"></i></button>`) : ''}
+                </div>
                 <div><i class="fa-solid fa-chair" style="width: 16px;"></i> Seat: ${student.SeatNo || 'N/A'}</div>
                 <div><i class="fa-solid fa-clock" style="width: 16px;"></i> ${student.batchTiming || 'N/A'}</div>
             </div>
@@ -1168,7 +1182,10 @@ function viewStudent(id, isReadOnly = false) {
             <h3 style="margin: 0; color: var(--primary-color); font-size: 1.1em;"><i class="fa-solid fa-address-book"></i> Contact Information</h3>
         </div>
         <div class="form-group">
-            <label>Email</label>
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+                Email
+                ${student.Email ? (student.isEmailVerified ? '<span style="color: var(--success-color); font-size: 0.85em;"><i class="fa-solid fa-circle-check"></i> Verified</span>' : '<span style="color: var(--warning-color); font-size: 0.85em;"><i class="fa-solid fa-circle-exclamation"></i> Not Verified</span>') : ''}
+            </label>
             <input type="email" id="modalEmail" value="${student.Email || ''}">
         </div>
         <div class="form-group">
@@ -1239,6 +1256,19 @@ function openNotifyModal(id) {
 
 function closeNotifyModal() {
     document.getElementById('notifyStudentModal').style.display = 'none';
+}
+
+window.sendEmailReminder = async function(id) {
+    if (!await showConfirm('Send an email verification reminder push notification to this student?')) return;
+    try {
+        const response = await apiFetch('/admin/students/' + id + '/notify', {
+            method: 'POST',
+            body: JSON.stringify({ type: 'email_reminder' })
+        });
+        showToast(response.message || 'Reminder sent!', 'success');
+    } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+    }
 }
 
 function toggleCustomMessageField() {

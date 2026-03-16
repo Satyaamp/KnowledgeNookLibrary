@@ -315,7 +315,15 @@ async function loadProfile() {
 
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-envelope" style="color:var(--primary-color); font-size:0.9em;"></i> Email</div>
-                    <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.Email}</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 5px; gap: 10px; flex-wrap: wrap;">
+                        <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; word-break: break-all;">${data.Email}</div>
+                        <span id="emailVerifyContainer">
+                            ${data.isEmailVerified 
+                                ? `<span style="color: var(--success-color); font-size: 0.9em; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-circle-check"></i> Verified</span>` 
+                                : `<button id="emailVerifyBtn" class="btn" style="padding: 4px 12px; font-size: 0.85em; border-radius: 6px;" onclick="openEmailOtpModal()">Verify</button>`
+                            }
+                        </span>
+                    </div>
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-phone" style="color:var(--primary-color); font-size:0.9em;"></i> Phone</div>
@@ -1591,6 +1599,96 @@ async function handleAadharUpload(input) {
             showToast('Failed to update Aadhar proof: ' + error.message, 'error');
         }
     }
+}
+
+// --- Email OTP Verification Logic ---
+let otpTimer;
+
+window.openEmailOtpModal = async function() {
+    const email = originalProfileData.Email;
+    const name = originalProfileData.FirstName;
+    const libId = originalProfileData.LibraryID;
+
+    document.getElementById('emailOtpModal').style.display = 'block';
+    document.getElementById('emailOtpInput').value = '';
+    startOtpTimer();
+
+    try {
+        await apiFetch('/send-otp', {
+            method: 'POST',
+            body: JSON.stringify({ email, name, libraryid: libId })
+        });
+        showToast('OTP sent to your email', 'success');
+    } catch (err) {
+        showToast(err.message || 'Failed to send OTP', 'error');
+    }
+}
+
+function startOtpTimer() {
+    let seconds = 60;
+    const secondsEl = document.getElementById('otpSeconds');
+    const timerText = document.getElementById('otpTimerText');
+    const resendBtn = document.getElementById('resendOtpBtn');
+
+    resendBtn.style.display = 'none';
+    timerText.style.display = 'block';
+    clearInterval(otpTimer);
+
+    otpTimer = setInterval(() => {
+        seconds--;
+        secondsEl.textContent = seconds;
+        if (seconds <= 0) {
+            clearInterval(otpTimer);
+            timerText.style.display = 'none';
+            resendBtn.style.display = 'inline-block';
+        }
+    }, 1000);
+}
+
+window.verifyEmailOtp = async function() {
+    const otpInput = document.getElementById('emailOtpInput').value;
+    if (!otpInput || otpInput.length !== 6) {
+        showToast('Please enter a 6-digit OTP', 'warning');
+        return;
+    }
+
+    const fullOtp = `KNL${otpInput}`;
+    const email = originalProfileData.Email;
+    const btn = document.getElementById('emailSubmitBtn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Verifying...';
+    btn.disabled = true;
+
+    try {
+        await apiFetch('/verify-otp', {
+            method: 'POST',
+            body: JSON.stringify({ email, otp: fullOtp })
+        });
+
+        showToast('Email Verified Successfully!', 'success');
+        closeEmailOtpModal();
+        
+        // Update UI immediately without reload
+        originalProfileData.isEmailVerified = true;
+        const container = document.getElementById('emailVerifyContainer');
+        if (container) {
+            container.innerHTML = `<span style="color: var(--success-color); font-size: 0.9em; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-circle-check"></i> Verified</span>`;
+        }
+    } catch (err) {
+        showToast(err.message || 'Invalid or Expired OTP', 'error');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+
+window.closeEmailOtpModal = function() {
+    document.getElementById('emailOtpModal').style.display = 'none';
+    clearInterval(otpTimer);
+}
+
+window.resendEmailOtp = async function() {
+    openEmailOtpModal(); 
 }
 
 // --- Notifications / Messages Logic ---
