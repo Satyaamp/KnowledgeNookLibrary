@@ -20,6 +20,7 @@
     "mongoose": "^9.2.4",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.2",
+    "sib-api-v3-sdk": "^8.5.0",
     "web-push": "^3.6.7"
   },
   "devDependencies": {
