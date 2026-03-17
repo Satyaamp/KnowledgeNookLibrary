@@ -16,13 +16,13 @@ if (!process.env.GMAIL_PASS) {
 }
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    host: 'smtp-relay.brevo.com',
     port: 587,
     secure: false, // true for 465, false for other ports (uses STARTTLS)
-    requireTLS: true,
-    family: 4, // Force IPv4 routing to prevent ENETUNREACH errors on Render
+    // requireTLS: true,
+    // family: 4, // Force IPv4 routing to prevent ENETUNREACH errors on Render
     auth: {
-        user: 'cbse821@gmail.com',
+        user: 'knowledgenooklibrary@gmail.com',
         pass: process.env.GMAIL_PASS // Ensure no quotes around this
     }
 });
@@ -48,6 +48,11 @@ app.use('/api/issues', require('./routes/issueRoutes'));
 app.use('/api/fees', require('./routes/feeRoutes'));
 app.use('/api/announcements', require('./routes/announcementRoutes'));
 // app.use('/api/profile-updates', require('./routes/profileUpdateRoutes'));
+
+// --- Config Routes ---
+app.get('/api/config/firebase', (req, res) => {
+    res.status(200).json({ apiKey: process.env.FIREBASE_API_KEY });
+});
 
 // --- OTP Verification Routes ---
 app.post('/api/send-otp', async (req, res) => {
@@ -85,7 +90,7 @@ app.post('/api/send-otp', async (req, res) => {
 
         // 5. Send Professional HTML Email
         const info = await transporter.sendMail({
-            from: '"Knowledge Nook Library" <cbse821@gmail.com>', 
+            from: '"Knowledge Nook Library" <knowledgenooklibrary@gmail.com>', 
             to: email,
             subject: `🔐 ${generatedOtp} is your Verification Code`, 
             html: `
