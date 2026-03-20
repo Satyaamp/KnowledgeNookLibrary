@@ -7,6 +7,7 @@ const RejectedStudent = require('../models/RejectedStudent');
 const bcrypt = require('bcryptjs');
 const Notification = require('../models/Notification');
 const { sendPushToStudent } = require('../utils/pushHelper');
+const Attendance = require('../models/Attendance');
 
 // @desc    Add new student
 // @route   POST /api/admin/students
@@ -248,6 +249,7 @@ const getProfileRequests = async (req, res) => {
 // @access  Private/Admin
 const approveProfileRequest = async (req, res) => {
     try {
+        const { approvedFields } = req.body;
         const request = await ProfileUpdateRequest.findById(req.params.id);
         if (!request || (request.Status !== 'Pending' && request.Status !== 'Under Review')) {
             return res.status(404).json({ message: 'Request not found or already processed' });
@@ -258,23 +260,48 @@ const approveProfileRequest = async (req, res) => {
             return res.status(404).json({ message: 'Student not found' });
         }
 
-        // Apply proposed data
-            if (request.ProposedData.Email && request.ProposedData.Email !== student.Email) {
-                student.isEmailVerified = false; // Reset verification on change
+        const dataToApply = {};
+        let rejectedFields = [];
+
+        // If approvedFields array is provided, only apply those
+        if (approvedFields && Array.isArray(approvedFields)) {
+            for (const key of Object.keys(request.ProposedData)) {
+                if (approvedFields.includes(key)) {
+                    dataToApply[key] = request.ProposedData[key];
+                } else {
+                    rejectedFields.push(key);
+                }
             }
-        Object.assign(student, request.ProposedData);
+        } else {
+            // Backward compatibility or full approval
+            Object.assign(dataToApply, request.ProposedData);
+        }
+
+        // Apply proposed data
+        if (dataToApply.Email && dataToApply.Email !== student.Email) {
+            student.isEmailVerified = false; // Reset verification on change
+        }
+        Object.assign(student, dataToApply);
         await student.save();
 
         request.Status = 'Approved';
+        
+        let message = 'Hi {FirstName}, your requested profile changes have been successfully applied.';
+        
+        if (rejectedFields.length > 0) {
+            request.AdminNote = `Approved: ${approvedFields.join(', ')}. Rejected: ${rejectedFields.join(', ')}.`;
+            message = `Hi {FirstName}, some of your requested changes (${approvedFields.join(', ')}) were approved. Other changes were rejected.`;
+        }
+
         await request.save();
 
         await sendPushToStudent(request.StudentId, {
-            title: 'Profile Request Approved',
-            message: 'Hi {FirstName}, your requested profile changes have been successfully applied.',
+            title: 'Profile Request Update',
+            message: message,
             url: '/student/dashboard.html#profile'
         });
 
-        res.json({ message: 'Profile request approved and applied', student });
+        res.json({ message: 'Profile request processed', student });
     } catch (error) {
         res.status(500).json({ message: 'Error approving request', error: error.message });
     }
@@ -626,6 +653,77 @@ const bulkUploadStudents = async (req, res) => {
     }
 };
 
+// @desc    Get Daily Attendance
+// @route   GET /api/admin/attendance
+// @access  Private/Admin
+const getDailyAttendance = async (req, res) => {
+    try {
+        // Defaults to today if no date passed
+        const dateString = req.query.date || new Date().toLocaleDateString('en-CA');
+        const records = await Attendance.find({ DateString: dateString }).populate('StudentId', 'FullName LibraryID Contact ProfilePictureURL');
+        res.json(records);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching attendance', error: error.message });
+    }
+};
+
+// @desc    Manually check in a student
+// @route   POST /api/admin/attendance
+// @access  Private/Admin
+const manualCheckIn = async (req, res) => {
+    try {
+        const { studentId } = req.body;
+        const student = await Student.findById(studentId);
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+
+        const now = new Date();
+        const dateString = now.toLocaleDateString('en-CA');
+
+        if (!student.batchTiming || student.batchTiming.trim() === '') {
+            return res.status(400).json({ message: 'Cannot check in: Student does not have a Batch Timing defined in their profile.' });
+        }
+
+        let attendance = await Attendance.findOne({ StudentId: studentId, DateString: dateString });
+        if (attendance) {
+            return res.status(400).json({ message: 'Student is already checked in for today.' });
+        }
+
+        attendance = await Attendance.create({
+            StudentId: studentId,
+            LibraryID: student.LibraryID,
+            DateString: dateString,
+            CheckInTime: now
+        });
+
+        res.status(201).json({ message: 'Student checked in manually.', attendance });
+    } catch (error) {
+        res.status(500).json({ message: 'Error checking in', error: error.message });
+    }
+};
+
+// @desc    Manually check out a student
+// @route   PUT /api/admin/attendance/:id/checkout
+// @access  Private/Admin
+const manualCheckOut = async (req, res) => {
+    try {
+        const attendance = await Attendance.findById(req.params.id);
+        if (!attendance) return res.status(404).json({ message: 'Attendance record not found' });
+        if (attendance.CheckOutTime) return res.status(400).json({ message: 'Student is already checked out.' });
+
+        const now = new Date();
+        const diffHours = (now - attendance.CheckInTime) / (1000 * 60 * 60);
+
+        attendance.CheckOutTime = now;
+        attendance.TotalHours = diffHours;
+        attendance.CheckOutMethod = 'Admin';
+        await attendance.save();
+
+        res.json({ message: 'Manually checked out successfully.', attendance });
+    } catch (error) {
+        res.status(500).json({ message: 'Error checking out', error: error.message });
+    }
+};
+
 module.exports = {
     addStudent,
     bulkUploadStudents,
@@ -643,5 +741,8 @@ module.exports = {
     verifyAadhar,
     notifyNotUploadedAadhar,
     sendManualNotification,
-    getStudentNotifications
+    getStudentNotifications,
+    getDailyAttendance,
+    manualCheckIn,
+    manualCheckOut
 };

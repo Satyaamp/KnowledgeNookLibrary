@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <meta name="description" content="Knowledge Nook Library Student Dashboard. View your profile, track fee payments, submit issues, and stay updated with the latest library announcements.">
     <title>Student Dashboard</title>
+
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -192,7 +193,10 @@
 
             </ul>
             <div class="nav-actions">
-                <button onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; margin-right: 15px; color: inherit;" title="Toggle Dark Mode">
+                <button id="pushStatusBtn" onclick="subscribeToPushNotifications(true)" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; color: inherit;" title="Enable Notifications">
+                    <i id="pushStatusIcon" class="fa-solid fa-bell-slash"></i>
+                </button>
+                <button onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; color: inherit;" title="Toggle Dark Mode">
                     <i id="themeIcon" class="fa-solid fa-moon"></i>
                 </button>
                 <input type="file" id="navProfilePicInput" accept="image/*" style="display: none;" onchange="handleProfilePicUpload(this)">
@@ -517,7 +521,7 @@
                     <p style="color: var(--text-secondary); font-size: 1em; margin-bottom: 15px;">History of changes you requested for your profile.</p>
                     <div id="requestsActions" style="display: none; margin-bottom: 15px; align-items: center; gap: 15px; padding: 10px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px;">
                         <label style="display: flex; align-items: center; gap: 8px; font-size: 1em; cursor: pointer; font-weight: 500;"><input type="checkbox" id="selectAllRequests" onchange="toggleSelectAllRequests()"> Select All</label>
-                        <button id="bulkDeleteBtn" onclick="deleteSelectedRequests()" class="btn-outline" style="padding: 0.3rem 0.8rem; font-size: 0.95em; color: #ef4444; border-color: #ef4444;" disabled><i class="fa-solid fa-trash"></i> Delete Selected</button>
+                        <button id="bulkDeleteBtn" onclick="deleteSelectedRequests()" class="btn-outline" style="padding: 0.3rem 0.8rem; font-size: 0.95em; color: #ef4444; border-color: #ef4444;" disabled><i class="fa-solid fa-trash"></i></button>
                     </div>
                     <div id="requestsHistoryList">Loading...</div>
                     <div id="requestsPagination" style="margin-top: 15px;"></div>
@@ -630,6 +634,18 @@
         </div>
     </div>
 
+    <!-- Attendance History Modal -->
+    <div id="attendanceHistoryModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-btn" onclick="closeAttendanceHistoryModal()">&times;</span>
+            <h2 style="margin-bottom: 15px;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary-color);"></i> Attendance History</h2>
+            <div id="attendanceHistoryList" style="max-height: 60vh; overflow-y: auto; padding-right: 5px;">
+                Loading history...
+            </div>
+            <div id="attendanceHistoryPagination" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
     <!-- PWA Install Popup -->
     <div id="pwaInstallPopup" class="pwa-popup">
         <h4 style="margin-bottom: 10px; color: var(--text-primary); font-family: 'Bricolage Grotesque', sans-serif;"><i class="fa-solid fa-desktop pwa-desktop-text"></i><i class="fa-solid fa-mobile-screen pwa-mobile-text"></i> <span class="pwa-desktop-text">Install Web App</span><span class="pwa-mobile-text">Install App</span></h4>
@@ -643,6 +659,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="/js/api.js"></script>
     <script src="/js/student.js"></script>
 

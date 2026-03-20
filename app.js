@@ -8,6 +8,7 @@ const nodemailer = require('nodemailer');
 const Otp = require('./models/EmailOtp');
 const PhoneOtp = require('./models/PhoneOtp');
 const Student = require('./models/Student');
+const SystemConfig = require('./models/SystemConfig');
 
 const app = express();
 
@@ -52,6 +53,55 @@ app.use('/api/announcements', require('./routes/announcementRoutes'));
 // --- Config Routes ---
 app.get('/api/config/firebase', (req, res) => {
     res.status(200).json({ apiKey: process.env.FIREBASE_API_KEY });
+});
+
+// --- Config Routes (Wi-Fi) ---
+app.get('/api/config/wifi', async (req, res) => {
+    try {
+        let config = await SystemConfig.findOne({ key: 'wifi_settings' });
+        if (!config) {
+            // Default settings if nothing exists in the database yet
+            config = { value: { hall1: { title: "Hall 01", network: "Knowledge Nook Library H1", password: "jio@1234" }, hall2: { title: "Hall 02 + Premium Rooms", network: "Airtel_KNLibrary", password: "Air73411" } } };
+        }
+        res.status(200).json(config.value);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+app.put('/api/admin/config/wifi', async (req, res) => {
+    try {
+        const { hall1, hall2 } = req.body;
+        await SystemConfig.findOneAndUpdate(
+            { key: 'wifi_settings' },
+            { value: { hall1, hall2 } },
+            { upsert: true, new: true } // Creates it if it doesn't exist
+        );
+        res.status(200).json({ message: 'Wi-Fi settings updated successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// --- Config Routes (Library GPS Location) ---
+app.get('/api/config/location', async (req, res) => {
+    try {
+        let config = await SystemConfig.findOne({ key: 'library_location' });
+        if (!config) config = { value: { lat: "", lng: "" } };
+        res.status(200).json(config.value);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+app.put('/api/admin/config/location', async (req, res) => {
+    try {
+        const { lat, lng } = req.body;
+        await SystemConfig.findOneAndUpdate({ key: 'library_location' }, { value: { lat, lng } }, { upsert: true });
+        res.status(200).json({ message: 'Location settings updated' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 
 // --- OTP Verification Routes ---

@@ -4,6 +4,9 @@ const InterestedStudent = require('../models/InterestedStudent');
 const Notification = require('../models/Notification');
 const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/cloudinary');
+const Attendance = require('../models/Attendance');
+const SystemConfig = require('../models/SystemConfig');
+const { sendPushToStudent } = require('../utils/pushHelper');
 
 // @desc    Get student profile
 // @route   GET /api/students/profile
@@ -387,4 +390,133 @@ const deleteNotification = async (req, res) => {
     }
 };
 
-module.exports = { getProfile, requestProfileUpdate, submitInterested, changePassword, getMyProfileRequest, markRequestAsSeen, getAllMyProfileRequests, deleteProfileRequest, deleteManyProfileRequests, updateProfilePicture, updateAadhar, getVapidPublicKey, savePushSubscription, getMyNotifications, markNotificationsAsRead, deleteNotification };
+// --- Helper: Haversine Distance Formula (in meters) ---
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; 
+    const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+// --- Helper: Parse "9 AM" to Date object ---
+function parseTime(timeStr) {
+    const match = timeStr.trim().match(/(\d+)(?::(\d+))?\s*(AM|PM)/i);
+    if (!match) return null;
+    let hours = parseInt(match[1], 10), minutes = match[2] ? parseInt(match[2], 10) : 0;
+    const period = match[3].toUpperCase();
+    if (period === 'PM' && hours < 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    const now = new Date();
+    now.setHours(hours, minutes, 0, 0);
+    return now;
+}
+
+// @desc    Mark Attendance via Location + QR Scan
+// @route   POST /api/students/attendance/scan
+// @access  Private/Student
+const markAttendance = async (req, res) => {
+    try {
+        const { qrData, lat, lng } = req.body;
+        if (qrData !== 'KNL_OFFICIAL_DOOR_QR_V1') return res.status(400).json({ message: 'Invalid QR Code. Please scan the official door code.' });
+
+        // 1. Verify Location Constraint (< 100 meters)
+        const config = await SystemConfig.findOne({ key: 'library_location' });
+        if (!config || !config.value.lat || !config.value.lng) return res.status(500).json({ message: 'Library GPS coordinates are not configured by admin yet.' });
+
+        const distance = getDistance(parseFloat(config.value.lat), parseFloat(config.value.lng), lat, lng);
+        if (distance > 100) return res.status(403).json({ message: `You are ${Math.round(distance)} meters away. You must be inside the library to check in.` });
+
+        const student = await Student.findById(req.user.id);
+        if (!student || student.AccountStatus !== 'Active') return res.status(403).json({ message: 'Account is not active.' });
+
+        const now = new Date();
+        const dateString = now.toLocaleDateString('en-CA'); // standard YYYY-MM-DD locally
+        let attendance = await Attendance.findOne({ StudentId: req.user.id, DateString: dateString });
+
+        // 2. Check-In Logic
+        if (!attendance) {
+            // Verify Batch Timing + 1 Hour Buffer
+            if (student.batchTiming) {
+                const batchStartStr = student.batchTiming.split('-')[0].trim(); // Takes "9 AM" from "9 AM - 6 PM"
+                const batchStart = parseTime(batchStartStr);
+                if (batchStart) {
+                    const bufferEnd = new Date(batchStart.getTime() + 60 * 60 * 1000); // +1 hour
+                    if (now > bufferEnd) {
+                        return res.status(400).json({ message: `You are late! Your batch started at ${batchStartStr} and the 1-hour entry window has closed.` });
+                    }
+                }
+            }
+
+            await Attendance.create({
+                StudentId: req.user.id,
+                LibraryID: student.LibraryID,
+                DateString: dateString,
+                CheckInTime: now
+            });
+
+            // Send Push Notification (caught to prevent blocking the response if push fails)
+            await sendPushToStudent(req.user.id, {
+                title: 'Checked In Successfully',
+                message: `Welcome to the library! You checked in at ${now.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}. Have a great study session!`,
+                url: '/student/dashboard.html#profile'
+            }).catch(err => console.error('Push notification error:', err));
+
+            return res.status(200).json({ message: 'Check-In Successful! Welcome to the library.', status: 'IN' });
+        } 
+        
+        // 3. Check-Out Logic
+        else {
+            if (attendance.CheckOutTime) return res.status(400).json({ message: 'You have already checked out for today.' });
+
+            // Verify 4-5 hours limit
+            const diffHours = (now - attendance.CheckInTime) / (1000 * 60 * 60);
+            if (diffHours < 4) {
+                return res.status(400).json({ message: `You must study for at least 4 hours before checking out. Current session: ${diffHours.toFixed(1)} hrs.` });
+            }
+
+            attendance.CheckOutTime = now;
+            attendance.TotalHours = diffHours;
+            attendance.CheckOutMethod = 'Student';
+            await attendance.save();
+
+            // Send Push Notification
+            await sendPushToStudent(req.user.id, {
+                title: 'Checked Out Successfully',
+                message: `You checked out at ${now.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}. Total study time today: ${diffHours.toFixed(1)} hrs.`,
+                url: '/student/dashboard.html#profile'
+            }).catch(err => console.error('Push notification error:', err));
+
+            return res.status(200).json({ message: `Check-Out Successful! Total study time: ${diffHours.toFixed(1)} hrs.`, status: 'OUT', hours: diffHours.toFixed(2) });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Today's Attendance for Student
+// @route   GET /api/students/attendance/today
+// @access  Private/Student
+const getTodayAttendance = async (req, res) => {
+    try {
+        const dateString = new Date().toLocaleDateString('en-CA');
+        const attendance = await Attendance.findOne({ StudentId: req.user.id, DateString: dateString });
+        res.json(attendance || null);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Attendance History for Student
+// @route   GET /api/students/attendance/history
+// @access  Private/Student
+const getMyAttendanceHistory = async (req, res) => {
+    try {
+        const attendance = await Attendance.find({ StudentId: req.user.id }).sort({ DateString: -1 });
+        res.json(attendance);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { getProfile, requestProfileUpdate, submitInterested, changePassword, getMyProfileRequest, markRequestAsSeen, getAllMyProfileRequests, deleteProfileRequest, deleteManyProfileRequests, updateProfilePicture, updateAadhar, getVapidPublicKey, savePushSubscription, getMyNotifications, markNotificationsAsRead, deleteNotification, markAttendance, getTodayAttendance, getMyAttendanceHistory };

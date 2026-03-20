@@ -31,6 +31,7 @@
                 <ul class="dashboard-nav-links">
                     <li><a href="#home"><i class="fa-solid fa-home"></i> Home</a></li>
                     <li><a href="#announcements"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
+                    <li><a href="#attendance"><i class="fa-solid fa-calendar-check"></i> Attendance</a></li>
                     <li><a href="#students" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-users"></i> Students <span id="nav-badge-students" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#aadhar" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-address-card"></i> Aadhar <span id="nav-badge-aadhar" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#bulk-students"><i class="fa-solid fa-file-csv"></i> Bulk Upload</a></li>
@@ -40,6 +41,7 @@
                     <li><a href="#issues" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-triangle-exclamation"></i> Issues <span id="nav-badge-issues" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#requests" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-id-card"></i> Requests <span id="nav-badge-requests" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#search"><i class="fa-solid fa-magnifying-glass"></i> Search</a></li>
+                    <li><a href="#settings"><i class="fa-solid fa-gear"></i> Settings</a></li>
                 </ul>
                 <div class="nav-actions">
                     <button onclick="toggleTheme()"
@@ -74,6 +76,7 @@
                     <li><a href="#home" onclick="closeSidebar()"><i class="fa-solid fa-home"></i> Dashboard</a></li>
                     <li><a href="#announcements" onclick="closeSidebar()"><i class="fa-solid fa-bullhorn"></i>
                             Announcements</a></li>
+                    <li><a href="#attendance" onclick="closeSidebar()"><i class="fa-solid fa-calendar-check"></i>Attendance</a></li>
                     <li><a href="#students" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
                             <span><i class="fa-solid fa-users"></i> Manage Students</span>
                             <span id="side-badge-students" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
@@ -116,6 +119,7 @@
                             <span id="side-badge-requests" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
                         </a></li>
                     <!-- <li><a href="#search" onclick="closeSidebar()"><i class="fa-solid fa-magnifying-glass"></i> Quick Search</a></li> -->
+                    <li><a href="#settings" onclick="closeSidebar()"><i class="fa-solid fa-gear"></i> Settings</a></li>
                 </ul>
             </div>
             <div class="main-content">
@@ -578,6 +582,84 @@
                             style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                     </div>
                 </div>
+
+                <!-- Attendance View -->
+                <div id="view-attendance" class="view-section" style="display: none;">
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <h3 style="margin:0;"><i class="fa-solid fa-calendar-check" style="color:var(--primary-color);"></i> Daily Attendance</h3>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="date" id="attendanceDateFilter" onchange="loadAttendance()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                                <button onclick="openManualCheckInModal()" class="btn" style="padding: 8px 12px;" title="Manual Check-In"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 15px; margin-bottom: 15px;">
+                            <input type="text" id="attendanceSearch" placeholder="Search by Name or Library ID..." onkeyup="filterAttendance()" style="padding: 10px; width: 100%; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                        </div>
+                        <div id="attendanceList">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div class="view-section" id="view-settings" style="display:none;">
+                    <h2 style="margin-bottom: 20px;"><i class="fa-solid fa-gear"></i> Library Settings</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                        <div class="card" style="margin-bottom: 0;">
+                            <h3 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fa-solid fa-wifi"></i> Manage Wi-Fi Credentials</h3>
+                        <form id="wifiSettingsForm" onsubmit="saveWifiSettings(event)">
+                            <h4 style="margin-bottom: 10px; border-bottom: 1px solid var(--card-border); padding-bottom: 5px;">Zone 1</h4>
+                            <div class="form-group">
+                                <label>Zone Title</label>
+                                <input type="text" id="wifiHall1Title" placeholder="e.g. Hall 01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Network Name</label>
+                                <input type="text" id="wifiHall1Network" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label>Password</label>
+                                <input type="text" id="wifiHall1Password" required>
+                            </div>
+                            <h4 style="margin-bottom: 10px; border-bottom: 1px solid var(--card-border); padding-bottom: 5px; margin-top: 20px;">Zone 2</h4>
+                            <div class="form-group">
+                                <label>Zone Title</label>
+                                <input type="text" id="wifiHall2Title" placeholder="e.g. Hall 02 + Premium Rooms" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Network Name</label>
+                                <input type="text" id="wifiHall2Network" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label>Password</label>
+                                <input type="text" id="wifiHall2Password" required>
+                            </div>
+                            <button type="submit" class="btn" style="width: 100%;"><i class="fa-solid fa-save"></i> Save Settings</button>
+                        </form>
+                        </div>
+
+                        <div class="card" style="margin-bottom: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0; color: var(--primary-color);"><i class="fa-solid fa-location-dot"></i> Attendance QR</h3>
+                                <button type="button" onclick="autoDetectLocation()" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-location-crosshairs"></i> Auto Detect</button>
+                            </div>
+                            <div style="background: var(--bg-color); border: 1px solid var(--card-border); padding: 15px; border-radius: 8px; height: calc(100% - 46px);">
+                                <p style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 15px;">Set your library's exact GPS coordinates so students can only check-in within 100 meters.</p>
+                            <form id="locationSettingsForm" onsubmit="saveLocationSettings(event)">
+                                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                    <div><label>Latitude</label><input type="text" id="libLat" placeholder="e.g. 25.5941" required></div>
+                                    <div><label>Longitude</label><input type="text" id="libLng" placeholder="e.g. 85.1376" required></div>
+                                </div>
+                                <button type="submit" class="btn" style="width: 100%; margin-bottom: 15px;"><i class="fa-solid fa-map-pin"></i> Save Coordinates</button>
+                            </form>
+                            <div style="text-align: center; margin-top: 20px; border-top: 1px dashed var(--card-border); padding-top: 20px;">
+                                <p style="font-weight: bold; margin-bottom: 10px; font-size: 1.1em;">Official Door QR Code</p>
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=KNL_OFFICIAL_DOOR_QR_V1" alt="Door QR" style="border: 4px solid var(--primary-color); border-radius: 8px; padding: 5px; background: white;">
+                                <p style="font-size: 0.85em; color: var(--text-secondary); margin-top: 10px;">Right-click this image to print and paste it on your door.</p>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -661,6 +743,21 @@
                     <button type="submit" class="btn" style="width: 100%;">Create Account</button>
                 </form>
                 <div id="convertMsg" style="margin-top: 10px; text-align: center;"></div>
+            </div>
+        </div>
+
+        <!-- Manual Check-In Modal -->
+        <div id="manualCheckInModal" class="modal">
+            <div class="modal-content" style="max-width: 400px;">
+                <span class="close-btn" onclick="closeManualCheckInModal()">&times;</span>
+                <h2 style="margin-bottom: 15px;"><i class="fa-solid fa-user-check" style="color: var(--primary-color);"></i> Manual Check-In</h2>
+                <form id="manualCheckInForm" onsubmit="submitManualCheckIn(event)">
+                    <div class="form-group">
+                        <label>Select Student</label>
+                        <select id="manualCheckInStudentId" required></select>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;"><i class="fa-solid fa-arrow-right-to-bracket"></i> Check In</button>
+                </form>
             </div>
         </div>
 
@@ -790,6 +887,7 @@
                 if (hash === '#home' || !window.location.hash) loadDashboardStats();
                 if (hash === '#announcements') loadAnnouncements();
                 if (hash === '#students') loadStudents();
+                if (hash === '#attendance') loadAttendance();
                 if (hash === '#aadhar') loadAadhar();
                 if (hash === '#interested') loadInterestedStudents();
                 if (hash === '#fees') loadFees();
@@ -803,6 +901,7 @@
                         if (searchInput) searchInput.focus();
                     }, 100);
                 }
+                if (hash === '#settings') { if (typeof loadWifiSettings === 'function') loadWifiSettings(); }
             }
         </script>
         <script src="../js/admin.js"></script>
@@ -831,6 +930,8 @@
                 }
             });
         </script>
+
+
     </body>
 
 </html>

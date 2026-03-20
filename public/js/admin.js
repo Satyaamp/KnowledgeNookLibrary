@@ -1698,22 +1698,28 @@ function renderRequests() {
                     </div>
                     
                     <div style="background: rgba(0,0,0,0.02); padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--card-border);">
-                        <h5 style="margin-bottom:8px; color:var(--text-secondary);">Requested Changes:</h5>
-                        ${Object.entries(req.ProposedData).map(([key, val]) => `
-                            <div style="display:grid; grid-template-columns: 120px 1fr; gap:10px; font-size:0.9em; margin-bottom:4px;">
-                                <span style="font-weight:600; color:var(--text-primary);">${key}:</span>
-                                <span style="color:var(--text-secondary);">${val || '<em style="opacity: 0.5;">(empty)</em>'}</span>
+                        <h5 style="margin-bottom:8px; color:var(--text-secondary);">Requested Changes (Check to approve):</h5>
+                        ${Object.entries(req.ProposedData).map(([key, val]) => {
+                            const currentVal = req.StudentId && req.StudentId[key] ? req.StudentId[key] : '<em style="opacity: 0.5;">(empty)</em>';
+                            return `
+                            <div style="display:flex; align-items:center; gap:10px; font-size:0.9em; margin-bottom:6px;">
+                                <input type="checkbox" id="req_${req._id}_${key}" value="${key}" checked style="cursor: pointer; width: 16px; height: 16px;">
+                                <span style="font-weight:600; color:var(--text-primary); width:120px;">${key}:</span>
+                                <div style="display: flex; flex-direction: column; gap: 2px;">
+                                    <span style="color:var(--error-color); text-decoration: line-through; font-size: 0.85em;">${currentVal}</span>
+                                    <span style="color:var(--success-color); font-weight: 500;">${val || '<em style="opacity: 0.5;">(empty)</em>'}</span>
+                                </div>
                             </div>
-                        `).join('')}
+                        `}).join('')}
                     </div>
 
                     <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
                         <label style="font-size:0.9em;">Action:</label>
-                        <select onchange="handleRequestAction('${req._id}', this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid var(--card-border); background:var(--card-bg); color:var(--text-primary); width: auto;">
+                        <select onchange="handleRequestAction('${req._id}', this)" style="padding: 6px; border-radius: 6px; border: 1px solid var(--card-border); background:var(--card-bg); color:var(--text-primary); width: auto;">
                             <option value="" disabled selected>Select Action...</option>
                             <option value="Under Review">Mark as Under Review</option>
-                            <option value="Approve" style="color: green; font-weight:bold;">Approve & Apply</option>
-                            <option value="Reject" style="color: red; font-weight:bold;">Reject</option>
+                            <option value="Approve" style="color: green; font-weight:bold;">Approve Selected</option>
+                            <option value="Reject" style="color: red; font-weight:bold;">Reject All</option>
                         </select>
                     </div>
                 </div>
@@ -1745,13 +1751,14 @@ window.changeRequestsPage = function(page) {
     renderRequests();
 }
 
-async function handleRequestAction(id, action) {
+async function handleRequestAction(id, selectElement) {
+    const action = selectElement.value;
     if (!action) return;
 
     if (action === 'Approve') {
-        await approveRequest(id);
+        await approveRequest(id, selectElement);
     } else if (action === 'Reject') {
-        await rejectRequest(id);
+        await rejectRequest(id, selectElement);
     } else if (action === 'Under Review') {
         try {
             await apiFetch(`/admin/profile-requests/${id}/status`, {
@@ -1760,24 +1767,54 @@ async function handleRequestAction(id, action) {
             });
             loadRequests();
             loadDashboardStats();
-        } catch (error) { showToast(error.message, 'error'); }
+        } catch (error) { 
+            showToast(error.message, 'error'); 
+            if (selectElement) selectElement.value = '';
+        }
     }
 }
 
-async function approveRequest(id) {
-    if (!await showConfirm('Approve this profile update?')) return;
+async function approveRequest(id, selectElement) {
+    const request = currentRequests.find(r => r._id === id);
+    if (!request) return;
+
+    const approvedFields = [];
+    Object.keys(request.ProposedData).forEach(key => {
+        const checkbox = document.getElementById(`req_${id}_${key}`);
+        if (checkbox && checkbox.checked) {
+            approvedFields.push(key);
+        }
+    });
+
+    if (approvedFields.length === 0) {
+        showToast('Please select at least one field to approve, or choose Reject instead.', 'warning');
+        if (selectElement) selectElement.value = '';
+        return;
+    }
+
+    if (!await showConfirm(`Approve ${approvedFields.length} selected change(s)?`)) {
+        if (selectElement) selectElement.value = '';
+        return;
+    }
     try {
-        await apiFetch('/admin/profile-requests/' + id + '/approve', { method: 'PUT' });
+        await apiFetch('/admin/profile-requests/' + id + '/approve', { 
+            method: 'PUT',
+            body: JSON.stringify({ approvedFields })
+        });
         loadRequests();
         loadDashboardStats();
     } catch (error) {
         showToast('Error: ' + error.message, 'error');
+        if (selectElement) selectElement.value = '';
     }
 }
 
-async function rejectRequest(id) {
+async function rejectRequest(id, selectElement) {
     const reason = await showPrompt("Please provide a reason for rejecting this request (optional, will be shown to the student).");
-    if (reason === null) return; // User clicked cancel
+    if (reason === null) {
+        if (selectElement) selectElement.value = '';
+        return; // User clicked cancel
+    }
 
     try {
         await apiFetch('/admin/profile-requests/' + id + '/reject', {
@@ -1790,6 +1827,7 @@ async function rejectRequest(id) {
         loadDashboardStats();
     } catch (error) {
         showToast('Error: ' + error.message, 'error');
+        if (selectElement) selectElement.value = '';
     }
 }
 
@@ -2156,6 +2194,7 @@ function renderIssues() {
                             <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${issue.Status === 'Resolved' ? 'var(--success-color)' : (issue.Status === 'Pending' ? 'var(--error-color)' : 'var(--warning-color)')}; font-weight: 600;">
                                 ${issue.Status}
                             </span>
+                        ${issue.IssueTitle === 'Attendance Override Request' && issue.Status !== 'Resolved' ? `<button onclick="window.location.hash='#attendance'; setTimeout(openManualCheckInModal, 300);" class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.85em; margin-left: 5px;"><i class="fa-solid fa-user-check"></i> Fix Attendance</button>` : ''}
                             <button onclick="replyToIssue('${issue._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--primary-color); color: var(--primary-color); border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-reply"></i> Reply</button>
                             ${issue.Status === 'Resolved' ? `<button onclick="deleteIssue('${issue._id}')" class="btn-outline" style="padding: 0.2rem 0.5rem; border-color: var(--error-color); color: var(--error-color); border-radius: 4px; font-size: 0.85em;"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
                         </div>
@@ -2525,6 +2564,153 @@ window.changePaymentHistoryPage = function(page) {
     paymentHistoryPage = page;
     renderPaymentHistory();
 }
+
+// --- Attendance Logic ---
+let currentAttendance = [];
+let filteredAttendance = [];
+
+window.loadAttendance = async function() {
+    const dateInput = document.getElementById('attendanceDateFilter');
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    
+    if (dateInput && !dateInput.value) {
+        dateInput.value = todayStr;
+    }
+    const dateVal = dateInput ? dateInput.value : todayStr;
+    const list = document.getElementById('attendanceList');
+    
+    if(list) list.innerHTML = 'Loading attendance data...';
+    try {
+        const records = await apiFetch(`/admin/attendance?date=${dateVal}`);
+        currentAttendance = records;
+        filterAttendance();
+    } catch (e) {
+        if(list) list.innerHTML = `<p style="color:red;">Error loading records: ${e.message}</p>`;
+    }
+}
+
+window.filterAttendance = function() {
+    const searchInput = document.getElementById('attendanceSearch');
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+    if (!query) {
+        filteredAttendance = [...currentAttendance];
+    } else {
+        filteredAttendance = currentAttendance.filter(r => {
+            const stuName = (r.StudentId && r.StudentId.FullName) ? r.StudentId.FullName.toLowerCase() : '';
+            const libId = r.LibraryID ? r.LibraryID.toLowerCase() : (r.StudentId && r.StudentId.LibraryID ? r.StudentId.LibraryID.toLowerCase() : '');
+            return stuName.includes(query) || libId.includes(query);
+        });
+    }
+    renderAttendance(filteredAttendance);
+}
+
+function renderAttendance(records) {
+    const list = document.getElementById('attendanceList');
+    if(!records || records.length === 0) {
+        list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No attendance records found for this date.</p>';
+        return;
+    }
+
+    let html = '<style>.attendance-swipe-container::-webkit-scrollbar { display: none; }</style>';
+
+    html += records.map(r => {
+        const inTime = r.CheckInTime ? new Date(r.CheckInTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '--';
+        
+        let outTime = r.CheckOutTime ? new Date(r.CheckOutTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '--';
+        if (r.CheckOutTime && r.CheckOutMethod === 'Admin') {
+            outTime += ` <span style="color: var(--warning-color); font-weight: bold; font-size: 0.85em; margin-left: 2px;" title="Checked out manually by Admin">(A)</span>`;
+        } else if (r.CheckOutTime && r.CheckOutMethod === 'Auto') {
+            outTime += ` <span style="color: var(--text-secondary); font-weight: bold; font-size: 0.85em; margin-left: 2px;" title="Auto Checked Out">(Auto)</span>`;
+        }
+
+        let hrs = '--';
+        if (r.TotalHours) {
+            hrs = String(Math.floor(Math.round(r.TotalHours * 60) / 60)).padStart(2, '0') + ':' + String(Math.round(r.TotalHours * 60) % 60).padStart(2, '0') + ' hrs';
+        } else if (r.CheckInTime) {
+            const diffMins = Math.floor((new Date() - new Date(r.CheckInTime)) / 60000);
+            const h = Math.floor(diffMins / 60);
+            const m = diffMins % 60;
+            hrs = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' hrs <span style="color: var(--success-color); font-size: 0.8em; margin-left: 4px;" title="Currently in library"><i class="fa-solid fa-circle-dot fa-fade"></i></span>';
+        }
+
+        const stuName = r.StudentId ? r.StudentId.FullName : 'Unknown Student';
+        const libId = r.LibraryID || (r.StudentId ? r.StudentId.LibraryID : '--');
+        
+        return `<div style="border: 1px solid var(--card-border); padding: 12px; border-radius: 8px; margin-bottom: 12px; background: var(--input-bg);">
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+                <div style="flex: 1 1 200px; min-width: 0;">
+                    <strong style="color: var(--primary-color); font-size: 1.05em; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${stuName}</strong>
+                    <div style="font-size:0.85em; color:var(--text-secondary);">ID: ${libId}</div>
+                </div>
+                <div class="attendance-swipe-container" style="display: flex; flex: 1 1 100%; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px;">
+                    <div style="flex: 1 0 100px; scroll-snap-align: center; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); text-align: center;">
+                        <span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 4px;">In</span> 
+                        <strong style="color:var(--success-color); font-size: 0.95em; white-space: nowrap;">${inTime}</strong>
+                    </div>
+                    <div style="flex: 1 0 100px; scroll-snap-align: center; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                        <span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 4px;">Out</span> 
+                        ${r.CheckOutTime 
+                            ? `<strong style="color:var(--error-color); font-size: 0.95em; white-space: nowrap;">${outTime}</strong>`
+                            : `<button onclick="manualCheckOut('${r._id}')" class="btn-outline" style="padding: 3px 8px; font-size: 0.75em; border-color: var(--error-color); color: var(--error-color); width: 100%; border-radius: 6px;">Manual Out</button>`
+                        }
+                    </div>
+                    <div style="flex: 1 0 100px; scroll-snap-align: center; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); text-align: center;">
+                        <span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 4px;">Total</span> 
+                        <strong style="font-size: 0.95em; white-space: nowrap;">${hrs}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    list.innerHTML = html;
+}
+
+window.manualCheckOut = async function(id) {
+    if (!await showConfirm('Are you sure you want to manually check out this student now?')) return;
+    try {
+        await apiFetch(`/admin/attendance/${id}/checkout`, { method: 'PUT' });
+        showToast('Student checked out successfully.', 'success');
+        loadAttendance();
+    } catch (e) {
+        showToast(e.message, 'error');
+    }
+}
+
+window.openManualCheckInModal = async function() {
+    if (currentStudents.length === 0) await loadStudents();
+    const select = document.getElementById('manualCheckInStudentId');
+    
+    const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
+    select.innerHTML = '<option value="" disabled selected>Select an active student...</option>' + 
+        activeStudents.map(s => `<option value="${s._id}">${s.FullName} (${s.LibraryID || 'No ID'})</option>`).join('');
+        
+    document.getElementById('manualCheckInModal').style.display = 'block';
+}
+
+window.closeManualCheckInModal = function() {
+    document.getElementById('manualCheckInModal').style.display = 'none';
+}
+
+window.submitManualCheckIn = async function(e) {
+    e.preventDefault();
+    const studentId = document.getElementById('manualCheckInStudentId').value;
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = 'Checking In...';
+    try {
+        await apiFetch('/admin/attendance', { method: 'POST', body: JSON.stringify({ studentId }) });
+        showToast('Checked in successfully!', 'success');
+        closeManualCheckInModal();
+        loadAttendance();
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        btn.disabled = false; btn.innerHTML = originalText;
+    }
+}
+
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
     const icon = document.getElementById('themeIcon');
@@ -2545,6 +2731,93 @@ window.toggleTheme = function() {
     } else {
         localStorage.setItem('theme', 'light');
         if (icon) icon.classList.replace('fa-sun', 'fa-moon');
+    }
+}
+
+// --- Wi-Fi Settings Management ---
+window.loadWifiSettings = async function() {
+    try {
+        const data = await apiFetch('/config/wifi');
+        if (document.getElementById('wifiHall1Network')) {
+            if(document.getElementById('wifiHall1Title')) document.getElementById('wifiHall1Title').value = data.hall1.title || 'Hall 01';
+            document.getElementById('wifiHall1Network').value = data.hall1.network;
+            document.getElementById('wifiHall1Password').value = data.hall1.password;
+            if(document.getElementById('wifiHall2Title')) document.getElementById('wifiHall2Title').value = data.hall2.title || 'Hall 02 + Premium Rooms';
+            document.getElementById('wifiHall2Network').value = data.hall2.network;
+            document.getElementById('wifiHall2Password').value = data.hall2.password;
+        }
+
+        // Also load GPS Location settings
+        const locData = await apiFetch('/config/location');
+        if (document.getElementById('libLat')) {
+            document.getElementById('libLat').value = locData.lat || '';
+            document.getElementById('libLng').value = locData.lng || '';
+        }
+    } catch (error) {
+        console.error('Error loading Wi-Fi config', error);
+    }
+}
+
+window.saveWifiSettings = async function(e) {
+    if (e) e.preventDefault();
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Saving...'; }
+
+    const payload = {
+        hall1: { 
+            title: document.getElementById('wifiHall1Title') ? document.getElementById('wifiHall1Title').value : 'Hall 01',
+            network: document.getElementById('wifiHall1Network').value, 
+            password: document.getElementById('wifiHall1Password').value 
+        },
+        hall2: { 
+            title: document.getElementById('wifiHall2Title') ? document.getElementById('wifiHall2Title').value : 'Hall 02 + Premium Rooms',
+            network: document.getElementById('wifiHall2Network').value, 
+            password: document.getElementById('wifiHall2Password').value 
+        }
+    };
+
+    try {
+        await apiFetch('/admin/config/wifi', { method: 'PUT', body: JSON.stringify(payload) });
+        showToast('Wi-Fi settings updated successfully!', 'success');
+    } catch (error) {
+        showToast('Error saving Wi-Fi settings: ' + error.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Settings'; }
+    }
+}
+
+window.saveLocationSettings = async function(e) {
+    if (e) e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Saving...'; }
+    try {
+        const payload = { lat: document.getElementById('libLat').value, lng: document.getElementById('libLng').value };
+        await apiFetch('/admin/config/location', { method: 'PUT', body: JSON.stringify(payload) });
+        showToast('Library coordinates saved securely!', 'success');
+    } catch (error) {
+        showToast('Error saving coordinates: ' + error.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-map-pin"></i> Save Coordinates'; }
+    }
+}
+
+window.autoDetectLocation = function() {
+    if (navigator.geolocation) {
+        showToast('Detecting location...', 'info');
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                if(document.getElementById('libLat')) document.getElementById('libLat').value = position.coords.latitude;
+                if(document.getElementById('libLng')) document.getElementById('libLng').value = position.coords.longitude;
+                showToast('Location detected! Click Save Coordinates.', 'success');
+            },
+            (error) => {
+                showToast(error.code === 1 ? 'Please allow location access in your browser settings.' : 'Failed to get location.', 'error');
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    } else {
+        showToast("Geolocation is not supported by your browser.", "error");
     }
 }
 

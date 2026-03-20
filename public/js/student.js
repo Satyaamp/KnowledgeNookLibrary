@@ -118,7 +118,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('name', profile.FullName || 'Student');
 
         // Prompt for Push Notifications slightly after loading so it isn't aggressive
-        setTimeout(subscribeToPushNotifications, 2000); 
+        setTimeout(() => {
+            subscribeToPushNotifications();
+            if (typeof checkPushStatus === 'function') checkPushStatus();
+        }, 2000); 
         
         fetchNotificationCount();
         loadAnnouncements(); // Fetch announcements immediately to update unread badge globally
@@ -160,6 +163,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initial route
     handleRoute();
+    
+    if (typeof checkPushStatus === 'function') checkPushStatus();
 });
 
 function validateFeeForm() {
@@ -287,11 +292,68 @@ async function loadProfile() {
     profileContent.innerHTML = 'Loading...';
     try {
         const data = await apiFetch('/students/profile');
+            const wifiData = await apiFetch('/config/wifi').catch(() => ({
+                // Fallback in case of an error
+
+                hall1: { title: "Hall 01", network: "Knowledge Nook Library H1", password: "jio@1234" },
+                hall2: { title: "Hall 02 + Premium Rooms", network: "Airtel_KNLibrary", password: "Air73411" }
+            }));
+        const attData = await apiFetch('/students/attendance/today').catch(() => null);
         originalProfileData = data; // Keep a copy for the update modal
+
+        let elapsedHrsText = '00:00 hrs';
+        if (attData) {
+            if (attData.TotalHours) {
+                elapsedHrsText = String(Math.floor(Math.round(attData.TotalHours * 60) / 60)).padStart(2, '0') + ':' + String(Math.round(attData.TotalHours * 60) % 60).padStart(2, '0') + ' hrs';
+            } else if (attData.CheckInTime) {
+                const diffMins = Math.floor((new Date() - new Date(attData.CheckInTime)) / 60000);
+                const hrs = Math.floor(diffMins / 60);
+                const mins = diffMins % 60;
+                elapsedHrsText = String(hrs).padStart(2, '0') + ':' + String(mins).padStart(2, '0') + ' hrs';
+            }
+        }
+
         profileContent.innerHTML = `
             <div class="grid-2" style="gap: 1.5rem; margin-top: 1rem;">
                 <!-- Status Container Placeholder -->
                 <div id="profileRequestStatusContainer" style="grid-column: 1 / -1; display:none;"></div>
+
+            <!-- Today's Attendance Widget -->
+            ${attData ? `
+            <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1; margin-top: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-clock" style="color:var(--primary-color);"></i> Today's Attendance (${attData.DateString.split('-').reverse().join('-')})</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="reportAttendanceIssue()" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-radius: 6px; color: var(--warning-color); border-color: var(--warning-color);" title="Report Issue"><i class="fa-solid fa-triangle-exclamation"></i> Issue</button>
+                        <button onclick="openAttendanceHistoryModal()" class="btn-outline" style="padding: 4px 12px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; text-align: center; gap: 10px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 80px; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border);">
+                        <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px;">In</div>
+                        <div style="font-weight: 600; color: var(--success-color);">${new Date(attData.CheckInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    </div>
+                    <div style="flex: 1; min-width: 80px; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border);">
+                        <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px;">Out</div>
+                        <div style="font-weight: 600; color: var(--error-color);">${attData.CheckOutTime ? new Date(attData.CheckOutTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}</div>
+                    </div>
+                    <div style="flex: 1; min-width: 80px; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border);">
+                        <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px;">Total Hrs</div>
+                        <div style="font-weight: 600; color: var(--primary-color);">${elapsedHrsText}</div>
+                    </div>
+                </div>
+            </div>` : `
+            <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1; margin-top: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-clock" style="color:var(--primary-color);"></i> Today's Attendance</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="reportAttendanceIssue()" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-radius: 6px; color: var(--warning-color); border-color: var(--warning-color);" title="Missed Check-In?"><i class="fa-solid fa-triangle-exclamation"></i> Missed?</button>
+                        <button onclick="openAttendanceHistoryModal()" class="btn-outline" style="padding: 4px 12px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
+                    </div>
+                </div>
+                <div style="color: var(--text-secondary); font-size: 1em; text-align: center;">You have not mark <b><u style="color: var(--primary-color);">Today Attendance</u></b></div>
+            </div>
+            `}
 
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-user" style="color:var(--primary-color); font-size:0.9em;"></i> Name</div>
@@ -395,6 +457,60 @@ async function loadProfile() {
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-chair" style="color:var(--primary-color); font-size:0.9em;"></i> Seat No</div>
                     <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.SeatNo}</div>
                 </div>
+
+                <!-- Wi-Fi Details Hub -->
+                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1;">
+                    <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 15px;">
+                        <i class="fa-solid fa-wifi" style="color:var(--primary-color); font-size:0.9em;"></i> Library Wi-Fi Access
+                    </div>
+                    ${data.AccountStatus === 'Active' ? `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        <!-- Hall 01 -->
+
+                        <div style="border: 1px solid var(--card-border); padding: 15px; border-radius: 8px; background: var(--bg-color);">
+
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 10px;"><i class="fa-solid fa-network-wired"></i> ${wifiData.hall1.title || 'Hall 01'}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 5px;">
+                                <span style="font-size: 0.9em; color: var(--text-secondary);">Network:</span>
+                                <div style="display: flex; align-items: center; gap: 8px; background: var(--input-bg); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
+                                    <strong style="font-size: 0.95em; user-select: all;">${wifiData.hall1.network}</strong>
+                                    <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary-color);" onclick="copyToClipboard('${wifiData.hall1.network}')" title="Copy Network Name"></i>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;">
+                                <span style="font-size: 0.9em; color: var(--text-secondary);">Password:</span>
+                                <div style="display: flex; align-items: center; gap: 8px; background: var(--input-bg); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
+                                    <strong style="font-size: 0.95em; letter-spacing: 1px; user-select: all;">${wifiData.hall1.password}</strong>
+                                    <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary-color);" onclick="copyToClipboard('${wifiData.hall1.password}')" title="Copy Password"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Hall 02 + Premium Rooms -->
+                        <div style="border: 1px solid var(--card-border); padding: 15px; border-radius: 8px; background: var(--bg-color);">
+
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 10px;"><i class="fa-solid fa-star" style="color: #F59E0B;"></i> ${wifiData.hall2.title || 'Hall 02 + Premium Rooms'}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 5px;">
+                                <span style="font-size: 0.9em; color: var(--text-secondary);">Network:</span>
+                                <div style="display: flex; align-items: center; gap: 8px; background: var(--input-bg); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
+                                    <strong style="font-size: 0.95em; user-select: all;">${wifiData.hall2.network}</strong>
+                                    <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary-color);" onclick="copyToClipboard('${wifiData.hall2.network}')" title="Copy Network Name"></i>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;">
+                                <span style="font-size: 0.9em; color: var(--text-secondary);">Password:</span>
+                                <div style="display: flex; align-items: center; gap: 8px; background: var(--input-bg); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
+                                    <strong style="font-size: 0.95em; letter-spacing: 1px; user-select: all;">${wifiData.hall2.password}</strong>
+                                    <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary-color);" onclick="copyToClipboard('${wifiData.hall2.password}')" title="Copy Password"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : `
+                    <div style="padding: 15px; background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--warning-color); border-radius: 6px; color: var(--text-primary); font-size: 0.95em;">
+                        <i class="fa-solid fa-lock" style="color: var(--warning-color); margin-right: 5px;"></i> Wi-Fi details are securely hidden and only visible to <strong>Active</strong> members.
+                    </div>
+                    `}
+                </div>
             </div>
         `;
 
@@ -436,6 +552,7 @@ async function loadProfileRequestStatus() {
                             <button onclick="dismissRequestNotification('${request._id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color: var(--success-color);">&times;</button>
                         </div>
                         <p style="font-size: 1em; color: var(--text-secondary);">Your profile has been successfully updated with the requested changes.</p>
+                        ${request.AdminNote ? `<div style="font-size: 0.9em; margin-top: 5px; color: var(--text-primary);"><strong>Note:</strong> ${request.AdminNote}</div>` : ''}
                     </div>`;
             } else if (request.Status === 'Rejected') {
                 bannerHTML = `
@@ -939,7 +1056,7 @@ function updateBulkDeleteState() {
     const checkboxes = document.querySelectorAll('.request-checkbox:checked');
     const bulkBtn = document.getElementById('bulkDeleteBtn');
     bulkBtn.disabled = checkboxes.length === 0;
-    bulkBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Delete Selected (${checkboxes.length})`;
+    bulkBtn.innerHTML = `<i class="fa-solid fa-trash"></i> (${checkboxes.length})`;
 }
 
 async function deleteSelectedRequests() {
@@ -1148,6 +1265,26 @@ window.prepareReupload = function(month) {
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
     validateFeeForm();
+}
+
+window.reportAttendanceIssue = function() {
+    window.location.hash = '#issues';
+    setTimeout(() => {
+        const container = document.getElementById('issueFormContainer');
+        if (container && window.innerWidth <= 768 && !container.classList.contains('expanded')) {
+            container.classList.add('expanded');
+            const header = document.querySelector('.mobile-collapse-header[onclick*="issueFormContainer"]');
+            if (header) {
+                const icon = header.querySelector('i.desktop-hidden');
+                if (icon) icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+            }
+        }
+        const titleInput = document.getElementById('issueTitle');
+        const descInput = document.getElementById('issueDesc');
+        if (titleInput) titleInput.value = "Attendance Override Request";
+        if (descInput) { descInput.value = "I missed my check-in/out because: "; descInput.focus(); }
+        validateIssueForm();
+    }, 150);
 }
 
 async function handleIssueSubmit(e) {
@@ -1387,6 +1524,34 @@ function closeImagePreview() {
     document.getElementById('previewImageElement').src = '';
 }
 
+// Global Helper to copy text to clipboard securely
+window.copyToClipboard = function(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Copied to clipboard!', 'success');
+        }).catch(err => {
+            showToast('Failed to copy', 'error');
+        });
+    } else {
+        // Fallback for older browsers or non-HTTPS connections
+        let textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast('Copied to clipboard!', 'success');
+        } catch (err) {
+            showToast('Failed to copy', 'error');
+        }
+        textArea.remove();
+    }
+}
+
 // --- Custom UI Helpers ---
 function injectCustomUI() {
     // Toast Container
@@ -1444,6 +1609,39 @@ function injectCustomUI() {
         const div = document.createElement('div');
         div.id = 'recaptcha-container';
         document.body.appendChild(div);
+    }
+
+    // Attendance Scanner Modal
+    if (!document.getElementById('scannerModal')) {
+        const div = document.createElement('div');
+        div.id = 'scannerModal';
+        div.className = 'custom-modal-overlay';
+        div.style.display = 'none';
+        div.innerHTML = `
+            <div class="custom-box" style="width: 90%; max-width: 400px; padding: 20px;">
+                <h3 style="margin-bottom: 10px;"><i class="fa-solid fa-expand"></i> Scan to Check-In</h3>
+                <p style="margin-bottom: 15px; color: var(--text-secondary); font-size: 0.9em;">Point your camera at the library's official door QR code.</p>
+                <div id="reader" style="width: 100%; min-height: 250px; background: #f3f4f6; border-radius: 8px; overflow: hidden; border: 2px dashed var(--primary-color);"></div>
+                <div class="custom-actions" style="margin-top: 20px;">
+                    <button class="btn btn-cancel" onclick="closeScanner()" style="width: 100%;">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(div);
+    }
+
+    // Floating Action Button (FAB) for Scanner
+    if (!document.getElementById('fabScanner')) {
+        const fab = document.createElement('button');
+        fab.id = 'fabScanner';
+        fab.className = 'btn';
+        fab.style.cssText = 'position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000; font-size: 1.8em; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;';
+        fab.innerHTML = '<i class="fa-solid fa-camera"></i>';
+        fab.title = 'Scan Door QR';
+        fab.onclick = () => openScanner();
+        fab.onmouseover = () => fab.style.transform = 'scale(1.1)';
+        fab.onmouseout = () => fab.style.transform = 'scale(1)';
+        document.body.appendChild(fab);
     }
 }
 
@@ -1640,6 +1838,147 @@ async function handleAadharUpload(input) {
             showToast('Failed to update Aadhar proof: ' + error.message, 'error');
         }
     }
+}
+
+// --- Attendance Scanner Logic ---
+let html5QrcodeScanner = null;
+
+window.openScanner = function() {
+    if (originalProfileData.AccountStatus !== 'Active') {
+        showToast("Your account must be active to mark attendance.", "error");
+        return;
+    }
+    if (typeof Html5QrcodeScanner === 'undefined') {
+        showToast("Scanner library not loaded. Admin needs to add html5-qrcode script.", "error");
+        return;
+    }
+
+    document.getElementById('scannerModal').style.display = 'flex';
+    
+    if (!html5QrcodeScanner) {
+        // Small delay ensures modal is visible before rendering camera
+        setTimeout(() => {
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }, 100);
+    }
+}
+
+window.closeScanner = function() {
+    document.getElementById('scannerModal').style.display = 'none';
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear().catch(e => console.error(e));
+        html5QrcodeScanner = null;
+    }
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+    closeScanner();
+    showToast("QR Scanned! Verifying location...", "info");
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                try {
+                    const response = await apiFetch('/students/attendance/scan', {
+                        method: 'POST',
+                        body: JSON.stringify({ qrData: decodedText, lat: position.coords.latitude, lng: position.coords.longitude })
+                    });
+                    showToast(response.message, 'success');
+                    if (window.location.hash === '#profile' || window.location.hash === '') loadProfile();
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            },
+            (error) => {
+                showToast(error.code === 1 ? "Please allow location access to check in." : "Failed to get location.", "error");
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    } else {
+        showToast("Geolocation is not supported by your browser.", "error");
+    }
+}
+
+let currentAttendanceHistory = [];
+let attendanceHistoryPage = 1;
+const ATTENDANCE_HISTORY_PER_PAGE = 5;
+
+window.openAttendanceHistoryModal = async function() {
+    document.getElementById('attendanceHistoryModal').style.display = 'block';
+    const list = document.getElementById('attendanceHistoryList');
+    list.innerHTML = 'Loading history...';
+    if (document.getElementById('attendanceHistoryPagination')) document.getElementById('attendanceHistoryPagination').innerHTML = '';
+    try {
+        const data = await apiFetch('/students/attendance/history');
+        if (data && data.length > 0) {
+            currentAttendanceHistory = data;
+            attendanceHistoryPage = 1;
+            renderAttendanceHistory();
+        } else {
+            list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No attendance history found.</p>';
+        }
+    } catch (err) {
+        list.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
+    }
+}
+
+function renderAttendanceHistory() {
+    const list = document.getElementById('attendanceHistoryList');
+    const paginationContainer = document.getElementById('attendanceHistoryPagination');
+
+    const startIndex = (attendanceHistoryPage - 1) * ATTENDANCE_HISTORY_PER_PAGE;
+    const endIndex = startIndex + ATTENDANCE_HISTORY_PER_PAGE;
+    const paginatedHistory = currentAttendanceHistory.slice(startIndex, endIndex);
+
+    list.innerHTML = paginatedHistory.map(r => {
+        const inTime = r.CheckInTime ? new Date(r.CheckInTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '--';
+        const outTime = r.CheckOutTime ? new Date(r.CheckOutTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '--';
+        let hrs = '--';
+        if (r.TotalHours) {
+            hrs = String(Math.floor(Math.round(r.TotalHours * 60) / 60)).padStart(2, '0') + ':' + String(Math.round(r.TotalHours * 60) % 60).padStart(2, '0') + ' hrs';
+        } else if (r.CheckInTime) {
+            hrs = '<span style="color: var(--success-color); font-size: 0.9em;"><i class="fa-solid fa-circle-dot fa-fade"></i> Active</span>';
+        }
+        const dateFormatted = r.DateString.split('-').reverse().join('-');
+
+        return `
+        <div style="border: 1px solid var(--card-border); padding: 12px; border-radius: 8px; margin-bottom: 10px; background: var(--bg-color);">
+            <div style="font-weight: 600; color: var(--primary-color); margin-bottom: 8px; font-size: 1.05em;"><i class="fa-regular fa-calendar"></i> ${dateFormatted}</div>
+            <div style="display: flex; gap: 10px; text-align: center; background: var(--input-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border);">
+                <div style="flex: 1;"><span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 2px;">In</span> <strong style="color:var(--success-color); font-size: 0.9em;">${inTime}</strong></div>
+                <div style="flex: 1; border-left: 1px dashed var(--card-border); border-right: 1px dashed var(--card-border); padding: 0 5px;"><span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 2px;">Out</span> <strong style="color:var(--error-color); font-size: 0.9em;">${outTime}</strong></div>
+                <div style="flex: 1;"><span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 2px;">Total</span> <strong style="font-size: 0.9em;">${hrs}</strong></div>
+            </div>
+        </div>`;
+    }).join('');
+
+    const totalPages = Math.ceil(currentAttendanceHistory.length / ATTENDANCE_HISTORY_PER_PAGE);
+    if (totalPages > 1) {
+        let paginationHTML = '<div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.9em;">';
+        paginationHTML += `<button onclick="changeAttendanceHistoryPage(${attendanceHistoryPage - 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${attendanceHistoryPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>`;
+        paginationHTML += `<span style="font-weight: 500; color: var(--text-secondary); padding: 0 5px;">${attendanceHistoryPage} / ${totalPages}</span>`;
+        paginationHTML += `<button onclick="changeAttendanceHistoryPage(${attendanceHistoryPage + 1})" class="btn-outline" style="padding: 0.2rem 0.5rem; border-radius: 6px;" ${attendanceHistoryPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>`;
+        paginationHTML += '</div>';
+        if (paginationContainer) paginationContainer.innerHTML = paginationHTML;
+    } else {
+        if (paginationContainer) paginationContainer.innerHTML = '';
+    }
+}
+
+window.changeAttendanceHistoryPage = function(page) {
+    const totalPages = Math.ceil(currentAttendanceHistory.length / ATTENDANCE_HISTORY_PER_PAGE);
+    if (page < 1 || page > totalPages) return;
+    attendanceHistoryPage = page;
+    renderAttendanceHistory();
+}
+
+window.closeAttendanceHistoryModal = function() {
+    document.getElementById('attendanceHistoryModal').style.display = 'none';
+}
+
+function onScanFailure(error) {
+    // Suppress console spam from typical frame failures
 }
 
 // --- Email OTP Verification Logic ---
@@ -2160,9 +2499,38 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
-async function subscribeToPushNotifications() {
+function checkPushStatus() {
+    const btn = document.getElementById('pushStatusBtn');
+    const icon = document.getElementById('pushStatusIcon');
+    if (!btn || !icon) return;
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        btn.style.display = 'none';
+        return;
+    }
+
+    if (Notification.permission === 'granted') {
+        icon.className = 'fa-solid fa-bell';
+        icon.style.color = 'var(--success-color)';
+        btn.title = "Notifications Enabled";
+    } else if (Notification.permission === 'denied') {
+        icon.className = 'fa-solid fa-bell-slash';
+        icon.style.color = 'var(--error-color)';
+        btn.title = "Notifications Blocked (Unblock in browser settings)";
+    } else {
+        icon.className = 'fa-solid fa-bell-slash';
+        icon.style.color = 'var(--warning-color)';
+        btn.title = "Enable Notifications";
+    }
+}
+
+async function subscribeToPushNotifications(manual = false) {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
         try {
+            if (Notification.permission === 'denied' && manual) {
+                showToast('Notifications are blocked. Please unblock them in your browser site settings.', 'warning');
+                return;
+            }
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.ready;
@@ -2181,9 +2549,18 @@ async function subscribeToPushNotifications() {
                     method: 'POST',
                     body: JSON.stringify(subscription)
                 });
+                
+                if (manual) showToast('Notifications enabled successfully!', 'success');
+            } else if (manual) {
+                showToast('Notification permission denied.', 'error');
             }
         } catch (error) {
             console.error('Error subscribing to push notifications:', error);
+            if (manual) showToast('Error enabling notifications.', 'error');
+        } finally {
+            if (typeof checkPushStatus === 'function') checkPushStatus();
         }
+    } else if (manual) {
+        showToast('Push notifications are not supported in this browser.', 'warning');
     }
 }
