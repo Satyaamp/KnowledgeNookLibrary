@@ -695,7 +695,7 @@ const bulkUploadStudents = async (req, res) => {
 const getDailyAttendance = async (req, res) => {
     try {
         // Defaults to today if no date passed
-        const dateString = req.query.date || new Date().toLocaleDateString('en-CA');
+        const dateString = req.query.date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
         const records = await Attendance.find({ DateString: dateString }).populate('StudentId', 'FullName LibraryID Contact ProfilePictureURL');
         res.json(records);
     } catch (error) {
@@ -713,7 +713,7 @@ const manualCheckIn = async (req, res) => {
         if (!student) return res.status(404).json({ message: 'Student not found' });
 
         const now = new Date();
-        const dateString = now.toLocaleDateString('en-CA');
+        const dateString = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
         if (!student.batchTiming || student.batchTiming.trim() === '') {
             return res.status(400).json({ message: 'Cannot check in: Student does not have a Batch Timing defined in their profile.' });

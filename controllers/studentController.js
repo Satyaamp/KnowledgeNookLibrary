@@ -446,7 +446,7 @@ const markAttendance = async (req, res) => {
         if (!student || student.AccountStatus !== 'Active') return res.status(403).json({ message: 'Account is not active.' });
 
         const now = new Date();
-        const dateString = now.toLocaleDateString('en-CA'); // standard YYYY-MM-DD locally
+        const dateString = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // standard YYYY-MM-DD locally
         let attendance = await Attendance.findOne({ StudentId: req.user.id, DateString: dateString });
 
         // 2. Check-In Logic
@@ -473,7 +473,7 @@ const markAttendance = async (req, res) => {
             // Send Push Notification (caught to prevent blocking the response if push fails)
             await sendPushToStudent(req.user.id, {
                 title: 'Checked In Successfully',
-                message: `Welcome to the library! You checked in at ${now.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}. Have a great study session!`,
+                message: `Welcome to the library! You checked in at ${now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute:'2-digit' })}. Have a great study session!`,
                 url: '/student/dashboard.html#profile'
             }).catch(err => console.error('Push notification error:', err));
 
@@ -498,7 +498,7 @@ const markAttendance = async (req, res) => {
             // Send Push Notification
             await sendPushToStudent(req.user.id, {
                 title: 'Checked Out Successfully',
-                message: `You checked out at ${now.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}. Total study time today: ${diffHours.toFixed(1)} hrs.`,
+                message: `You checked out at ${now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute:'2-digit' })}. Total study time today: ${diffHours.toFixed(1)} hrs.`,
                 url: '/student/dashboard.html#profile'
             }).catch(err => console.error('Push notification error:', err));
 
@@ -514,7 +514,7 @@ const markAttendance = async (req, res) => {
 // @access  Private/Student
 const getTodayAttendance = async (req, res) => {
     try {
-        const dateString = new Date().toLocaleDateString('en-CA');
+        const dateString = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
         const attendance = await Attendance.findOne({ StudentId: req.user.id, DateString: dateString });
         res.json(attendance || null);
     } catch (error) {
