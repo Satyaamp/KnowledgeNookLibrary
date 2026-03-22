@@ -13,8 +13,21 @@ const { sendPushToStudent } = require('../utils/pushHelper');
 // @access  Private/Student
 const getProfile = async (req, res) => {
     try {
-        const student = await Student.findById(req.user.id).select('-Password');
+        const student = await Student.findById(req.user.id).select('-Password').lean();
         if (student) {
+            student.assignedHall = null;
+            if (student.SeatNo) {
+                const numericSeat = parseInt(student.SeatNo.replace(/\D/g, ''), 10);
+                if (!isNaN(numericSeat)) {
+                    const config = await SystemConfig.findOne({ key: 'seat_layout_config' });
+                    if (config && config.value && config.value.halls) {
+                        const hall = config.value.halls.find(h => numericSeat >= h.start && numericSeat <= h.end);
+                        if (hall) {
+                            student.assignedHall = hall.name;
+                        }
+                    }
+                }
+            }
             res.json(student);
         } else {
             res.status(404).json({ message: 'Student not found' });
@@ -164,11 +177,15 @@ const markRequestAsSeen = async (req, res) => {
 const getAllMyProfileRequests = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 5;
+        const limit = parseInt(req.query.limit) || 10;
+        const status = req.query.status;
         const skip = (page - 1) * limit;
 
-        const total = await ProfileUpdateRequest.countDocuments({ StudentId: req.user.id, HiddenByStudent: { $ne: true } });
-        const requests = await ProfileUpdateRequest.find({ StudentId: req.user.id, HiddenByStudent: { $ne: true } })
+        const query = { StudentId: req.user.id, HiddenByStudent: { $ne: true } };
+        if (status) query.Status = status;
+
+        const total = await ProfileUpdateRequest.countDocuments(query);
+        const requests = await ProfileUpdateRequest.find(query)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -390,15 +407,6 @@ const deleteNotification = async (req, res) => {
     }
 };
 
-// --- Helper: Haversine Distance Formula (in meters) ---
-function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371e3; 
-    const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
-    const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-}
-
 // --- Helper: Parse "9 AM" to Date object ---
 function parseTime(timeStr) {
     const match = timeStr.trim().match(/(\d+)(?::(\d+))?\s*(AM|PM)/i);
@@ -412,20 +420,27 @@ function parseTime(timeStr) {
     return now;
 }
 
-// @desc    Mark Attendance via Location + QR Scan
+// @desc    Mark Attendance via Wi-Fi IP + QR Scan
 // @route   POST /api/students/attendance/scan
 // @access  Private/Student
 const markAttendance = async (req, res) => {
     try {
-        const { qrData, lat, lng } = req.body;
+        const { qrData } = req.body;
         if (qrData !== 'KNL_OFFICIAL_DOOR_QR_V1') return res.status(400).json({ message: 'Invalid QR Code. Please scan the official door code.' });
 
-        // 1. Verify Location Constraint (< 100 meters)
+        // 1. Verify Wi-Fi IP Constraint
         const config = await SystemConfig.findOne({ key: 'library_location' });
-        if (!config || !config.value.lat || !config.value.lng) return res.status(500).json({ message: 'Library GPS coordinates are not configured by admin yet.' });
+        const configuredIP = config && config.value ? (config.value.ip || config.value.lat) : null;
+        if (!configuredIP) return res.status(500).json({ message: 'Library Wi-Fi IP is not configured by admin yet.' });
 
-        const distance = getDistance(parseFloat(config.value.lat), parseFloat(config.value.lng), lat, lng);
-        if (distance > 100) return res.status(403).json({ message: `You are ${Math.round(distance)} meters away. You must be inside the library to check in.` });
+        let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        if (clientIp && clientIp.includes(',')) clientIp = clientIp.split(',')[0].trim();
+        if (clientIp === '::1') clientIp = '127.0.0.1'; // Handle local testing
+        if (clientIp && clientIp.startsWith('::ffff:')) clientIp = clientIp.substring(7); // Normalize IPv4-mapped IPv6
+
+        if (clientIp !== configuredIP) {
+            return res.status(403).json({ message: `Access Denied! You must be connected to the Library's Wi-Fi network to check in.` });
+        }
 
         const student = await Student.findById(req.user.id);
         if (!student || student.AccountStatus !== 'Active') return res.status(403).json({ message: 'Account is not active.' });

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { addStudent, getStudents, updateStudent, getProfileRequests, approveProfileRequest, rejectProfileRequest, getDashboardStats, getInterestedStudents, markInterestedStudentReviewed, rejectInterestedStudent, convertInterestedStudent, updateProfileRequestStatus, verifyAadhar, notifyNotUploadedAadhar, bulkUploadStudents, sendManualNotification, getStudentNotifications, getDailyAttendance, manualCheckIn, manualCheckOut } = require('../controllers/adminController');
+const { addStudent, getStudents, updateStudent, getProfileRequests, approveProfileRequest, rejectProfileRequest, getDashboardStats, getInterestedStudents, markInterestedStudentReviewed, rejectInterestedStudent, convertInterestedStudent, updateProfileRequestStatus, verifyAadhar, notifyNotUploadedAadhar, bulkUploadStudents, sendManualNotification, getStudentNotifications, getDailyAttendance, manualCheckIn, manualCheckOut, getSeatConfig, updateSeatConfig } = require('../controllers/adminController');
 const { authGuard } = require('../middleware/authGuard');
 const { adminGuard } = require('../middleware/adminGuard');
 const upload = require('../utils/upload');
@@ -63,5 +63,8 @@ router.get('/attendance', getDailyAttendance);
 router.post('/attendance', manualCheckIn);
 router.put('/attendance/:id/checkout', manualCheckOut);
 
+router.route('/config/seats')
+    .get(getSeatConfig)
+    .put(updateSeatConfig);
 
 module.exports = router;

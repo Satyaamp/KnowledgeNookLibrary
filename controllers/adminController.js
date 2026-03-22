@@ -8,6 +8,7 @@ const bcrypt = require('bcryptjs');
 const Notification = require('../models/Notification');
 const { sendPushToStudent } = require('../utils/pushHelper');
 const Attendance = require('../models/Attendance');
+const SystemConfig = require('../models/SystemConfig');
 
 // @desc    Add new student
 // @route   POST /api/admin/students
@@ -23,6 +24,14 @@ const addStudent = async (req, res) => {
         const studentExists = await Student.findOne({ Email });
         if (studentExists) {
             return res.status(400).json({ message: 'Student already exists with this email' });
+        }
+
+        // Prevent double-booking a seat for the same timing
+        if (SeatNo && batchTiming) {
+            const seatConflict = await Student.findOne({ SeatNo, batchTiming, AccountStatus: 'Active' });
+            if (seatConflict) {
+                return res.status(400).json({ message: `Seat ${SeatNo} is already occupied by ${seatConflict.FullName || seatConflict.FirstName} during '${batchTiming}'.` });
+            }
         }
 
         // Hash the initial password for the student
@@ -62,6 +71,23 @@ const updateStudent = async (req, res) => {
         const student = await Student.findById(req.params.id);
 
         if (student) {
+            // Prevent double-booking a seat for the same timing during update
+            const newSeatNo = req.body.SeatNo !== undefined ? req.body.SeatNo : student.SeatNo;
+            const newBatchTiming = req.body.batchTiming !== undefined ? req.body.batchTiming : student.batchTiming;
+            const newStatus = req.body.AccountStatus || student.AccountStatus;
+
+            if (newSeatNo && newBatchTiming && newStatus === 'Active') {
+                const seatConflict = await Student.findOne({
+                    SeatNo: newSeatNo,
+                    batchTiming: newBatchTiming,
+                    AccountStatus: 'Active',
+                    _id: { $ne: student._id }
+                });
+                if (seatConflict) {
+                    return res.status(400).json({ message: `Seat ${newSeatNo} is already occupied by ${seatConflict.FullName || seatConflict.FirstName} during '${newBatchTiming}'.` });
+                }
+            }
+
                 if (req.body.Email && req.body.Email !== student.Email) {
                     student.isEmailVerified = false; // Reset verification on change
                 }
@@ -488,6 +514,16 @@ const convertInterestedStudent = async (req, res) => {
             return res.status(404).json({ message: 'Record not found' });
         }
 
+        // Prevent double-booking a seat for the same timing
+        const finalSeatNo = SeatNo || '';
+        const finalBatchTiming = batchTiming || '';
+        if (finalSeatNo && finalBatchTiming) {
+            const seatConflict = await Student.findOne({ SeatNo: finalSeatNo, batchTiming: finalBatchTiming, AccountStatus: 'Active' });
+            if (seatConflict) {
+                return res.status(400).json({ message: `Conflict: Seat ${finalSeatNo} is already occupied by ${seatConflict.FullName || seatConflict.FirstName} during '${finalBatchTiming}'.` });
+            }
+        }
+
         // Generate default password
         const defaultPassword = 'library@123';
         const salt = await bcrypt.genSalt(10);
@@ -724,6 +760,32 @@ const manualCheckOut = async (req, res) => {
     }
 };
 
+// @desc    Get Seat Configuration
+// @route   GET /api/admin/config/seats
+// @access  Private/Admin
+const getSeatConfig = async (req, res) => {
+    try {
+        let config = await SystemConfig.findOne({ key: 'seat_layout_config' });
+        if (!config) config = await SystemConfig.create({ key: 'seat_layout_config', value: { halls: [] } });
+        res.json(config.value);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update Seat Configuration
+// @route   PUT /api/admin/config/seats
+// @access  Private/Admin
+const updateSeatConfig = async (req, res) => {
+    try {
+        const { halls } = req.body;
+        await SystemConfig.findOneAndUpdate({ key: 'seat_layout_config' }, { value: { halls } }, { upsert: true });
+        res.json({ message: 'Seat configuration updated successfully', halls });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     addStudent,
     bulkUploadStudents,
@@ -744,5 +806,7 @@ module.exports = {
     getStudentNotifications,
     getDailyAttendance,
     manualCheckIn,
-    manualCheckOut
+    manualCheckOut,
+    getSeatConfig,
+    updateSeatConfig
 };

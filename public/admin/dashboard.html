@@ -32,6 +32,7 @@
                     <li><a href="#home"><i class="fa-solid fa-home"></i> Home</a></li>
                     <li><a href="#announcements"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
                     <li><a href="#attendance"><i class="fa-solid fa-calendar-check"></i> Attendance</a></li>
+                    <li><a href="#seats"><i class="fa-solid fa-chair"></i> Seat Map</a></li>
                     <li><a href="#students" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-users"></i> Students <span id="nav-badge-students" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#aadhar" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-address-card"></i> Aadhar <span id="nav-badge-aadhar" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#bulk-students"><i class="fa-solid fa-file-csv"></i> Bulk Upload</a></li>
@@ -76,6 +77,7 @@
                     <li><a href="#home" onclick="closeSidebar()"><i class="fa-solid fa-home"></i> Dashboard</a></li>
                     <li><a href="#announcements" onclick="closeSidebar()"><i class="fa-solid fa-bullhorn"></i>
                             Announcements</a></li>
+                    <li><a href="#seats" onclick="closeSidebar()"><i class="fa-solid fa-chair"></i> Live Seat Map</a></li>
                     <li><a href="#attendance" onclick="closeSidebar()"><i class="fa-solid fa-calendar-check"></i>Attendance</a></li>
                     <li><a href="#students" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
                             <span><i class="fa-solid fa-users"></i> Manage Students</span>
@@ -600,11 +602,49 @@
                     </div>
                 </div>
 
+                <!-- Live Seat Layout View -->
+                <div id="view-seats" class="view-section" style="display: none;">
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <h3 style="margin:0;"><i class="fa-solid fa-chair" style="color:var(--primary-color);"></i> Live Seat Layout</h3>
+                            <select id="seatBatchFilter" onchange="renderSeatLayout()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary);">
+                                <option value="">All Batches (Overall)</option>
+                                <option value="Basic">Basic</option>
+                                <option value="Fundamental">Fundamental</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Officer's">Officer's</option>
+                            </select>
+                        </div>
+                        <div style="margin-top: 15px; display:flex; gap:15px; font-size:0.9em; flex-wrap:wrap;">
+                            <span style="display:flex; align-items:center; gap:5px;"><div style="width:16px; height:16px; background:var(--success-color); border-radius:4px;"></div> Available</span>
+                            <span style="display:flex; align-items:center; gap:5px;"><div style="width:16px; height:16px; background:var(--error-color); border-radius:4px;"></div> Occupied</span>
+                        </div>
+                        <div id="seatLayoutContainer" style="margin-top: 25px;">Loading seat layout...</div>
+                    </div>
+                </div>
+
                 <!-- Settings View -->
                 <div class="view-section" id="view-settings" style="display:none;">
-                    <h2 style="margin-bottom: 20px;"><i class="fa-solid fa-gear"></i> Library Settings</h2>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
-                        <div class="card" style="margin-bottom: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                        <h2 style="margin: 0;"><i class="fa-solid fa-gear"></i> Library Settings</h2>
+                        
+                        <!-- Settings Tabs -->
+                        <div style="display:flex; gap:4px; background:var(--input-bg); padding:4px; border-radius:12px; border:1px solid var(--card-border); flex-shrink:0; overflow-x: auto; max-width: 100%;">
+                            <button id="tabBtnWifi" onclick="switchSettingsTab('wifi')" class="btn" style="padding:8px 16px; border-radius:8px; font-size:0.95em; display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;">
+                                <i class="fa-solid fa-wifi"></i> Wi-Fi Settings
+                            </button>
+                            <button id="tabBtnAttendance" onclick="switchSettingsTab('attendance')" class="btn-outline" style="padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;">
+                                <i class="fa-solid fa-location-dot"></i> Attendance
+                            </button>
+                            <button id="tabBtnSeats" onclick="switchSettingsTab('seats')" class="btn-outline" style="padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;">
+                                <i class="fa-solid fa-chair"></i> Seats Mapping
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Wi-Fi Tab Content -->
+                    <div id="settingsTabWifiContent" style="display: block;">
+                        <div class="card" style="max-width: 800px; margin: 0 auto;">
                             <h3 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fa-solid fa-wifi"></i> Manage Wi-Fi Credentials</h3>
                         <form id="wifiSettingsForm" onsubmit="saveWifiSettings(event)">
                             <h4 style="margin-bottom: 10px; border-bottom: 1px solid var(--card-border); padding-bottom: 5px;">Zone 1</h4>
@@ -636,27 +676,60 @@
                             <button type="submit" class="btn" style="width: 100%;"><i class="fa-solid fa-save"></i> Save Settings</button>
                         </form>
                         </div>
+                    </div>
 
-                        <div class="card" style="margin-bottom: 0;">
+                    <!-- Attendance Tab Content -->
+                    <div id="settingsTabAttendanceContent" style="display: none;">
+                        <div class="card" style="max-width: 800px; margin: 0 auto;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <h3 style="margin: 0; color: var(--primary-color);"><i class="fa-solid fa-location-dot"></i> Attendance QR</h3>
-                                <button type="button" onclick="autoDetectLocation()" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-location-crosshairs"></i> Auto Detect</button>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <h3 style="margin: 0; color: var(--primary-color);"><i class="fa-solid fa-wifi"></i> Attendance IP</h3>
+                                    <i class="fa-solid fa-circle-info" style="color: var(--text-secondary); cursor: pointer;" onclick="const el = document.getElementById('ipInfoBox'); el.style.display = el.style.display === 'none' ? 'block' : 'none';" title="Important Info"></i>
+                                </div>
+                                <button type="button" onclick="autoDetectIP()" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-satellite-dish"></i> Detect IP</button>
                             </div>
                             <div style="background: var(--bg-color); border: 1px solid var(--card-border); padding: 15px; border-radius: 8px; height: calc(100% - 46px);">
-                                <p style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 15px;">Set your library's exact GPS coordinates so students can only check-in within 100 meters.</p>
-                            <form id="locationSettingsForm" onsubmit="saveLocationSettings(event)">
-                                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                                    <div><label>Latitude</label><input type="text" id="libLat" placeholder="e.g. 25.5941" required></div>
-                                    <div><label>Longitude</label><input type="text" id="libLng" placeholder="e.g. 85.1376" required></div>
+                                <p style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 15px;">Set your library's Public Internet IP. Students must be on your Wi-Fi to check in.</p>
+                                <div id="ipInfoBox" style="display: none; background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 0.85em; color: #92400E; line-height: 1.5;">
+                                    <strong>Important:</strong> If your library loses power or you reboot your router, your ISP might assign your router a new Public IP address.<br><br>If that happens, students will suddenly get blocked. <strong>The Fix is easy:</strong> You just connect to your library's Wi-Fi, open your Admin Dashboard, and click the <strong>"Detect IP"</strong> button. It will instantly update the database with the new IP, and students can check in again. <em>(Or, you can ask your ISP for a "Static IP", which never changes, and you'll never have to touch it again).</em>
                                 </div>
-                                <button type="submit" class="btn" style="width: 100%; margin-bottom: 15px;"><i class="fa-solid fa-map-pin"></i> Save Coordinates</button>
+                            <form id="ipSettingsForm" onsubmit="saveIPSettings(event)">
+                                <div class="form-group">
+                                    <label>Public IP Address</label>
+                                    <input type="text" id="libIP" placeholder="e.g. 203.0.113.45" required>
+                                </div>
+                                <button type="submit" class="btn" style="width: 100%; margin-bottom: 15px;"><i class="fa-solid fa-save"></i> Save Library IP</button>
                             </form>
-                            <div style="text-align: center; margin-top: 20px; border-top: 1px dashed var(--card-border); padding-top: 20px;">
-                                <p style="font-weight: bold; margin-bottom: 10px; font-size: 1.1em;">Official Door QR Code</p>
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=KNL_OFFICIAL_DOOR_QR_V1" alt="Door QR" style="border: 4px solid var(--primary-color); border-radius: 8px; padding: 5px; background: white;">
-                                <p style="font-size: 0.85em; color: var(--text-secondary); margin-top: 10px;">Right-click this image to print and paste it on your door.</p>
+                            
+                            <div style="text-align: center; margin-top: 30px; border-top: 1px dashed var(--card-border); padding-top: 30px;">
+                                <h4 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.1em;"><i class="fa-solid fa-qrcode" style="color: var(--primary-color);"></i> Official Door QR Code</h4>
+                                
+                                <!-- Styled QR Card -->
+                                <div style="display: inline-block; background: #fff; padding: 25px 20px; border-radius: 16px; border: 1px solid var(--input-border); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); text-align: center; max-width: 320px;">
+                                    <div style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.4em; font-weight: 800; color: #111827; margin-bottom: 15px;">Knowledge Nook Library</div>
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=KNL_OFFICIAL_DOOR_QR_V1" alt="Door QR" style="width: 220px; height: 220px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #E5E7EB;">
+                                    <div style="font-size: 1.2em; font-weight: 800; color: var(--primary-color); margin-bottom: 8px; letter-spacing: 1px;">SCAN TO CHECK-IN</div>
+                                    <div style="font-size: 0.85em; color: #4B5563; line-height: 1.5; padding: 0 10px; font-weight: 500;">Please connect to the library Wi-Fi before scanning via your student dashboard.</div>
+                                </div>
+
+                                <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                                    <button type="button" onclick="printQRCode()" class="btn" style="padding: 10px 20px; font-size: 0.95em;"><i class="fa-solid fa-print"></i> Print Poster</button>
+                                    <button type="button" onclick="downloadQRCode()" class="btn-outline" style="padding: 10px 20px; font-size: 0.95em; background: var(--bg-color);"><i class="fa-solid fa-download"></i> Download Image</button>
+                                </div>
+                                <p style="font-size: 0.85em; color: var(--text-secondary); margin-top: 15px;">Print and paste this at the library entrance for students to scan.</p>
                             </div>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Seats Tab Content -->
+                    <div id="settingsTabSeatsContent" style="display: none;">
+                        <div class="card" style="max-width: 800px; margin: 0 auto;">
+                            <h3 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fa-solid fa-building-user"></i> Configure Halls & Seats</h3>
+                            <p style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 20px;">Define your library's physical halls and their sequential seat ranges to map them accurately on the Live Seat Dashboard.</p>
+                            <div id="hallConfigList" style="margin-bottom: 15px;"></div>
+                            <button type="button" class="btn-outline" onclick="addHallConfigRow()" style="margin-bottom: 15px; width: 100%; border: 2px dashed var(--primary-color); padding: 10px;"><i class="fa-solid fa-plus"></i> Add New Hall</button>
+                            <button type="button" class="btn" onclick="saveSeatConfig()" style="width: 100%;"><i class="fa-solid fa-save"></i> Save Configuration</button>
                         </div>
                     </div>
                 </div>
@@ -806,6 +879,17 @@
             </div>
         </div>
 
+        <!-- Seat Details Modal -->
+        <div id="seatDetailsModal" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <span class="close-btn" onclick="closeSeatDetailsModal()">&times;</span>
+                <h2 id="seatDetailsTitle" style="margin-bottom: 15px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px;"><i class="fa-solid fa-chair" style="color: var(--primary-color);"></i> Seat Details</h2>
+                <div id="seatDetailsList" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                    <!-- Student list injected here -->
+                </div>
+            </div>
+        </div>
+
         <script src="/js/api.js"></script>
         <script>
             const pricingGrid = {
@@ -887,6 +971,7 @@
                 if (hash === '#home' || !window.location.hash) loadDashboardStats();
                 if (hash === '#announcements') loadAnnouncements();
                 if (hash === '#students') loadStudents();
+                if (hash === '#seats') loadSeatLayout();
                 if (hash === '#attendance') loadAttendance();
                 if (hash === '#aadhar') loadAadhar();
                 if (hash === '#interested') loadInterestedStudents();
@@ -901,7 +986,10 @@
                         if (searchInput) searchInput.focus();
                     }, 100);
                 }
-                if (hash === '#settings') { if (typeof loadWifiSettings === 'function') loadWifiSettings(); }
+                if (hash === '#settings') { 
+                    if (typeof loadWifiSettings === 'function') loadWifiSettings(); 
+                    if (typeof loadSeatConfig === 'function') loadSeatConfig(); 
+                }
             }
         </script>
         <script src="../js/admin.js"></script>

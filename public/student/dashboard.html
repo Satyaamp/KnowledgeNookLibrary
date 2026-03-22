@@ -181,7 +181,7 @@
                 </li>
                 <li>
                     <a href="#notifications" style="display: flex; align-items: center; gap: 5px;">
-                        <i class="fa-solid fa-envelope"></i> Messages
+                        <i class="fa-solid fa-envelope"></i> Inbox
                         <span class="notification-badge" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span>
                     </a>
                 </li>
@@ -354,7 +354,7 @@
                 </div>
             </div>
 
-            <!-- Admin Messages View -->
+            <!-- Inbox View -->
             <div id="view-notifications" class="view-section" style="display: none;">
                 <div class="card">
 
@@ -362,7 +362,7 @@
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
                         <h3 style="margin:0; display:flex; align-items:center; gap:6px;">
                             <i class="fa-solid fa-envelope" style="color:var(--primary-color);"></i>
-                            Admin Messages
+                            Inbox
                         </h3>
                         <div style="display:flex; gap:4px; background:var(--input-bg); padding:3px; border-radius:20px; border:1px solid var(--card-border); flex-shrink:0;">
                             <button id="msgTabBtnUnread" onclick="switchMessageTab('unread')" class="btn" style="padding:4px 10px; border-radius:16px; font-size:0.9em; display:flex; align-items:center; gap:4px; white-space:nowrap;">
@@ -517,14 +517,88 @@
             <!-- My Requests History View -->
             <div id="view-requests" class="view-section" style="display: none;">
                 <div class="card">
-                    <h3><i class="fa-solid fa-paper-plane"></i> My Requests</h3>
-                    <p style="color: var(--text-secondary); font-size: 1em; margin-bottom: 15px;">History of changes you requested for your profile.</p>
-                    <div id="requestsActions" style="display: none; margin-bottom: 15px; align-items: center; gap: 15px; padding: 10px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px;">
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 1em; cursor: pointer; font-weight: 500;"><input type="checkbox" id="selectAllRequests" onchange="toggleSelectAllRequests()"> Select All</label>
-                        <button id="bulkDeleteBtn" onclick="deleteSelectedRequests()" class="btn-outline" style="padding: 0.3rem 0.8rem; font-size: 0.95em; color: #ef4444; border-color: #ef4444;" disabled><i class="fa-solid fa-trash"></i></button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                        <div>
+                            <h3 style="margin: 0;"><i class="fa-solid fa-paper-plane" style="color: var(--primary-color);"></i> My Requests</h3>
+                            <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 5px;">History of changes you requested for your profile.</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                            <select id="filterRequestStatus" onchange="filterRequests()" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); font-size: 0.9em;">
+                                <option value="">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                            <select id="filterRequestPerPage" onchange="changeRequestsLimit()" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); font-size: 0.9em;">
+                                <option value="5">5 per page</option>
+                                <option value="10" selected>10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="50">50 per page</option>
+                            </select>
+                        </div>
                     </div>
-                    <div id="requestsHistoryList">Loading...</div>
-                    <div id="requestsPagination" style="margin-top: 15px;"></div>
+                    
+                    <div id="requestsActions" style="display: none; margin-bottom: 15px; align-items: center; justify-content: space-between; padding: 10px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.95em; cursor: pointer; font-weight: 500;"><input type="checkbox" id="selectAllRequests" onchange="toggleSelectAllRequests()"> Select All</label>
+                        <button id="bulkDeleteBtn" onclick="deleteSelectedRequests()" class="btn-outline" style="padding: 0.3rem 0.8rem; font-size: 0.9em; color: #ef4444; border-color: #ef4444;" disabled><i class="fa-solid fa-trash"></i> Delete Selected</button>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95em;">
+                            <thead>
+                                <tr style="background: var(--input-bg); border-top: 1px solid var(--card-border); border-bottom: 2px solid var(--card-border);">
+                                    <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600; width: 40px; text-align: center;"></th>
+                                    <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Date</th>
+                                    <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Requested Changes</th>
+                                    <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Admin Note</th>
+                                    <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600; text-align: center;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requestsHistoryList">
+                                <!-- Content injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="requestsPagination" style="display: flex; justify-content: flex-end; margin-top: 15px;"></div>
+                </div>
+            </div>
+            
+            <!-- Attendance History View -->
+            <div id="view-attendance-history" class="view-section" style="display: none;">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                        <div>
+                            <h3 style="margin: 0;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary-color);"></i> Attendance History</h3>
+                            <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 5px;">Log of all your past check-ins and check-outs.</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                            <select id="filterAttendancePerPage" onchange="changeAttendanceHistoryLimit()" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--bg-color); color: var(--text-primary); font-size: 0.9em;">
+                                <option value="5">5 per page</option>
+                                <option value="10" selected>10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="50">50 per page</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95em;">
+                            <thead>
+                                <tr style="background: var(--input-bg); border-top: 1px solid var(--card-border); border-bottom: 2px solid var(--card-border);">
+                                    <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Date</th>
+                                    <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">In Time</th>
+                                    <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Out Time</th>
+                                    <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Total Hrs</th>
+                                    <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Note</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceHistoryList">
+                                <!-- Content injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="attendanceHistoryPagination" style="display: flex; justify-content: flex-end; margin-top: 15px;"></div>
                 </div>
             </div>
         </div>
@@ -631,18 +705,6 @@
                 <button type="submit" class="btn" style="width: 100%;">Update Password</button>
             </form>
             <div id="passwordMsg" style="margin-top: 10px; text-align: center;"></div>
-        </div>
-    </div>
-
-    <!-- Attendance History Modal -->
-    <div id="attendanceHistoryModal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <span class="close-btn" onclick="closeAttendanceHistoryModal()">&times;</span>
-            <h2 style="margin-bottom: 15px;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary-color);"></i> Attendance History</h2>
-            <div id="attendanceHistoryList" style="max-height: 60vh; overflow-y: auto; padding-right: 5px;">
-                Loading history...
-            </div>
-            <div id="attendanceHistoryPagination" style="margin-top: 15px;"></div>
         </div>
     </div>
 

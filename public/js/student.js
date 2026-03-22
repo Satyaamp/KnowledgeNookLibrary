@@ -104,7 +104,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (feeAmountField) feeAmountField.value = profile.amount || 0;
 
         // Update Plan in header
-        const planText = profile.planDuration ? `${profile.planDuration} (${profile.batchType || 'N/A'}) | ${profile.batchTiming || 'N/A'} | ${profile.SeatNo || 0}` : 'N/A';
+        const planText = profile.planDuration
+            ? `${profile.planDuration} (${profile.batchType || 'N/A'}) | ${profile.assignedHall || 'N/A'}_${profile.SeatNo || 'N/A'}`
+            : 'N/A';
         document.getElementById('studentPlan').innerHTML = `<i class="fa-solid fa-clock" style="margin-right: 5px;"></i>${planText} &nbsp;&nbsp;`;
 
         // Update joining date in header
@@ -285,6 +287,7 @@ function handleRoute() {
     if (hash === '#issues') loadIssues();
     if (hash === '#requests') loadRequestsHistory();
     if (hash === '#notifications') { loadNotifications(); }
+    if (hash === '#attendance-history') loadAttendanceHistory();
 }
 
 async function loadProfile() {
@@ -325,7 +328,7 @@ async function loadProfile() {
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-clock" style="color:var(--primary-color);"></i> Today's Attendance (${attData.DateString.split('-').reverse().join('-')})</div>
                     <div style="display: flex; gap: 8px;">
                         <button onclick="reportAttendanceIssue()" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-radius: 6px; color: var(--warning-color); border-color: var(--warning-color);" title="Report Issue"><i class="fa-solid fa-triangle-exclamation"></i> Issue</button>
-                        <button onclick="openAttendanceHistoryModal()" class="btn-outline" style="padding: 4px 12px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
+                        <button onclick="window.location.hash='#attendance-history'" class="btn-outline" style="padding: 4px 12px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; text-align: center; gap: 10px; flex-wrap: wrap;">
@@ -348,7 +351,7 @@ async function loadProfile() {
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-clock" style="color:var(--primary-color);"></i> Today's Attendance</div>
                     <div style="display: flex; gap: 8px;">
                         <button onclick="reportAttendanceIssue()" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-radius: 6px; color: var(--warning-color); border-color: var(--warning-color);" title="Missed Check-In?"><i class="fa-solid fa-triangle-exclamation"></i> Missed?</button>
-                        <button onclick="openAttendanceHistoryModal()" class="btn-outline" style="padding: 4px 12px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
+                        <button onclick="window.location.hash='#attendance-history'" class="btn-outline" style="padding: 4px 12px; font-size: 0.85em; border-radius: 6px;"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
                     </div>
                 </div>
                 <div style="color: var(--text-secondary); font-size: 1em; text-align: center;">You have not mark <b><u style="color: var(--primary-color);">Today Attendance</u></b></div>
@@ -455,7 +458,9 @@ async function loadProfile() {
                 </div>
                 <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-chair" style="color:var(--primary-color); font-size:0.9em;"></i> Seat No</div>
-                    <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.SeatNo}</div>
+                    <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">
+                    ${data.assignedHall || 'N/A'}_${data.SeatNo || 'N/A'}
+                    </div>
                 </div>
 
                 <!-- Wi-Fi Details Hub -->
@@ -968,7 +973,18 @@ window.closeIssueModal = function() {
 
 // --- Requests History Logic ---
 let requestsCurrentPage = 1;
-const REQUESTS_PER_PAGE = 5;
+let REQUESTS_PER_PAGE = 10;
+
+window.changeRequestsLimit = function() {
+    REQUESTS_PER_PAGE = document.getElementById('filterRequestPerPage').value;
+    requestsCurrentPage = 1;
+    loadRequestsHistory();
+}
+
+window.filterRequests = function() {
+    requestsCurrentPage = 1;
+    loadRequestsHistory();
+}
 
 async function loadRequestsHistory() {
     const list = document.getElementById('requestsHistoryList');
@@ -976,50 +992,50 @@ async function loadRequestsHistory() {
     const actionsContainer = document.getElementById('requestsActions');
     const selectAllCheckbox = document.getElementById('selectAllRequests');
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const statusFilter = document.getElementById('filterRequestStatus') ? document.getElementById('filterRequestStatus').value : '';
     
-    list.innerHTML = 'Loading history...';
+    list.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Loading history...</td></tr>';
     paginationContainer.innerHTML = '';
     actionsContainer.style.display = 'none';
     selectAllCheckbox.checked = false;
     bulkDeleteBtn.disabled = true;
 
     try {
-        const data = await apiFetch(`/students/profile-requests?page=${requestsCurrentPage}&limit=${REQUESTS_PER_PAGE}`);
+        let url = `/students/profile-requests?page=${requestsCurrentPage}&limit=${REQUESTS_PER_PAGE}`;
+        if (statusFilter) url += `&status=${statusFilter}`;
+        
+        const data = await apiFetch(url);
         
         if (data.requests && data.requests.length > 0) {
             actionsContainer.style.display = 'flex';
 
             list.innerHTML = data.requests.map(req => {
-                // Format the proposed changes
                 const changes = Object.entries(req.ProposedData || {})
-                    .map(([key, val]) => `<span style="background: var(--input-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-right: 5px; color: var(--text-primary); border: 1px solid var(--card-border);">${key}: ${val}</span>`)
+                    .map(([key, val]) => `<span style="background: var(--input-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-right: 5px; color: var(--text-primary); border: 1px solid var(--card-border); display: inline-block; margin-bottom: 4px;">${key}: ${val}</span>`)
                     .join('');
                 
                 const isLocked = ['Pending', 'Under Review'].includes(req.Status);
 
                 return `
-                <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                             ${!isLocked ? `<input type="checkbox" class="request-checkbox" value="${req._id}" onchange="updateBulkDeleteState()">` : '<i class="fa-solid fa-lock" title="Active requests cannot be deleted" style="color: #ccc; width: 13px;"></i>'}
-                             <span style="font-size: 0.95em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${req.Status === 'Approved' ? 'var(--success-color)' : (req.Status === 'Rejected' || req.Status === 'Cancelled' ? 'var(--error-color)' : (req.Status === 'Under Review' ? 'var(--primary-color)' : 'var(--warning-color)'))}; font-weight: 600;">
-                                ${req.Status}
-                            </span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span style="font-size: 0.9em; color: var(--text-secondary);">
-                                ${new Date(req.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-')}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 8px;">
-                        <div style="font-size: 1em; color: var(--text-secondary); margin-bottom: 4px;">Requested Changes:</div>
-                        <div>${changes || '<em style="color:#999">No data</em>'}</div>
-                    </div>
-
-                    ${req.AdminNote ? `<div style="font-size: 0.95em; background: var(--bg-color); padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); border-left: 3px solid ${req.Status === 'Rejected' || req.Status === 'Cancelled' ? 'var(--error-color)' : 'var(--text-secondary)'}; color: var(--text-primary);"><strong>Note:</strong> ${req.AdminNote}</div>` : ''}
-                </div>
+                <tr style="border-bottom: 1px solid var(--card-border); background: var(--card-bg);">
+                    <td style="padding: 12px 15px; text-align: center;">
+                        ${!isLocked ? `<input type="checkbox" class="request-checkbox" value="${req._id}" onchange="updateBulkDeleteState()">` : '<i class="fa-solid fa-lock" title="Active requests cannot be deleted" style="color: #ccc;"></i>'}
+                    </td>
+                    <td style="padding: 12px 15px; color: var(--text-secondary); white-space: nowrap;">
+                        ${new Date(req.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}
+                    </td>
+                    <td style="padding: 12px 15px;">
+                        ${changes || '<em style="color:#999">No data</em>'}
+                    </td>
+                    <td style="padding: 12px 15px; color: var(--text-primary); font-size: 0.9em; max-width: 250px;">
+                        ${req.AdminNote ? `<strong>Note:</strong> ${req.AdminNote}` : '<span style="color: var(--text-secondary);">-</span>'}
+                    </td>
+                    <td style="padding: 12px 15px; text-align: center;">
+                        <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${req.Status === 'Approved' ? 'var(--success-color)' : (req.Status === 'Rejected' || req.Status === 'Cancelled' ? 'var(--error-color)' : (req.Status === 'Under Review' ? 'var(--primary-color)' : 'var(--warning-color)'))}; font-weight: 600; white-space: nowrap;">
+                            ${req.Status}
+                        </span>
+                    </td>
+                </tr>
             `}).join('');
 
             // Pagination Controls
@@ -1032,10 +1048,10 @@ async function loadRequestsHistory() {
                 paginationContainer.innerHTML = paginationHTML;
             }
         } else {
-            list.innerHTML = '<p style="color: var(--text-secondary);">No request history found.</p>';
+            list.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--text-secondary);">No request history found.</td></tr>';
         }
     } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        list.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: red;">Error: ${error.message}</td></tr>`;
     }
 }
 
@@ -1618,12 +1634,20 @@ function injectCustomUI() {
         div.className = 'custom-modal-overlay';
         div.style.display = 'none';
         div.innerHTML = `
-            <div class="custom-box" style="width: 90%; max-width: 400px; padding: 20px;">
-                <h3 style="margin-bottom: 10px;"><i class="fa-solid fa-expand"></i> Scan to Check-In</h3>
-                <p style="margin-bottom: 15px; color: var(--text-secondary); font-size: 0.9em;">Point your camera at the library's official door QR code.</p>
-                <div id="reader" style="width: 100%; min-height: 250px; background: #f3f4f6; border-radius: 8px; overflow: hidden; border: 2px dashed var(--primary-color);"></div>
-                <div class="custom-actions" style="margin-top: 20px;">
-                    <button class="btn btn-cancel" onclick="closeScanner()" style="width: 100%;">Cancel</button>
+            <div class="custom-box" style="width: 90%; max-width: 400px; padding: 20px; position: relative; overflow: hidden; min-height: 380px;">
+                <div id="scannerContent">
+                    <h3 style="margin-bottom: 10px;"><i class="fa-solid fa-expand"></i> Scan to Check-In</h3>
+                    <p style="margin-bottom: 15px; color: var(--text-secondary); font-size: 0.9em;">Point your camera at the library's official door QR code.</p>
+                    <div id="reader" style="width: 100%; min-height: 250px; background: #f3f4f6; border-radius: 8px; overflow: hidden; border: 2px dashed var(--primary-color);"></div>
+                    <div class="custom-actions" style="margin-top: 20px;">
+                        <button class="btn btn-cancel" onclick="closeScanner()" style="width: 100%;">Cancel</button>
+                    </div>
+                </div>
+                
+                <div id="scannerVerificationOverlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--card-bg); z-index: 10; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <i class="fa-solid fa-fingerprint fa-beat-fade" style="font-size: 4em; color: var(--primary-color); margin-bottom: 20px;"></i>
+                    <h3 style="margin-bottom: 10px; color: var(--text-primary);">Verifying Scan...</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.95em; padding: 0 20px;">Checking network connection and logging attendance</p>
                 </div>
             </div>
         `;
@@ -1873,41 +1897,49 @@ window.closeScanner = function() {
 }
 
 function onScanSuccess(decodedText, decodedResult) {
-    closeScanner();
-    showToast("QR Scanned! Verifying location...", "info");
-
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                try {
-                    const response = await apiFetch('/students/attendance/scan', {
-                        method: 'POST',
-                        body: JSON.stringify({ qrData: decodedText, lat: position.coords.latitude, lng: position.coords.longitude })
-                    });
-                    showToast(response.message, 'success');
-                    if (window.location.hash === '#profile' || window.location.hash === '') loadProfile();
-                } catch (error) {
-                    showToast(error.message, 'error');
-                }
-            },
-            (error) => {
-                showToast(error.code === 1 ? "Please allow location access to check in." : "Failed to get location.", "error");
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-    } else {
-        showToast("Geolocation is not supported by your browser.", "error");
+    if (html5QrcodeScanner && html5QrcodeScanner.pause) {
+        try { html5QrcodeScanner.pause(); } catch(e) {}
     }
+
+    const content = document.getElementById('scannerContent');
+    const overlay = document.getElementById('scannerVerificationOverlay');
+    
+    if (content) content.style.display = 'none';
+    if (overlay) overlay.style.display = 'flex';
+
+    apiFetch('/students/attendance/scan', {
+        method: 'POST',
+        body: JSON.stringify({ qrData: decodedText })
+    })
+    .then(response => {
+        setTimeout(() => {
+            closeScanner();
+            showToast(response.message, 'success');
+            if (window.location.hash === '#profile' || window.location.hash === '') loadProfile();
+        }, 5000); // 5s delay for animation to play out nicely
+    })
+    .catch(error => {
+        setTimeout(() => {
+            closeScanner();
+            showToast(error.message, 'error');
+        }, 5000);
+    });
 }
 
 let currentAttendanceHistory = [];
 let attendanceHistoryPage = 1;
-const ATTENDANCE_HISTORY_PER_PAGE = 5;
+let ATTENDANCE_HISTORY_PER_PAGE = 10;
 
-window.openAttendanceHistoryModal = async function() {
-    document.getElementById('attendanceHistoryModal').style.display = 'block';
+window.changeAttendanceHistoryLimit = function() {
+    ATTENDANCE_HISTORY_PER_PAGE = parseInt(document.getElementById('filterAttendancePerPage').value) || 10;
+    attendanceHistoryPage = 1;
+    renderAttendanceHistory();
+}
+
+window.loadAttendanceHistory = async function() {
     const list = document.getElementById('attendanceHistoryList');
-    list.innerHTML = 'Loading history...';
+    if (!list) return;
+    list.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Loading history...</td></tr>';
     if (document.getElementById('attendanceHistoryPagination')) document.getElementById('attendanceHistoryPagination').innerHTML = '';
     try {
         const data = await apiFetch('/students/attendance/history');
@@ -1916,10 +1948,10 @@ window.openAttendanceHistoryModal = async function() {
             attendanceHistoryPage = 1;
             renderAttendanceHistory();
         } else {
-            list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No attendance history found.</p>';
+            list.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--text-secondary);">No attendance history found.</td></tr>';
         }
     } catch (err) {
-        list.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
+        list.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: red;">Error: ${err.message}</td></tr>`;
     }
 }
 
@@ -1942,15 +1974,27 @@ function renderAttendanceHistory() {
         }
         const dateFormatted = r.DateString.split('-').reverse().join('-');
 
+        let note = '<span style="color: var(--text-secondary);">-</span>';
+        if (r.CheckOutTime) {
+            if (r.CheckOutMethod === 'Admin') {
+                note = '<span style="color: var(--warning-color); font-weight: 500; font-size: 0.9em;"><i class="fa-solid fa-user-shield"></i> Admin Checkout</span>';
+            } else if (r.CheckOutMethod === 'Auto') {
+                note = '<span style="color: var(--text-secondary); font-weight: 500; font-size: 0.9em;"><i class="fa-solid fa-robot"></i> Auto Checkout</span>';
+            } else {
+                note = '<span style="color: var(--success-color); font-weight: 500; font-size: 0.9em;"><i class="fa-solid fa-user-check"></i> Self Checkout</span>';
+            }
+        }
+
         return `
-        <div style="border: 1px solid var(--card-border); padding: 12px; border-radius: 8px; margin-bottom: 10px; background: var(--bg-color);">
-            <div style="font-weight: 600; color: var(--primary-color); margin-bottom: 8px; font-size: 1.05em;"><i class="fa-regular fa-calendar"></i> ${dateFormatted}</div>
-            <div style="display: flex; gap: 10px; text-align: center; background: var(--input-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border);">
-                <div style="flex: 1;"><span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 2px;">In</span> <strong style="color:var(--success-color); font-size: 0.9em;">${inTime}</strong></div>
-                <div style="flex: 1; border-left: 1px dashed var(--card-border); border-right: 1px dashed var(--card-border); padding: 0 5px;"><span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 2px;">Out</span> <strong style="color:var(--error-color); font-size: 0.9em;">${outTime}</strong></div>
-                <div style="flex: 1;"><span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 2px;">Total</span> <strong style="font-size: 0.9em;">${hrs}</strong></div>
-            </div>
-        </div>`;
+        <tr style="border-bottom: 1px solid var(--card-border); background: var(--card-bg);">
+            <td style="padding: 12px 15px; color: var(--text-primary); font-weight: 500; white-space: nowrap;">
+                <i class="fa-regular fa-calendar" style="color: var(--text-secondary); margin-right: 5px;"></i> ${dateFormatted}
+            </td>
+            <td style="padding: 12px 15px; color: var(--success-color); font-weight: 600;">${inTime}</td>
+            <td style="padding: 12px 15px; color: var(--error-color); font-weight: 600;">${outTime}</td>
+            <td style="padding: 12px 15px; color: var(--text-primary); font-weight: 600;">${hrs}</td>
+            <td style="padding: 12px 15px;">${note}</td>
+        </tr>`;
     }).join('');
 
     const totalPages = Math.ceil(currentAttendanceHistory.length / ATTENDANCE_HISTORY_PER_PAGE);
@@ -1971,10 +2015,6 @@ window.changeAttendanceHistoryPage = function(page) {
     if (page < 1 || page > totalPages) return;
     attendanceHistoryPage = page;
     renderAttendanceHistory();
-}
-
-window.closeAttendanceHistoryModal = function() {
-    document.getElementById('attendanceHistoryModal').style.display = 'none';
 }
 
 function onScanFailure(error) {
@@ -2403,9 +2443,7 @@ function renderMsgList(listId, paginationId, items, page, isUnread) {
             white-space:pre-wrap;
             word-break:break-word;
             line-height:1.5;
-        ">
-            ${n.Message}
-        </div>
+        ">${n.Message}</div>
 
     </div>
     `).join('');

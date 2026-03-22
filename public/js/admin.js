@@ -1395,7 +1395,7 @@ async function submitStudentUpdate(e) {
         closeStudentModal();
         loadStudents(); // Refresh the list
     } catch (error) {
-        showToast('Error updating student: ' + error.message, 'error');
+        showToast(error.message, 'error');
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -2735,6 +2735,28 @@ window.toggleTheme = function() {
 }
 
 // --- Wi-Fi Settings Management ---
+window.switchSettingsTab = function(tab) {
+    const tabs = ['wifi', 'attendance', 'seats'];
+    tabs.forEach(t => {
+        const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+        const content = document.getElementById('settingsTab' + t.charAt(0).toUpperCase() + t.slice(1) + 'Content');
+        
+        if (t === tab) {
+            if(btn) {
+                btn.className = 'btn';
+                btn.style.cssText = 'padding:8px 16px; border-radius:8px; font-size:0.95em; display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;';
+            }
+            if(content) content.style.display = 'block';
+        } else {
+            if(btn) {
+                btn.className = 'btn-outline';
+                btn.style.cssText = 'padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;';
+            }
+            if(content) content.style.display = 'none';
+        }
+    });
+}
+
 window.loadWifiSettings = async function() {
     try {
         const data = await apiFetch('/config/wifi');
@@ -2747,11 +2769,10 @@ window.loadWifiSettings = async function() {
             document.getElementById('wifiHall2Password').value = data.hall2.password;
         }
 
-        // Also load GPS Location settings
+        // Also load IP Settings
         const locData = await apiFetch('/config/location');
-        if (document.getElementById('libLat')) {
-            document.getElementById('libLat').value = locData.lat || '';
-            document.getElementById('libLng').value = locData.lng || '';
+        if (document.getElementById('libIP')) {
+            document.getElementById('libIP').value = locData.ip || locData.lat || '';
         }
     } catch (error) {
         console.error('Error loading Wi-Fi config', error);
@@ -2787,37 +2808,32 @@ window.saveWifiSettings = async function(e) {
     }
 }
 
-window.saveLocationSettings = async function(e) {
+window.saveIPSettings = async function(e) {
     if (e) e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     if (btn) { btn.disabled = true; btn.innerHTML = 'Saving...'; }
     try {
-        const payload = { lat: document.getElementById('libLat').value, lng: document.getElementById('libLng').value };
+        const ipValue = document.getElementById('libIP').value;
+        // Send lat/lng as well to bypass strict database schemas that ignore 'ip'
+        const payload = { ip: ipValue, lat: ipValue, lng: '0' };
         await apiFetch('/admin/config/location', { method: 'PUT', body: JSON.stringify(payload) });
-        showToast('Library coordinates saved securely!', 'success');
+        showToast('Library IP saved securely!', 'success');
     } catch (error) {
-        showToast('Error saving coordinates: ' + error.message, 'error');
+        showToast('Error saving IP: ' + error.message, 'error');
     } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-map-pin"></i> Save Coordinates'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Library IP'; }
     }
 }
 
-window.autoDetectLocation = function() {
-    if (navigator.geolocation) {
-        showToast('Detecting location...', 'info');
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                if(document.getElementById('libLat')) document.getElementById('libLat').value = position.coords.latitude;
-                if(document.getElementById('libLng')) document.getElementById('libLng').value = position.coords.longitude;
-                showToast('Location detected! Click Save Coordinates.', 'success');
-            },
-            (error) => {
-                showToast(error.code === 1 ? 'Please allow location access in your browser settings.' : 'Failed to get location.', 'error');
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-    } else {
-        showToast("Geolocation is not supported by your browser.", "error");
+window.autoDetectIP = async function() {
+    showToast('Detecting Public IP...', 'info');
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        if (document.getElementById('libIP')) document.getElementById('libIP').value = data.ip;
+        showToast('IP detected! Click Save Library IP.', 'success');
+    } catch (error) {
+        showToast('Failed to detect IP. Are you connected to the internet?', 'error');
     }
 }
 
@@ -2829,4 +2845,228 @@ function openImageModal(url) {
 window.closeImageModal = function() {
     document.getElementById('imageModal').style.display = 'none';
     document.getElementById('modalImage').src = '';
+}
+
+window.downloadQRCode = function() {
+    showToast('Downloading QR Code...', 'info');
+    const url = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=KNL_OFFICIAL_DOOR_QR_V1';
+    fetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+            const blobUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = blobUrl;
+            a.download = 'KnowledgeNook_Door_QR.png';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(blobUrl);
+            a.remove();
+            showToast('QR Code downloaded successfully!', 'success');
+        })
+        .catch(() => {
+            window.open(url, '_blank');
+        });
+}
+
+window.printQRCode = function() {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Print QR Poster</title>
+            <style>
+                body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: Arial, sans-serif; background: #fff; }
+                .poster { text-align: center; border: 5px solid #000; padding: 60px; border-radius: 30px; max-width: 600px; width: 100%; box-sizing: border-box; }
+                .poster h1 { font-size: 3.2em; margin: 0 0 30px 0; color: #000; }
+                .poster img { width: 400px; height: 400px; margin-bottom: 30px; border: 2px solid #ccc; border-radius: 10px; }
+                .poster h2 { font-size: 2.8em; margin: 0 0 20px 0; color: #000; letter-spacing: 2px; }
+                .poster p { font-size: 1.6em; margin: 0; color: #444; line-height: 1.5; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <div class="poster">
+                <h1>Knowledge Nook Library</h1>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=KNL_OFFICIAL_DOOR_QR_V1" alt="QR Code">
+                <h2>SCAN TO CHECK-IN</h2>
+                <p>Please connect to the library Wi-Fi<br>before scanning via your dashboard.</p>
+            </div>
+            <script>
+                setTimeout(() => { window.print(); window.close(); }, 800);
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+// --- Live Seat Layout & Configuration Logic ---
+let currentSeatConfig = { halls: [] };
+
+window.loadSeatConfig = async function() {
+    try {
+        const data = await apiFetch('/admin/config/seats');
+        currentSeatConfig = data || { halls: [] };
+        renderHallConfigList();
+    } catch (error) {
+        console.error('Error loading seat config', error);
+    }
+}
+
+window.renderHallConfigList = function() {
+    const list = document.getElementById('hallConfigList');
+    if (!list) return;
+    if (!currentSeatConfig.halls || currentSeatConfig.halls.length === 0) {
+        list.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px; border: 1px dashed var(--card-border); border-radius: 8px;">No halls configured. Click "Add New Hall" below.</p>';
+        return;
+    }
+    list.innerHTML = currentSeatConfig.halls.map((h, i) => `
+        <div style="display:flex; flex-wrap: wrap; gap:10px; margin-bottom:15px; align-items:flex-end; background:var(--bg-color); padding:15px; border-radius:8px; border:1px solid var(--card-border);">
+            <div style="flex:1; min-width: 150px;">
+                <label style="font-size:0.8em; font-weight:600; color:var(--text-secondary);">Hall Name</label>
+                <input type="text" id="hallName_${i}" value="${h.name}" placeholder="e.g. Hall 1" style="padding:8px; width:100%; border-radius:6px; border:1px solid var(--input-border);">
+            </div>
+            <div style="flex:0.5; min-width: 80px;">
+                <label style="font-size:0.8em; font-weight:600; color:var(--text-secondary);">Start Seat</label>
+                <input type="number" id="hallStart_${i}" value="${h.start}" style="padding:8px; width:100%; border-radius:6px; border:1px solid var(--input-border);">
+            </div>
+            <div style="flex:0.5; min-width: 80px;">
+                <label style="font-size:0.8em; font-weight:600; color:var(--text-secondary);">End Seat</label>
+                <input type="number" id="hallEnd_${i}" value="${h.end}" style="padding:8px; width:100%; border-radius:6px; border:1px solid var(--input-border);">
+            </div>
+            <button type="button" class="btn-outline" onclick="removeHallConfigRow(${i})" style="color:var(--error-color); border-color:var(--error-color); padding:8px 12px; height: 38px;"><i class="fa-solid fa-trash"></i></button>
+        </div>
+    `).join('');
+}
+
+window.addHallConfigRow = function() {
+    if(!currentSeatConfig.halls) currentSeatConfig.halls = [];
+    currentSeatConfig.halls.push({ name: '', start: 1, end: 50 });
+    renderHallConfigList();
+}
+
+window.removeHallConfigRow = function(index) {
+    currentSeatConfig.halls.splice(index, 1);
+    renderHallConfigList();
+}
+
+window.saveSeatConfig = async function() {
+    const halls = [];
+    if(currentSeatConfig.halls) {
+        for (let i = 0; i < currentSeatConfig.halls.length; i++) {
+            halls.push({
+                name: document.getElementById(`hallName_${i}`).value,
+                start: parseInt(document.getElementById(`hallStart_${i}`).value),
+                end: parseInt(document.getElementById(`hallEnd_${i}`).value)
+            });
+        }
+    }
+    try {
+        await apiFetch('/admin/config/seats', { method: 'PUT', body: JSON.stringify({ halls }) });
+        showToast('Seat mapping saved successfully!', 'success');
+        currentSeatConfig.halls = halls;
+    } catch (error) {
+        showToast('Error saving seat config: ' + error.message, 'error');
+    }
+}
+
+window.loadSeatLayout = async function() {
+    if (currentStudents.length === 0) await loadStudents();
+    if (!currentSeatConfig || !currentSeatConfig.halls || currentSeatConfig.halls.length === 0) await loadSeatConfig();
+    renderSeatLayout();
+}
+
+window.renderSeatLayout = function() {
+    const container = document.getElementById('seatLayoutContainer');
+    const batchFilter = document.getElementById('seatBatchFilter') ? document.getElementById('seatBatchFilter').value : '';
+
+    if (!currentSeatConfig || !currentSeatConfig.halls || currentSeatConfig.halls.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:40px; background:var(--bg-color); border-radius:8px; border:1px dashed var(--card-border); color:var(--text-secondary);">No seat configuration found. <br><br> Go to <b>Settings -> Seats Mapping</b> to define your halls.</div>';
+        return;
+    }
+
+    const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
+    const filteredStudents = batchFilter ? activeStudents.filter(s => s.batchType === batchFilter) : activeStudents;
+
+    const occupiedSeats = {};
+    filteredStudents.forEach(s => {
+        if (s.SeatNo) {
+            const numericSeat = s.SeatNo.replace(/\D/g, ''); // Extracts pure number from things like "S-12"
+            if (numericSeat) {
+                if (!occupiedSeats[numericSeat]) occupiedSeats[numericSeat] = [];
+                occupiedSeats[numericSeat].push(s);
+            }
+        }
+    });
+
+    let html = '';
+    currentSeatConfig.halls.forEach(hall => {
+        let emptyCount = 0; let occupiedCount = 0;
+        let total = (hall.end - hall.start) + 1;
+        
+        let gridHtml = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 10px; margin-top: 20px;">`;
+        
+        for (let i = hall.start; i <= hall.end; i++) {
+            const seatNumStr = i.toString();
+            const occupiers = occupiedSeats[seatNumStr];
+            
+            if (occupiers && occupiers.length > 0) {
+                occupiedCount++;
+                const tooltipStr = `Seat ${i}&#10;` + occupiers.map(o => `• ${o.FullName} (${o.batchType || 'No Batch'})`).join('&#10;');
+                gridHtml += `<div onclick="viewSeatDetails('${seatNumStr}')" style="aspect-ratio: 1; background: var(--error-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 0.9em; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" title="${tooltipStr}">${i}</div>`;
+            } else {
+                emptyCount++;
+                gridHtml += `<div style="aspect-ratio: 1; background: var(--success-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: crosshair; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 0.9em; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" title="Seat ${i} - Available">${i}</div>`;
+            }
+        }
+        gridHtml += `</div>`;
+
+        html += `
+            <div style="margin-bottom: 25px; background: var(--bg-color); border: 1px solid var(--card-border); padding: 25px; border-radius: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed var(--card-border); padding-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h4 style="margin: 0; color: var(--primary-color); font-size: 1.2em;">${hall.name}</h4>
+                    <div style="font-size: 0.9em; display: flex; gap: 15px; background: var(--card-bg); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--card-border);">
+                        <span style="color: var(--text-secondary);">Total: <strong>${total}</strong></span>
+                        <span style="color: var(--success-color);">Empty: <strong>${emptyCount}</strong></span>
+                        <span style="color: var(--error-color);">Occupied: <strong>${occupiedCount}</strong></span>
+                    </div>
+                </div>
+                ${gridHtml}
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+window.viewSeatDetails = function(seatNum) {
+    const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
+    const occupiers = activeStudents.filter(s => s.SeatNo && s.SeatNo.replace(/\D/g, '') === seatNum);
+    
+    const listContainer = document.getElementById('seatDetailsList');
+    document.getElementById('seatDetailsTitle').innerHTML = `<i class="fa-solid fa-chair" style="color: var(--primary-color);"></i> Seat ${seatNum} Occupants`;
+    
+    if (occupiers.length === 0) {
+        listContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No students currently assigned to this seat.</p>';
+    } else {
+        listContainer.innerHTML = occupiers.map(s => `
+            <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="color: var(--primary-color); font-size: 1.1em; display: flex; align-items: center; gap: 8px;"><img src="${s.ProfilePictureURL || '/img/default-avatar.png'}" style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover;"> ${s.FullName}</strong>
+                    <span style="font-size: 0.85em; padding: 3px 10px; background: var(--bg-color); border: 1px solid var(--card-border); border-radius: 12px; font-weight: 600;">${s.batchType || 'No Batch'}</span>
+                </div>
+                <div style="font-size: 0.9em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; border-top: 1px dashed var(--card-border); padding-top: 10px;">
+                    <span><i class="fa-solid fa-id-badge" style="width: 16px;"></i> ${s.LibraryID || 'N/A'}</span>
+                    <span><i class="fa-solid fa-phone" style="width: 16px;"></i> ${s.Contact || 'N/A'}</span>
+                    <span><i class="fa-solid fa-clock" style="width: 16px;"></i> ${s.batchTiming || 'N/A'}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+    document.getElementById('seatDetailsModal').style.display = 'block';
+}
+
+window.closeSeatDetailsModal = function() {
+    document.getElementById('seatDetailsModal').style.display = 'none';
 }
