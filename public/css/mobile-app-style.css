@@ -110,7 +110,7 @@
   .btn-logout svg { width: 14px; height: 14px; }
 
   .btn-logout:hover {
-    background: var(--mob-primary) !important;
+    background: #ff0000 !important;
     color: #fff !important;
     border-color: var(--mob-primary) !important;
     transform: none !important;
@@ -340,7 +340,7 @@
     border-radius: var(--mob-radius-sm);
     margin-bottom: 8px;
     padding: 12px 14px;
-    background: var(--mob-surface2);
+    background: #2b2f3500;
     border: 1px solid var(--mob-border);
     font-size: 1rem;
     font-family: var(--mob-font-body);

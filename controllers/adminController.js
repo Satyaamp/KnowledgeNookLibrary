@@ -16,34 +16,57 @@ const SystemConfig = require('../models/SystemConfig');
 const addStudent = async (req, res) => {
     try {
         const {
-            FirstName, LastName, DOB, Gender, Email, Contact,
-            Password, FatherName, City, Area, Pincode,
-            AadharNumber, SeatNo, CurrentBatch, LibraryID, batchTiming
+            FirstName, LastName, Email, Contact, LibraryID, AadharNumber,
+            JoiningDate, SeatNo, planDuration, batchType, amount, mustChangePassword,
+            DOB, Gender, FatherName, City, Area, Pincode, batchTiming
         } = req.body;
 
-        const studentExists = await Student.findOne({ Email });
-        if (studentExists) {
-            return res.status(400).json({ message: 'Student already exists with this email' });
+        if (Email) {
+            const studentExists = await Student.findOne({ Email });
+            if (studentExists) {
+                return res.status(400).json({ message: `Email is already registered to ${studentExists.FullName || studentExists.FirstName}` });
+            }
         }
-
-        // Prevent double-booking a seat for the same timing
-        if (SeatNo && batchTiming) {
-            const seatConflict = await Student.findOne({ SeatNo, batchTiming, AccountStatus: 'Active' });
-            if (seatConflict) {
-                return res.status(400).json({ message: `Seat ${SeatNo} is already occupied by ${seatConflict.FullName || seatConflict.FirstName} during '${batchTiming}'.` });
+        
+        const contactExists = await Student.findOne({ Contact });
+        if (contactExists) {
+            return res.status(400).json({ message: `Contact number is already connected to ${contactExists.FullName || contactExists.FirstName}` });
+        }
+        
+        if (LibraryID) {
+            const libExists = await Student.findOne({ LibraryID });
+            if (libExists) {
+                return res.status(400).json({ message: `Library ID is already assigned to ${libExists.FullName || libExists.FirstName}` });
             }
         }
 
-        // Hash the initial password for the student
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(Password, salt);
+        if (AadharNumber) {
+            const aadharExists = await Student.findOne({ AadharNumber });
+            if (aadharExists) {
+                return res.status(400).json({ message: `Aadhar Number is already connected to ${aadharExists.FullName || aadharExists.FirstName}` });
+            }
+        }
 
-        const student = await Student.create({
-            FirstName, LastName, DOB, Gender, Email, Contact,
-            Password: hashedPassword, FatherName, City, Area, Pincode,
-            AadharNumber, SeatNo, CurrentBatch, LibraryID, batchTiming,
-            AccountStatus: 'Active' // Creating directly from admin makes it active
-        });
+        // Generate a default password from the phone number
+        const defaultPassword = Contact || 'Default123!';
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(defaultPassword, salt);
+        
+        // Build payload cleanly
+        const studentPayload = {
+            FirstName, LastName, Contact, SeatNo, planDuration, batchType, amount,
+            mustChangePassword: mustChangePassword !== undefined ? mustChangePassword : true,
+            DOB, Gender, FatherName, City, Area, Pincode, batchTiming,
+            Password: hashedPassword,
+            AccountStatus: 'Active'
+        };
+
+        if (Email) studentPayload.Email = Email;
+        if (LibraryID) studentPayload.LibraryID = LibraryID;
+        if (AadharNumber) studentPayload.AadharNumber = AadharNumber;
+        if (JoiningDate) studentPayload.JoiningDate = JoiningDate;
+
+        const student = await Student.create(studentPayload);
 
         res.status(201).json(student);
     } catch (error) {
@@ -105,11 +128,13 @@ const updateStudent = async (req, res) => {
             student.Pincode = req.body.Pincode || student.Pincode;
             student.AccountStatus = req.body.AccountStatus || student.AccountStatus;
             student.SeatNo = req.body.SeatNo !== undefined ? req.body.SeatNo : student.SeatNo;
-            student.planDuration = req.body.planDuration !== undefined ? req.body.planDuration : student.planDuration;
-            student.batchType = req.body.batchType !== undefined ? req.body.batchType : student.batchType;
-            student.amount = req.body.amount !== undefined ? req.body.amount : student.amount;
+            // New Plan/Batch features
+            if (req.body.planDuration !== undefined) student.planDuration = req.body.planDuration;
+            if (req.body.batchType !== undefined) student.batchType = req.body.batchType;
+            if (req.body.amount !== undefined) student.amount = req.body.amount;
+            if (req.body.batchTiming !== undefined) student.batchTiming = req.body.batchTiming;
+            if (req.body.JoiningDate !== undefined) student.JoiningDate = req.body.JoiningDate;
             student.LibraryID = req.body.LibraryID !== undefined ? req.body.LibraryID : student.LibraryID;
-            student.batchTiming = req.body.batchTiming !== undefined ? req.body.batchTiming : student.batchTiming;
 
             if (req.body.ResetPassword === true) {
                 const salt = await bcrypt.genSalt(10);
@@ -184,7 +209,7 @@ const verifyAadhar = async (req, res) => {
 // @access  Private/Admin
 const sendManualNotification = async (req, res) => {
     try {
-        const { type, customMessage } = req.body;
+        const { type, customMessage, title: customTitle, message: customRawMessage } = req.body;
         const student = await Student.findById(req.params.id);
 
         if (!student) {
@@ -194,7 +219,10 @@ const sendManualNotification = async (req, res) => {
         let pushMessage = '';
         let title = 'Library Update';
 
-        if (type === 'fee_reminder') {
+        if (customTitle && customRawMessage) {
+            title = customTitle;
+            pushMessage = customRawMessage;
+        } else if (type === 'fee_reminder') {
             title = 'Fee Reminder';
             pushMessage = `Hi {FirstName}, your fee proof for this month is not updated. Please upload a clear proof from your dashboard to avoid rejection.`;
         } else if (type === 'aadhar_reminder') {
@@ -207,7 +235,7 @@ const sendManualNotification = async (req, res) => {
             title = 'Message from Admin';
             pushMessage = customMessage || 'You have a new message from the admin.';
         } else {
-            return res.status(400).json({ message: 'Invalid notification type' });
+            return res.status(400).json({ message: 'Invalid notification type/payload' });
         }
 
         await sendPushToStudent(student._id, { title, message: pushMessage, url: '/student/dashboard.html#notifications' });
@@ -786,6 +814,112 @@ const updateSeatConfig = async (req, res) => {
     }
 };
 
+// @desc    Get student fee timeline
+// @route   GET /api/admin/students/:id/fee-timeline
+// @access  Private/Admin
+const getStudentFeeTimeline = async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id);
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+
+        const fees = await Fee.find({ StudentId: student._id });
+        
+        const joinDate = new Date(student.JoiningDate || student.createdAt);
+        const currentDate = new Date();
+        let maxDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+
+        // If the student has paid fees for future months, extend the timeline
+        fees.forEach(f => {
+            if (f.Month) {
+                const parsedDate = new Date(f.Month);
+                if (!isNaN(parsedDate) && parsedDate > maxDate) {
+                    maxDate = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1);
+                }
+            }
+        });
+        
+        const timeline = [];
+        let iterDate = new Date(joinDate.getFullYear(), joinDate.getMonth(), 1);
+        const endDate = maxDate;
+        
+        while (iterDate <= endDate) {
+            let rawMonthName = iterDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+            // For older node/OS that use invisible characters (like u202f), replace all whitespaces with a regular space
+            const monthName = rawMonthName.replace(/\s+/g, ' ').trim();
+            const expectedAmount = student.amount || 0;
+            
+            const feeRecord = fees.find(f => {
+                if(!f.Month) return false;
+                const safeFMonth = f.Month.replace(/\s+/g, ' ').trim().toLowerCase();
+                return safeFMonth === monthName.toLowerCase();
+            });
+            
+            timeline.push({
+                month: monthName,
+                expectedAmount,
+                status: feeRecord ? feeRecord.Status : 'Unpaid',
+                record: feeRecord || null
+            });
+            
+            iterDate.setMonth(iterDate.getMonth() + 1);
+        }
+        
+        timeline.reverse();
+        res.json(timeline);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching fee timeline', error: error.message });
+    }
+};
+
+// @desc    Override mark fee as paid
+// @route   POST /api/admin/students/:id/mark-fee-paid
+// @access  Private/Admin
+const markStudentFeePaid = async (req, res) => {
+    try {
+        const { Month, Amount, AdminNote } = req.body;
+        const student = await Student.findById(req.params.id);
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+        
+        const existingFee = await Fee.findOne({ StudentId: student._id, Month });
+        if (existingFee && existingFee.Status === 'Paid') {
+            return res.status(400).json({ message: 'Fee already paid for this month' });
+        }
+        
+        if (existingFee) {
+            existingFee.Status = 'Paid';
+            existingFee.AdminNote = AdminNote || 'Marked paid by Admin';
+            existingFee.Amount = Amount || student.amount || 0;
+            await existingFee.save();
+        } else {
+            await Fee.create({
+                StudentId: student._id,
+                Month,
+                Amount: Amount || student.amount || 0,
+                Status: 'Paid',
+                ProofImageURL: 'N/A',
+                AdminNote: AdminNote || 'Marked paid by Admin'
+            });
+        }
+        res.json({ message: 'Fee marked as paid successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error marking fee as paid', error: error.message });
+    }
+};
+
+// @desc    Get all notifications globally (for admin tracking)
+// @route   GET /api/admin/notifications/global
+// @access  Private/Admin
+const getAllNotifications = async (req, res) => {
+    try {
+        const notifications = await Notification.find()
+            .populate('StudentId', 'FullName LibraryID Contact ProfilePictureURL')
+            .sort({ createdAt: -1 }); // Newest first
+        res.json(notifications);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching global notifications', error: error.message });
+    }
+};
+
 module.exports = {
     addStudent,
     bulkUploadStudents,
@@ -808,5 +942,8 @@ module.exports = {
     manualCheckIn,
     manualCheckOut,
     getSeatConfig,
-    updateSeatConfig
+    updateSeatConfig,
+    getStudentFeeTimeline,
+    markStudentFeePaid,
+    getAllNotifications
 };

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { addStudent, getStudents, updateStudent, getProfileRequests, approveProfileRequest, rejectProfileRequest, getDashboardStats, getInterestedStudents, markInterestedStudentReviewed, rejectInterestedStudent, convertInterestedStudent, updateProfileRequestStatus, verifyAadhar, notifyNotUploadedAadhar, bulkUploadStudents, sendManualNotification, getStudentNotifications, getDailyAttendance, manualCheckIn, manualCheckOut, getSeatConfig, updateSeatConfig } = require('../controllers/adminController');
+const { addStudent, getStudents, updateStudent, getProfileRequests, approveProfileRequest, rejectProfileRequest, getDashboardStats, getInterestedStudents, markInterestedStudentReviewed, rejectInterestedStudent, convertInterestedStudent, updateProfileRequestStatus, verifyAadhar, notifyNotUploadedAadhar, bulkUploadStudents, sendManualNotification, getStudentNotifications, getDailyAttendance, manualCheckIn, manualCheckOut, getSeatConfig, updateSeatConfig, getStudentFeeTimeline, markStudentFeePaid, getAllNotifications } = require('../controllers/adminController');
 const { authGuard } = require('../middleware/authGuard');
 const { adminGuard } = require('../middleware/adminGuard');
 const upload = require('../utils/upload');
@@ -32,6 +32,9 @@ router.route('/aadhar/notify-not-uploaded')
 router.route('/students/:id/notify')
     .post(sendManualNotification);
 
+router.route('/notifications/global')
+    .get(getAllNotifications);
+
 router.route('/students/:id/notifications')
     .get(getStudentNotifications);
 
@@ -62,6 +65,9 @@ router.route('/convert-student/:id')
 router.get('/attendance', getDailyAttendance);
 router.post('/attendance', manualCheckIn);
 router.put('/attendance/:id/checkout', manualCheckOut);
+
+router.route('/students/:id/fee-timeline').get(getStudentFeeTimeline);
+router.route('/students/:id/mark-fee-paid').post(markStudentFeePaid);
 
 router.route('/config/seats')
     .get(getSeatConfig)

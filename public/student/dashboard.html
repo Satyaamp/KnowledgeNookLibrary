@@ -241,7 +241,7 @@
             <div class="navbar" style="align-items: flex-end;">
 
                 <!-- Student welcome section with plan, ID and join date -->
-                <h1 style="margin: 0;">Welcome, <span id="studentName"></span></h1>
+                <h1 style="margin: 0;">Hi, <span id="studentName"></span></h1>
                 <div style="font-size: 1em; color: #6B7280; font-weight: 500; padding-bottom: 5px;">
                     <span id="studentPlan" style="margin-right: 15px;"></span>
                     <span id="studentLibraryID" style="margin-right: 15px;"></span>
@@ -364,7 +364,7 @@
                             <i class="fa-solid fa-envelope" style="color:var(--primary-color);"></i>
                             Inbox
                         </h3>
-                        <div style="display:flex; gap:4px; background:var(--input-bg); padding:3px; border-radius:20px; border:1px solid var(--card-border); flex-shrink:0;">
+                        <div style="display:flex; gap:4px; padding:3px; border-radius:20px; border:1px solid var(--card-border); flex-shrink:0;">
                             <button id="msgTabBtnUnread" onclick="switchMessageTab('unread')" class="btn" style="padding:4px 10px; border-radius:16px; font-size:0.9em; display:flex; align-items:center; gap:4px; white-space:nowrap;">
                                 <i class="fa-solid fa-envelope" style="font-size:0.85em;"></i> Unread
                             </button>
@@ -541,7 +541,7 @@
                     
                     <div id="requestsActions" style="display: none; margin-bottom: 15px; align-items: center; justify-content: space-between; padding: 10px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px;">
                         <label style="display: flex; align-items: center; gap: 8px; font-size: 0.95em; cursor: pointer; font-weight: 500;"><input type="checkbox" id="selectAllRequests" onchange="toggleSelectAllRequests()"> Select All</label>
-                        <button id="bulkDeleteBtn" onclick="deleteSelectedRequests()" class="btn-outline" style="padding: 0.3rem 0.8rem; font-size: 0.9em; color: #ef4444; border-color: #ef4444;" disabled><i class="fa-solid fa-trash"></i> Delete Selected</button>
+                        <button id="bulkDeleteBtn" onclick="deleteSelectedRequests()" class="btn-outline" style="padding: 0.3rem 0.8rem; font-size: 0.9em; color: #ef4444; border-color: #ef4444;" disabled><i class="fa-solid fa-trash"></i></button>
                     </div>
 
                     <div style="overflow-x: auto;">

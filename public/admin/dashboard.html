@@ -42,6 +42,7 @@
                     <li><a href="#issues" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-triangle-exclamation"></i> Issues <span id="nav-badge-issues" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#requests" style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-id-card"></i> Requests <span id="nav-badge-requests" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; line-height: 1;">0</span></a></li>
                     <li><a href="#search"><i class="fa-solid fa-magnifying-glass"></i> Search</a></li>
+                    <li><a href="#notifications"><i class="fa-solid fa-bell"></i> Notifications Log</a></li>
                     <li><a href="#settings"><i class="fa-solid fa-gear"></i> Settings</a></li>
                 </ul>
                 <div class="nav-actions">
@@ -100,22 +101,15 @@
                             <span id="side-badge-leads" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
                         </a></li>
 
-                    <li><a href="#fees" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
-                            <span><i class="fa-solid fa-indian-rupee-sign"></i> Verify Fees</span>
+                    <li><a href="#fee-management" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-wallet"></i> Fee Management</span>
                             <span id="side-badge-fees" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
                         </a></li>
-
-
-                    <li style="border-left: 3px solid green;"><a href="#payment-history" onclick="closeSidebar()">
-                    <i class="fa-solid fa-indian-rupee-sign" style="color: var(--success-color)"></i> 
-                    Fees History 
-                    <i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i>
-                    </a>
-                    </li>
                     <li><a href="#issues" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
                             <span><i class="fa-solid fa-triangle-exclamation"></i> Issues</span>
                             <span id="side-badge-issues" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
                         </a></li>
+                    <li><a href="#notifications" onclick="closeSidebar()"><i class="fa-solid fa-bell"></i> Notifications Log</a></li>
                     <li><a href="#requests" onclick="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
                             <span><i class="fa-solid fa-id-card"></i> Profile Requests</span>
                             <span id="side-badge-requests" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
@@ -274,6 +268,40 @@
                     </div>
                 </div>
 
+                <!-- Global Notifications View -->
+                <div id="view-notifications" class="view-section" style="display: none;">
+                    <div class="card">
+                        <h3><i class="fa-solid fa-bell"></i> Global Notification Logs</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">Track all push notifications sent across the entire platform.</p>
+                        
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <input type="text" id="globalNotificationSearch" placeholder="Search by recipient name, Library ID, or message Title..."
+                                onkeyup="filterGlobalNotifications()"
+                                style="padding: 10px; width: 100%; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); box-sizing: border-box;">
+                        </div>
+
+                        <div style="overflow-x: auto;">
+                            <!-- Hide table headers if array is empty handled in JS -->
+                            <table class="table" style="width: 100%; white-space: nowrap;">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Recipient</th>
+                                        <th>Library ID</th>
+                                        <th>Title</th>
+                                        <th>Message</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="globalNotificationList">
+                                    <tr><td colspan="6" style="text-align: center; padding: 20px;">Loading global notifications...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="globalNotificationPagination" class="pagination" style="margin-top: 15px; display: flex; justify-content: center; gap: 5px;"></div>
+                    </div>
+                </div>
+
                 <!-- Students View -->
                 <div id="view-students" class="view-section" style="display: none;">
                     <div class="card">
@@ -283,6 +311,14 @@
                             <a href="#search" onclick="closeSidebar()" style="text-decoration:none;">
                                 <u><i class="fa-solid fa-magnifying-glass"></i> Quick Search</a></u>
                             </a>
+                            <div style="margin-left: auto; display:flex; gap: 10px;">
+                                <button onclick="exportStudentsCSV()" class="btn-outline" style="padding: 8px 15px; font-size: 0.9em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-color: var(--primary-color); color: var(--primary-color);">
+                                    <i class="fa-solid fa-download"></i> Export CSV
+                                </button>
+                                <button onclick="openAddStudentModal()" class="btn" style="padding: 8px 15px; font-size: 0.9em; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                    <i class="fa-solid fa-user-plus"></i> Add Student
+                                </button>
+                            </div>
                         </div><br>
                         <div class="form-group" style="margin-bottom: 15px;">
                             <input type="text" id="studentSearch"
@@ -447,8 +483,64 @@
                     </div>
                 </div>
 
-                <!-- Fees View -->
-                <div id="view-fees" class="view-section" style="display: none;">
+                <!-- Fee Management View (Combined) -->
+                <div id="view-fee-management" class="view-section" style="display: none;">
+                    <div style="margin-bottom: 15px; display: flex; gap: 10px; overflow-x: auto; background: var(--card-bg); padding: 10px; border-radius: 12px; border: 1px solid var(--card-border);" class="custom-tabs">
+                        <button id="feeTabTimelineBtn" class="btn" style="padding: 8px 15px; white-space: nowrap; border-radius: 8px; font-weight: 600; border: none; flex-shrink: 0;" onclick="switchFeeTab('timeline')">
+                            <i class="fa-solid fa-timeline"></i> Fee Timeline
+                        </button>
+                        <button id="feeTabVerifyBtn" class="btn-outline" style="padding: 8px 15px; white-space: nowrap; border-radius: 8px; border: none; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; flex-shrink: 0;" onclick="switchFeeTab('verify')">
+                            <i class="fa-solid fa-indian-rupee-sign" style="margin-right: 5px;"></i> Verify Uploads
+                            <span id="tab-badge-fees" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; margin-left: 5px;">0</span>
+                        </button>
+                        <button id="feeTabHistoryBtn" class="btn-outline" style="padding: 8px 15px; white-space: nowrap; border-radius: 8px; border: none; color: var(--text-secondary); font-weight: 600; flex-shrink: 0;" onclick="switchFeeTab('history')">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Verified History
+                        </button>
+                    </div>
+
+                    <!-- Fee Timeline Tab Content -->
+                    <div id="feeTabTimelineContent" style="display: block;">
+                    <div class="card">
+                        <h3><i class="fa-solid fa-timeline" style="margin-right:5px; color: var(--primary-color);"></i> Student Fee Timeline</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">Search for any active student to view their complete month-by-month fee history since their joining date.</p>
+                        
+                        <div class="form-group" style="margin-bottom: 20px; position: relative;">
+                            <input type="text" id="timelineSearch" placeholder="Search actively enrolled students by Name or Library ID..."
+                                onkeyup="filterTimelineSearch()" autocomplete="off" style="padding: 12px; width: 100%; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); font-size: 1.05em; color: var(--text-primary);">
+                            <div id="timelineSearchResults" style="background: var(--bg-color); border: 1px solid var(--card-border); border-top: none; border-radius: 0 0 8px 8px; max-height: 250px; overflow-y: auto; display: none; position: absolute; width: 100%; z-index: 10; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <div id="timelineContainer" style="display: none; border-top: 2px solid var(--card-border); padding-top: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <h4 id="timelineStudentName" style="margin: 0; font-size: 1.3em;">Student Name</h4>
+                                    <div style="color: var(--text-secondary); font-size: 0.95em; margin-top: 5px;" id="timelineStudentDetails">ID: KNL123 | Joined: Jan 2026 | Plan: Monthly</div>
+                                </div>
+                            </div>
+                            
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95em;">
+                                    <thead>
+                                        <tr style="background: var(--input-bg); border-top: 1px solid var(--card-border); border-bottom: 2px solid var(--card-border);">
+                                            <th style="padding: 12px 15px; font-weight: 600;">Month</th>
+                                            <th style="padding: 12px 15px; font-weight: 600;">Expected Fee</th>
+                                            <th style="padding: 12px 15px; font-weight: 600;">Status</th>
+                                            <th style="padding: 12px 15px; font-weight: 600; text-align: right;">Admin Overrides</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="timelineMatrixBody">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Verify Fees Tab Content -->
+                <div id="feeTabVerifyContent" style="display: none;">
                     <div class="card">
                         <h3><i class="fa-solid fa-indian-rupee-sign" style=" margin-right:5px;"></i> Verify Fees</h3>
                         <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
@@ -469,14 +561,19 @@
                     </div>
                 </div>
 
-                <!-- Payment History View -->
-                <div id="view-payment-history" class="view-section" style="display: none;">
+                <!-- Payment History Tab Content -->
+                <div id="feeTabHistoryContent" style="display: none;">
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                             <h3 style="margin: 0;"><i class="fa-solid fa-indian-rupee-sign" style="color: var(--success-color); margin-right: 8px;"></i> Verified Payment History</h3>
-                            <div class="search-bar" style="max-width: 300px; width: 100%; position: relative;">
-                                <i class="fa-solid fa-search search-icon" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
-                                <input type="text" id="paymentHistorySearch" placeholder="Search name, ID, txn, month..." onkeyup="filterPaymentHistory()" style="width: 100%; padding-left: 35px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                                <button onclick="exportPaymentHistoryCSV()" class="btn-outline" style="padding: 8px 15px; font-size: 0.9em; border-color: var(--primary-color); color: var(--primary-color); height: 40px;">
+                                    <i class="fa-solid fa-download"></i> Export CSV
+                                </button>
+                                <div class="search-bar" style="max-width: 300px; width: 100%; position: relative;">
+                                    <i class="fa-solid fa-search search-icon" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                                    <input type="text" id="paymentHistorySearch" placeholder="Search name, ID, txn, month..." onkeyup="filterPaymentHistory()" style="width: 100%; height: 40px; padding-left: 35px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); box-sizing: border-box;">
+                                </div>
                             </div>
                         </div>
                         
@@ -501,6 +598,7 @@
                         <div id="paymentHistoryPagination" style="display: flex; gap: 5px; margin-top: 15px; justify-content: flex-end;"></div>
                     </div>
                 </div>
+                </div> <!-- End of view-fee-management -->
 
                 <!-- Requests View -->
                 <div id="view-requests" class="view-section" style="display: none;">
@@ -879,6 +977,75 @@
             </div>
         </div>
 
+        <!-- Add Student Modal -->
+        <div id="addStudentModal" class="modal">
+            <div class="modal-content" style="max-width: 600px;">
+                <span class="close-btn" onclick="closeAddStudentModal()">&times;</span>
+                <h2 style="margin-bottom: 15px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px;"><i class="fa-solid fa-user-plus" style="color: var(--primary-color);"></i> Add New Student</h2>
+                <form id="addStudentForm" onsubmit="submitAddStudent(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label>First Name *</label>
+                            <input type="text" id="addFirstName" required placeholder="Enter first name">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name *</label>
+                            <input type="text" id="addLastName" required placeholder="Enter last name">
+                        </div>
+                        <div class="form-group">
+                            <label>Contact Number *</label>
+                            <input type="tel" id="addContact" required placeholder="10-digit number" pattern="[0-9]{10}">
+                        </div>
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" id="addEmail" required placeholder="Student's email">
+                        </div>
+                        <div class="form-group">
+                            <label>Library ID *</label>
+                            <input type="text" id="addLibraryID" required placeholder="e.g. KNL2601">
+                        </div>
+                        <div class="form-group">
+                            <label>Aadhar Number</label>
+                            <input type="text" id="addAadhar" placeholder="Optional 12-digit aadhar" pattern="[0-9]{12}">
+                        </div>
+                        <div class="form-group">
+                            <label>Joining Date *</label>
+                            <input type="date" id="addJoiningDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Seat No. *</label>
+                            <input type="text" id="addSeatNo" required placeholder="e.g. S12">
+                        </div>
+                        <div class="form-group">
+                            <label>Plan Duration *</label>
+                            <select id="addPlanDuration" required onchange="calculateAddFee()">
+                                <option value="" disabled selected>Select Plan</option>
+                                <option value="Monthly">Monthly</option>
+                                <option value="Quarterly">Quarterly</option>
+                                <option value="Half-Yearly">Half-Yearly</option>
+                                <option value="Yearly">Yearly</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Batch Type *</label>
+                            <select id="addBatchType" required onchange="calculateAddFee()">
+                                <option value="" disabled selected>Select Batch</option>
+                                <option value="Basic">Basic</option>
+                                <option value="Fundamental">Fundamental</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Officer's">Officer's</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Calculated Amount (₹)</label>
+                            <input type="number" id="addAmount" readonly style="background: var(--bg-color); cursor: not-allowed; font-weight: bold; color: var(--text-primary);">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 20px;"><i class="fa-solid fa-cloud-arrow-up"></i> Save Student</button>
+                </form>
+            </div>
+        </div>
+
         <!-- Seat Details Modal -->
         <div id="seatDetailsModal" class="modal">
             <div class="modal-content" style="max-width: 500px;">
@@ -903,6 +1070,18 @@
                 const duration = document.getElementById('convertPlanDuration').value;
                 const batch = document.getElementById('convertBatchType').value;
                 const amountField = document.getElementById('convertAmount');
+
+                if (duration && batch && pricingGrid[duration] && pricingGrid[duration][batch]) {
+                    amountField.value = pricingGrid[duration][batch];
+                } else {
+                    amountField.value = '';
+                }
+            }
+
+            function calculateAddFee() {
+                const duration = document.getElementById('addPlanDuration').value;
+                const batch = document.getElementById('addBatchType').value;
+                const amountField = document.getElementById('addAmount');
 
                 if (duration && batch && pricingGrid[duration] && pricingGrid[duration][batch]) {
                     amountField.value = pricingGrid[duration][batch];
@@ -975,10 +1154,15 @@
                 if (hash === '#attendance') loadAttendance();
                 if (hash === '#aadhar') loadAadhar();
                 if (hash === '#interested') loadInterestedStudents();
-                if (hash === '#fees') loadFees();
-                if (hash === '#payment-history') loadPaymentHistory();
+                if (hash === '#fee-management') {
+                    if (currentStudents.length === 0) loadStudents();
+                    loadFees();
+                    loadPaymentHistory();
+                    setTimeout(() => document.getElementById('timelineSearch').focus(), 100);
+                }
                 if (hash === '#issues') loadIssues();
                 if (hash === '#requests') loadRequests();
+                if (hash === '#notifications') loadGlobalNotifications();
                 if (hash === '#search') {
                     if (currentStudents.length === 0) loadStudents();
                     setTimeout(() => {

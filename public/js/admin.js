@@ -34,10 +34,12 @@ let currentIssuesPage = 1;
 const issuesPerPage = 10;
 
 async function loadDashboardStats() {
- 
+
+
     try {
         const stats = await apiFetch('/admin/dashboard-stats');
-        
+
+
         if (document.getElementById('stat-total-students')) {
             document.getElementById('stat-total-students').textContent = stats.totalStudents || 0;
             document.getElementById('stat-active-students').textContent = stats.activeStudents || 0;
@@ -60,7 +62,8 @@ async function loadDashboardStats() {
         updateNavBadge('fees', stats.pendingFees || 0);
         updateNavBadge('issues', stats.openIssues || 0);
         updateNavBadge('requests', stats.pendingProfileRequests || 0);
-        
+
+
 
         // Distribution Stats (Batch & Plan)
         const distContainer = document.getElementById('distribution-stats-container');
@@ -107,10 +110,11 @@ async function loadDashboardStats() {
     }
 }
 
-window.updateNavBadge = function(type, count) {
+window.updateNavBadge = function (type, count) {
     const navBadge = document.getElementById(`nav-badge-${type}`);
     const sideBadge = document.getElementById(`side-badge-${type}`);
-    
+
+
     if (navBadge) {
         navBadge.textContent = count;
         navBadge.style.display = count > 0 ? 'inline-flex' : 'none';
@@ -127,136 +131,143 @@ let bulkInvalidStudents = [];
 function handleBulkStudentUpload(input) {
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
-    
+
+
     const reader = new FileReader();
-    reader.onload = function(e) {
-        processCSVData(e.target.result);
-        input.value = '';
-    };
-    reader.readAsText(file);
-}
-
-function processCSVData(csvText) {
-    const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
-    if (lines.length < 2) {
-        showToast('CSV is empty or missing headers.', 'error');
-        return;
-    }
-    
-    // Remove hidden BOM (Byte Order Mark) that Excel often adds, and strip quotes
-    const rawHeaderLine = lines[0].replace(/^\uFEFF/, '');
-    // const headers = rawHeaderLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.replace(/^"|"$/g, '').trim());
-    const rawHeaders = rawHeaderLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.replace(/^"|"$/g, '').trim());
-    
-    // Map headers to correct casing to prevent ALL CAPS from failing
-    const headerMap = {
-        'firstname': 'FirstName',
-        'lastname': 'LastName',
-        'dob': 'DOB',
-        'gender': 'Gender',
-        'email': 'Email',
-        'contact': 'Contact',
-        'fathername': 'FatherName',
-        "father's name": 'FatherName',
-        'city': 'City',
-        'pincode': 'Pincode',
-        'area': 'Area',
-        'aadharnumber': 'AadharNumber',
-        'joiningdate': 'JoiningDate',
-        'libraryid': 'LibraryID',
-        'seatno': 'SeatNo',
-        'planduration': 'planDuration',
-        'batchtype': 'batchType',
-        'currentbatch': 'batchType', // Automatically maps your CurrentBatch column!
-        'mustchangepassword': 'mustChangePassword'
-    };
-
-    const headers = rawHeaders.map(h => headerMap[h.toLowerCase()] || h);
-    bulkValidStudents = [];
-    bulkInvalidStudents = [];
-
-    for (let i = 1; i < lines.length; i++) {
-        // Regex to split by comma ignoring commas inside double quotes
-        const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
-        const row = {};
-        headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
-        row._originalId = 'row_' + i;
-        
-        validateBulkRow(row);
-    }
-    
-    document.getElementById('bulkUploadInitial').style.display = 'none';
-    document.getElementById('bulkUploadPreview').style.display = 'block';
-    switchBulkTab('valid');
-}
-
-function validateBulkRow(row) {
-    let errors = [];
-    if (!row.FirstName || !row.FirstName.trim()) errors.push('Missing First Name');
-    
-    const contactClean = row.Contact ? row.Contact.replace(/\D/g,'') : '';
-    if (!contactClean) errors.push('Missing Contact');
-    else if (contactClean.length !== 10) errors.push('Contact must be 10 digits');
-    else row.Contact = contactClean;
-
-    if (row.Gender) {
-        const g = row.Gender.trim().toLowerCase();
-        if (g === 'male') row.Gender = 'Male';
-        else if (g === 'female') row.Gender = 'Female';
-        else if (g === 'other') row.Gender = 'Other';
-        else errors.push(`Invalid Gender (${row.Gender})`);
+    reader.onload = function (e) {
+        reader.onload = function (e) {
+            processCSVData(e.target.result);
+            input.value = '';
+        };
+        reader.readAsText(file);
     }
 
-    if (row.planDuration) {
-        const validPlans = ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'];
-        const planMatch = validPlans.find(p => p.toLowerCase() === row.planDuration.trim().toLowerCase());
-        if (planMatch) row.planDuration = planMatch;
-        else errors.push(`Invalid Plan (${row.planDuration})`);
+    function processCSVData(csvText) {
+        const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
+        if (lines.length < 2) {
+            showToast('CSV is empty or missing headers.', 'error');
+            return;
+        }
+
+
+        // Remove hidden BOM (Byte Order Mark) that Excel often adds, and strip quotes
+        const rawHeaderLine = lines[0].replace(/^\uFEFF/, '');
+        // const headers = rawHeaderLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.replace(/^"|"$/g, '').trim());
+        const rawHeaders = rawHeaderLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.replace(/^"|"$/g, '').trim());
+
+
+        // Map headers to correct casing to prevent ALL CAPS from failing
+        const headerMap = {
+            'firstname': 'FirstName',
+            'lastname': 'LastName',
+            'dob': 'DOB',
+            'gender': 'Gender',
+            'email': 'Email',
+            'contact': 'Contact',
+            'fathername': 'FatherName',
+            "father's name": 'FatherName',
+            'city': 'City',
+            'pincode': 'Pincode',
+            'area': 'Area',
+            'aadharnumber': 'AadharNumber',
+            'joiningdate': 'JoiningDate',
+            'libraryid': 'LibraryID',
+            'seatno': 'SeatNo',
+            'planduration': 'planDuration',
+            'batchtype': 'batchType',
+            'currentbatch': 'batchType', // Automatically maps your CurrentBatch column!
+            'mustchangepassword': 'mustChangePassword'
+        };
+
+        const headers = rawHeaders.map(h => headerMap[h.toLowerCase()] || h);
+        bulkValidStudents = [];
+        bulkInvalidStudents = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            // Regex to split by comma ignoring commas inside double quotes
+            const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+            const row = {};
+            headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
+            row._originalId = 'row_' + i;
+
+
+            validateBulkRow(row);
+        }
+
+
+        document.getElementById('bulkUploadInitial').style.display = 'none';
+        document.getElementById('bulkUploadPreview').style.display = 'block';
+        switchBulkTab('valid');
     }
 
-    if (row.batchType) {
-        const validBatches = ['Basic', 'Fundamental', 'Standard', "Officer's"];
-        const batchMatch = validBatches.find(b => b.toLowerCase() === row.batchType.trim().toLowerCase());
-        if (batchMatch) row.batchType = batchMatch;
-        else errors.push(`Invalid Batch (${row.batchType})`);
+    function validateBulkRow(row) {
+        let errors = [];
+        if (!row.FirstName || !row.FirstName.trim()) errors.push('Missing First Name');
+
+        const contactClean = row.Contact ? row.Contact.replace(/\D/g, '') : '';
+        if (!contactClean) errors.push('Missing Contact');
+        else if (contactClean.length !== 10) errors.push('Contact must be 10 digits');
+        else row.Contact = contactClean;
+
+        if (row.Gender) {
+            const g = row.Gender.trim().toLowerCase();
+            if (g === 'male') row.Gender = 'Male';
+            else if (g === 'female') row.Gender = 'Female';
+            else if (g === 'other') row.Gender = 'Other';
+            else errors.push(`Invalid Gender (${row.Gender})`);
+        }
+
+        if (row.planDuration) {
+            const validPlans = ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'];
+            const planMatch = validPlans.find(p => p.toLowerCase() === row.planDuration.trim().toLowerCase());
+            if (planMatch) row.planDuration = planMatch;
+            else errors.push(`Invalid Plan (${row.planDuration})`);
+        }
+
+        if (row.batchType) {
+            const validBatches = ['Basic', 'Fundamental', 'Standard', "Officer's"];
+            const batchMatch = validBatches.find(b => b.toLowerCase() === row.batchType.trim().toLowerCase());
+            if (batchMatch) row.batchType = batchMatch;
+            else errors.push(`Invalid Batch (${row.batchType})`);
+        }
+
+
+        if (errors.length === 0) {
+            bulkValidStudents.push(row);
+        } else {
+            row._errors = errors;
+            bulkInvalidStudents.push(row);
+        }
     }
-    
-    if (errors.length === 0) {
-        bulkValidStudents.push(row);
-    } else {
-        row._errors = errors;
-        bulkInvalidStudents.push(row);
+
+    function switchBulkTab(tab) {
+        const validBtn = document.getElementById('bulkTabValidBtn');
+        const invalidBtn = document.getElementById('bulkTabInvalidBtn');
+        const validContent = document.getElementById('bulkValidContent');
+        const invalidContent = document.getElementById('bulkInvalidContent');
+
+        if (tab === 'valid') {
+            validBtn.className = 'btn'; validBtn.style.color = ''; validBtn.style.border = '';
+            invalidBtn.className = 'btn-outline'; invalidBtn.style.border = 'none'; invalidBtn.style.color = 'var(--text-secondary)';
+            validContent.style.display = 'block'; invalidContent.style.display = 'none';
+        } else {
+            invalidBtn.className = 'btn'; invalidBtn.style.color = ''; invalidBtn.style.border = '';
+            validBtn.className = 'btn-outline'; validBtn.style.border = 'none'; validBtn.style.color = 'var(--text-secondary)';
+            validContent.style.display = 'none'; invalidContent.style.display = 'block';
+        }
+        renderBulkLists();
     }
-}
 
-function switchBulkTab(tab) {
-    const validBtn = document.getElementById('bulkTabValidBtn');
-    const invalidBtn = document.getElementById('bulkTabInvalidBtn');
-    const validContent = document.getElementById('bulkValidContent');
-    const invalidContent = document.getElementById('bulkInvalidContent');
+    function renderBulkLists() {
+        document.getElementById('bulkValidCount').textContent = bulkValidStudents.length;
+        document.getElementById('bulkSubmitCount').textContent = bulkValidStudents.length;
+        document.getElementById('bulkInvalidCount').textContent = bulkInvalidStudents.length;
 
-    if (tab === 'valid') {
-        validBtn.className = 'btn'; validBtn.style.color = ''; validBtn.style.border = '';
-        invalidBtn.className = 'btn-outline'; invalidBtn.style.border = 'none'; invalidBtn.style.color = 'var(--text-secondary)';
-        validContent.style.display = 'block'; invalidContent.style.display = 'none';
-    } else {
-        invalidBtn.className = 'btn'; invalidBtn.style.color = ''; invalidBtn.style.border = '';
-        validBtn.className = 'btn-outline'; validBtn.style.border = 'none'; validBtn.style.color = 'var(--text-secondary)';
-        validContent.style.display = 'none'; invalidContent.style.display = 'block';
-    }
-    renderBulkLists();
-}
-
-function renderBulkLists() {
-    document.getElementById('bulkValidCount').textContent = bulkValidStudents.length;
-    document.getElementById('bulkSubmitCount').textContent = bulkValidStudents.length;
-    document.getElementById('bulkInvalidCount').textContent = bulkInvalidStudents.length;
-
-    const validList = document.getElementById('bulkValidList');
-    if (bulkValidStudents.length === 0) {
-        validList.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No passed students yet.</p>';
-    } else {
-        validList.innerHTML = bulkValidStudents.map(student => `
+        const validList = document.getElementById('bulkValidList');
+        if (bulkValidStudents.length === 0) {
+            validList.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No passed students yet.</p>';
+        } else {
+            validList.innerHTML = bulkValidStudents.map(student => `
             <div style="padding: 10px; border: 1px solid var(--card-border); border-radius: 6px; background: var(--card-bg); margin-bottom: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
@@ -275,13 +286,13 @@ function renderBulkLists() {
                 </div>
             </div>
         `).join('');
-    }
+        }
 
-    const invalidList = document.getElementById('bulkInvalidList');
-    if (bulkInvalidStudents.length === 0) {
-        invalidList.innerHTML = '<p style="color: var(--success-color); text-align: center; padding: 20px;"><i class="fa-solid fa-check-double"></i> All rows are valid!</p>';
-    } else {
-        invalidList.innerHTML = bulkInvalidStudents.map(student => `
+        const invalidList = document.getElementById('bulkInvalidList');
+        if (bulkInvalidStudents.length === 0) {
+            invalidList.innerHTML = '<p style="color: var(--success-color); text-align: center; padding: 20px;"><i class="fa-solid fa-check-double"></i> All rows are valid!</p>';
+        } else {
+            invalidList.innerHTML = bulkInvalidStudents.map(student => `
             <div style="padding: 15px; border: 1px solid var(--error-color); border-left: 4px solid var(--error-color); border-radius: 6px; background: var(--card-bg); margin-bottom: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                     <div style="color: var(--error-color); font-size: 0.85em; font-weight: 600;">
@@ -338,271 +349,276 @@ function renderBulkLists() {
                 </div>
             </div>
         `).join('');
+        }
     }
 }
+    function fixBulkStudent(originalId) {
+        const studentIndex = bulkInvalidStudents.findIndex(s => s._originalId === originalId);
+        if (studentIndex === -1) return;
 
-function fixBulkStudent(originalId) {
-    const studentIndex = bulkInvalidStudents.findIndex(s => s._originalId === originalId);
-    if (studentIndex === -1) return;
+        const row = bulkInvalidStudents[studentIndex];
+        row.FirstName = document.getElementById(`fix_fname_${originalId}`).value;
+        row.Contact = document.getElementById(`fix_contact_${originalId}`).value;
+        row.Gender = document.getElementById(`fix_gender_${originalId}`).value || '';
+        row.planDuration = document.getElementById(`fix_plan_${originalId}`).value || '';
+        row.batchType = document.getElementById(`fix_batch_${originalId}`).value || '';
 
-    const row = bulkInvalidStudents[studentIndex];
-    row.FirstName = document.getElementById(`fix_fname_${originalId}`).value;
-    row.Contact = document.getElementById(`fix_contact_${originalId}`).value;
-    row.Gender = document.getElementById(`fix_gender_${originalId}`).value || '';
-    row.planDuration = document.getElementById(`fix_plan_${originalId}`).value || '';
-    row.batchType = document.getElementById(`fix_batch_${originalId}`).value || '';
+        bulkInvalidStudents.splice(studentIndex, 1);
+        validateBulkRow(row);
 
-    bulkInvalidStudents.splice(studentIndex, 1);
-    validateBulkRow(row);
-
-    if (bulkValidStudents.find(s => s._originalId === originalId)) {
-        showToast('Fixed and moved to Passed list!', 'success');
-    } else {
-        showToast('Still contains errors', 'warning');
-    }
-    renderBulkLists();
-}
-
-function resetBulkUpload() {
-    bulkValidStudents = [];
-    bulkInvalidStudents = [];
-    document.getElementById('bulkUploadInitial').style.display = 'block';
-    document.getElementById('bulkUploadPreview').style.display = 'none';
-}
-
-async function submitBulkStudents() {
-    if (bulkValidStudents.length === 0) {
-        showToast('No valid students to upload.', 'warning');
-        return;
-    }
-    if (!await showConfirm(`Upload ${bulkValidStudents.length} students to the database?`)) return;
-
-    showToast('Uploading and creating accounts... please wait.', 'info');
-    try {
-        const data = await apiFetch('/admin/students/bulk-upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ students: bulkValidStudents })
-        });
-        showToast(data.message, 'success');
-        resetBulkUpload();
-        window.location.hash = '#students';
-        loadStudents();
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Bulk upload failed: ' + error.message, 'error');
-    }
-}
-
-
-async function loadStudents() {
-    const list = document.getElementById('studentsList');
-    list.innerHTML = 'Loading students...';
-    try {
-        const data = await apiFetch('/admin/students');
-        if (data && data.length > 0) {
-            currentStudents = data;
-            // Initialize filtered list with all students or apply existing search
-            filterStudents(true);
+        if (bulkValidStudents.find(s => s._originalId === originalId)) {
+            showToast('Fixed and moved to Passed list!', 'success');
         } else {
-            list.innerHTML = '<p>No students found.</p>';
-            document.getElementById('studentsPagination').innerHTML = '';
+            showToast('Still contains errors', 'warning');
         }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        renderBulkLists();
     }
-}
 
-function filterStudents(immediate = false) {
-    const searchInput = document.getElementById('studentSearch');
-    const query = searchInput ? searchInput.value.toLowerCase() : '';
-    const statusFilter = document.getElementById('filterStudentStatus') ? document.getElementById('filterStudentStatus').value : '';
-    const genderFilter = document.getElementById('filterStudentGender') ? document.getElementById('filterStudentGender').value : '';
-    const batchFilter = document.getElementById('filterStudentBatch') ? document.getElementById('filterStudentBatch').value : '';
-    const planFilter = document.getElementById('filterStudentPlan') ? document.getElementById('filterStudentPlan').value : '';
+    function resetBulkUpload() {
+        bulkValidStudents = [];
+        bulkInvalidStudents = [];
+        document.getElementById('bulkUploadInitial').style.display = 'block';
+        document.getElementById('bulkUploadPreview').style.display = 'none';
+    }
 
-    if (searchTimeout) clearTimeout(searchTimeout);
+    async function submitBulkStudents() {
+        if (bulkValidStudents.length === 0) {
+            showToast('No valid students to upload.', 'warning');
+            return;
+        }
+        if (!await showConfirm(`Upload ${bulkValidStudents.length} students to the database?`)) return;
 
-    const executeFilter = () => {
-        filteredStudents = currentStudents.filter(student => {
-            const name = (student.FullName || student.FirstName + ' ' + (student.LastName || '')).toLowerCase();
-            const contact = (student.Contact || '').toLowerCase();
-            const email = (student.Email || '').toLowerCase();
-            const libId = (student.LibraryID || '').toLowerCase();
-            const aadhar = (student.AadharNumber || '').toLowerCase();
-            
-            const matchesQuery = name.includes(query) || contact.includes(query) || email.includes(query) || libId.includes(query) || aadhar.includes(query);
-            const matchesStatus = statusFilter === '' || student.AccountStatus === statusFilter;
-            const matchesGender = genderFilter === '' || (student.Gender || 'Not Specified') === genderFilter;
-            const matchesBatch = batchFilter === '' || student.batchType === batchFilter;
-            const matchesPlan = planFilter === '' || student.planDuration === planFilter;
-
-            return matchesQuery && matchesStatus && matchesGender && matchesBatch && matchesPlan;
-        });
-        currentStudentsPage = 1;
-        renderStudents();
-    };
-
-    if (immediate) executeFilter();
-    else searchTimeout = setTimeout(executeFilter, 300);
-}
-
-function showPendingFees() {
-    window.location.hash = '#fees';
-    const dropdown = document.getElementById('filterFeeStatus');
-    if (dropdown) {
-        dropdown.value = 'Pending';
-        if (currentFees.length > 0) {
-            filterFees(true);
+        showToast('Uploading and creating accounts... please wait.', 'info');
+        try {
+            const data = await apiFetch('/admin/students/bulk-upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ students: bulkValidStudents })
+            });
+            showToast(data.message, 'success');
+            resetBulkUpload();
+            window.location.hash = '#students';
+            loadStudents();
+            loadDashboardStats();
+        } catch (error) {
+            showToast('Bulk upload failed: ' + error.message, 'error');
         }
     }
-}
 
-function showPendingAadhar() {
-    window.location.hash = '#aadhar';
-    const dropdown = document.getElementById('filterAadharStatus');
-    if (dropdown) {
-        dropdown.value = 'Pending';
-        if (currentAadharStudents && currentAadharStudents.length > 0) {
-            filterAadhar(true);
+
+    async function loadStudents() {
+        const list = document.getElementById('studentsList');
+        list.innerHTML = 'Loading students...';
+        try {
+            const data = await apiFetch('/admin/students');
+            if (data && data.length > 0) {
+                currentStudents = data;
+                // Initialize filtered list with all students or apply existing search
+                filterStudents(true);
+            } else {
+                list.innerHTML = '<p>No students found.</p>';
+                document.getElementById('studentsPagination').innerHTML = '';
+            }
+        } catch (error) {
+            list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
         }
     }
-}
 
-function showVerifiedAadhar() {
-    window.location.hash = '#aadhar';
-    const dropdown = document.getElementById('filterAadharStatus');
-    if (dropdown) {
-        dropdown.value = 'Verified';
-        if (currentAadharStudents && currentAadharStudents.length > 0) {
-            filterAadhar(true);
+    function filterStudents(immediate = false) {
+        const searchInput = document.getElementById('studentSearch');
+        const query = searchInput ? searchInput.value.toLowerCase() : '';
+        const statusFilter = document.getElementById('filterStudentStatus') ? document.getElementById('filterStudentStatus').value : '';
+        const genderFilter = document.getElementById('filterStudentGender') ? document.getElementById('filterStudentGender').value : '';
+        const batchFilter = document.getElementById('filterStudentBatch') ? document.getElementById('filterStudentBatch').value : '';
+        const planFilter = document.getElementById('filterStudentPlan') ? document.getElementById('filterStudentPlan').value : '';
+
+        if (searchTimeout) clearTimeout(searchTimeout);
+
+        const executeFilter = () => {
+            filteredStudents = currentStudents.filter(student => {
+                const name = (student.FullName || student.FirstName + ' ' + (student.LastName || '')).toLowerCase();
+                const contact = (student.Contact || '').toLowerCase();
+                const email = (student.Email || '').toLowerCase();
+                const libId = (student.LibraryID || '').toLowerCase();
+                const aadhar = (student.AadharNumber || '').toLowerCase();
+
+
+                const matchesQuery = name.includes(query) || contact.includes(query) || email.includes(query) || libId.includes(query) || aadhar.includes(query);
+                const matchesStatus = statusFilter === '' || student.AccountStatus === statusFilter;
+                const matchesGender = genderFilter === '' || (student.Gender || 'Not Specified') === genderFilter;
+                const matchesBatch = batchFilter === '' || student.batchType === batchFilter;
+                const matchesPlan = planFilter === '' || student.planDuration === planFilter;
+
+                return matchesQuery && matchesStatus && matchesGender && matchesBatch && matchesPlan;
+            });
+            currentStudentsPage = 1;
+            renderStudents();
+        };
+
+        if (immediate) executeFilter();
+        else searchTimeout = setTimeout(executeFilter, 300);
+    }
+
+    function showPendingFees() {
+        window.location.hash = '#fees';
+        const dropdown = document.getElementById('filterFeeStatus');
+        if (dropdown) {
+            dropdown.value = 'Pending';
+            if (currentFees.length > 0) {
+                filterFees(true);
+            }
         }
     }
-}
 
-function showNotUploadedAadhar() {
-    window.location.hash = '#aadhar';
-    const dropdown = document.getElementById('filterAadharStatus');
-    if (dropdown) {
-        dropdown.value = 'Not Uploaded';
-        if (currentAadharStudents && currentAadharStudents.length > 0) {
-            filterAadhar(true);
+    function showPendingAadhar() {
+        window.location.hash = '#aadhar';
+        const dropdown = document.getElementById('filterAadharStatus');
+        if (dropdown) {
+            dropdown.value = 'Pending';
+            if (currentAadharStudents && currentAadharStudents.length > 0) {
+                filterAadhar(true);
+            }
         }
     }
-}
 
-function showOpenIssues() {
-    window.location.hash = '#issues';
-    const dropdown = document.getElementById('filterIssueStatus');
-    if (dropdown) {
-        dropdown.value = 'Open'; // Use a special value
-        if (currentIssues.length > 0) {
-            filterIssues(true);
+    function showVerifiedAadhar() {
+        window.location.hash = '#aadhar';
+        const dropdown = document.getElementById('filterAadharStatus');
+        if (dropdown) {
+            dropdown.value = 'Verified';
+            if (currentAadharStudents && currentAadharStudents.length > 0) {
+                filterAadhar(true);
+            }
         }
     }
-}
 
-function showActiveStudents() {
-    window.location.hash = '#students';
-    const dropdown = document.getElementById('filterStudentStatus');
-    const genderDropdown = document.getElementById('filterStudentGender');
-    const batchDropdown = document.getElementById('filterStudentBatch');
-    const planDropdown = document.getElementById('filterStudentPlan');
-    if (dropdown) dropdown.value = 'Active';
-    if (genderDropdown) genderDropdown.value = '';
-    if (batchDropdown) batchDropdown.value = '';
-    if (planDropdown) planDropdown.value = '';
-    if (currentStudents.length > 0) {
-        filterStudents(true);
+    function showNotUploadedAadhar() {
+        window.location.hash = '#aadhar';
+        const dropdown = document.getElementById('filterAadharStatus');
+        if (dropdown) {
+            dropdown.value = 'Not Uploaded';
+            if (currentAadharStudents && currentAadharStudents.length > 0) {
+                filterAadhar(true);
+            }
+        }
     }
-}
 
-function showInactiveStudents() {
-    window.location.hash = '#students';
-    const dropdown = document.getElementById('filterStudentStatus');
-    const genderDropdown = document.getElementById('filterStudentGender');
-    const batchDropdown = document.getElementById('filterStudentBatch');
-    const planDropdown = document.getElementById('filterStudentPlan');
-    if (dropdown) dropdown.value = 'Inactive';
-    if (genderDropdown) genderDropdown.value = '';
-    if (batchDropdown) batchDropdown.value = '';
-    if (planDropdown) planDropdown.value = '';
-    if (currentStudents.length > 0) {
-        filterStudents(true);
+    function showOpenIssues() {
+        window.location.hash = '#issues';
+        const dropdown = document.getElementById('filterIssueStatus');
+        if (dropdown) {
+            dropdown.value = 'Open'; // Use a special value
+            if (currentIssues.length > 0) {
+                filterIssues(true);
+            }
+        }
     }
-}
 
-function showAllStudents() {
-    window.location.hash = '#students';
-    const dropdown = document.getElementById('filterStudentStatus');
-    const genderDropdown = document.getElementById('filterStudentGender');
-    const batchDropdown = document.getElementById('filterStudentBatch');
-    const planDropdown = document.getElementById('filterStudentPlan');
-    if (dropdown) dropdown.value = '';
-    if (genderDropdown) genderDropdown.value = '';
-    if (batchDropdown) batchDropdown.value = '';
-    if (planDropdown) planDropdown.value = '';
-    if (currentStudents.length > 0) {
-        filterStudents(true);
+    function showActiveStudents() {
+        window.location.hash = '#students';
+        const dropdown = document.getElementById('filterStudentStatus');
+        const genderDropdown = document.getElementById('filterStudentGender');
+        const batchDropdown = document.getElementById('filterStudentBatch');
+        const planDropdown = document.getElementById('filterStudentPlan');
+        if (dropdown) dropdown.value = 'Active';
+        if (genderDropdown) genderDropdown.value = '';
+        if (batchDropdown) batchDropdown.value = '';
+        if (planDropdown) planDropdown.value = '';
+        if (currentStudents.length > 0) {
+            filterStudents(true);
+        }
     }
-}
 
-function showPendingApprovals() {
-    window.location.hash = '#students';
-    const dropdown = document.getElementById('filterStudentStatus');
-    const genderDropdown = document.getElementById('filterStudentGender');
-    const batchDropdown = document.getElementById('filterStudentBatch');
-    const planDropdown = document.getElementById('filterStudentPlan');
-    if (dropdown) dropdown.value = 'Pending';
-    if (genderDropdown) genderDropdown.value = '';
-    if (batchDropdown) batchDropdown.value = '';
-    if (planDropdown) planDropdown.value = '';
-    if (currentStudents.length > 0) {
-        filterStudents(true);
+    function showInactiveStudents() {
+        window.location.hash = '#students';
+        const dropdown = document.getElementById('filterStudentStatus');
+        const genderDropdown = document.getElementById('filterStudentGender');
+        const batchDropdown = document.getElementById('filterStudentBatch');
+        const planDropdown = document.getElementById('filterStudentPlan');
+        if (dropdown) dropdown.value = 'Inactive';
+        if (genderDropdown) genderDropdown.value = '';
+        if (batchDropdown) batchDropdown.value = '';
+        if (planDropdown) planDropdown.value = '';
+        if (currentStudents.length > 0) {
+            filterStudents(true);
+        }
     }
-}
 
-function showStudentsByGender(gender) {
-    window.location.hash = '#students';
-    const statusDropdown = document.getElementById('filterStudentStatus');
-    const genderDropdown = document.getElementById('filterStudentGender');
-    const batchDropdown = document.getElementById('filterStudentBatch');
-    const planDropdown = document.getElementById('filterStudentPlan');
-    
-    if (statusDropdown) statusDropdown.value = 'Active'; // Stats only count active students
-    if (genderDropdown) genderDropdown.value = gender;
-    if (batchDropdown) batchDropdown.value = '';
-    if (planDropdown) planDropdown.value = '';
-    
-    if (currentStudents.length > 0) {
-        filterStudents(true);
+    function showAllStudents() {
+        window.location.hash = '#students';
+        const dropdown = document.getElementById('filterStudentStatus');
+        const genderDropdown = document.getElementById('filterStudentGender');
+        const batchDropdown = document.getElementById('filterStudentBatch');
+        const planDropdown = document.getElementById('filterStudentPlan');
+        if (dropdown) dropdown.value = '';
+        if (genderDropdown) genderDropdown.value = '';
+        if (batchDropdown) batchDropdown.value = '';
+        if (planDropdown) planDropdown.value = '';
+        if (currentStudents.length > 0) {
+            filterStudents(true);
+        }
     }
-}
 
-function showStudentsByBatchPlan(batch, plan) {
-    window.location.hash = '#students';
-    const statusDropdown = document.getElementById('filterStudentStatus');
-    const genderDropdown = document.getElementById('filterStudentGender');
-    const batchDropdown = document.getElementById('filterStudentBatch');
-    const planDropdown = document.getElementById('filterStudentPlan');
-    
-    if (statusDropdown) statusDropdown.value = 'Active'; // Stats only count active students
-    if (genderDropdown) genderDropdown.value = '';
-    if (batchDropdown) batchDropdown.value = batch;
-    if (planDropdown) planDropdown.value = plan;
-    
-    if (currentStudents.length > 0) {
-        filterStudents(true);
+    function showPendingApprovals() {
+        window.location.hash = '#students';
+        const dropdown = document.getElementById('filterStudentStatus');
+        const genderDropdown = document.getElementById('filterStudentGender');
+        const batchDropdown = document.getElementById('filterStudentBatch');
+        const planDropdown = document.getElementById('filterStudentPlan');
+        if (dropdown) dropdown.value = 'Pending';
+        if (genderDropdown) genderDropdown.value = '';
+        if (batchDropdown) batchDropdown.value = '';
+        if (planDropdown) planDropdown.value = '';
+        if (currentStudents.length > 0) {
+            filterStudents(true);
+        }
     }
-}
 
-function renderStudents() {
-    const list = document.getElementById('studentsList');
-    const startIndex = (currentStudentsPage - 1) * studentsPerPage;
-    const endIndex = startIndex + studentsPerPage;
-    const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+    function showStudentsByGender(gender) {
+        window.location.hash = '#students';
+        const statusDropdown = document.getElementById('filterStudentStatus');
+        const genderDropdown = document.getElementById('filterStudentGender');
+        const batchDropdown = document.getElementById('filterStudentBatch');
+        const planDropdown = document.getElementById('filterStudentPlan');
 
-  list.innerHTML = paginatedStudents.map(student => `
+
+        if (statusDropdown) statusDropdown.value = 'Active'; // Stats only count active students
+        if (genderDropdown) genderDropdown.value = gender;
+        if (batchDropdown) batchDropdown.value = '';
+        if (planDropdown) planDropdown.value = '';
+
+
+        if (currentStudents.length > 0) {
+            filterStudents(true);
+        }
+    }
+
+    function showStudentsByBatchPlan(batch, plan) {
+        window.location.hash = '#students';
+        const statusDropdown = document.getElementById('filterStudentStatus');
+        const genderDropdown = document.getElementById('filterStudentGender');
+        const batchDropdown = document.getElementById('filterStudentBatch');
+        const planDropdown = document.getElementById('filterStudentPlan');
+
+
+        if (statusDropdown) statusDropdown.value = 'Active'; // Stats only count active students
+        if (genderDropdown) genderDropdown.value = '';
+        if (batchDropdown) batchDropdown.value = batch;
+        if (planDropdown) planDropdown.value = plan;
+
+
+        if (currentStudents.length > 0) {
+            filterStudents(true);
+        }
+    }
+
+    function renderStudents() {
+        const list = document.getElementById('studentsList');
+        const startIndex = (currentStudentsPage - 1) * studentsPerPage;
+        const endIndex = startIndex + studentsPerPage;
+        const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+
+        list.innerHTML = paginatedStudents.map(student => `
         <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -614,18 +630,17 @@ function renderStudents() {
                             ${student.FullName || student.FirstName + ' ' + (student.LastName || '')}
                             </strong>
 
-                          
                                 <span style="font-size:1em; color:var(--secondary-color); ">
                                     <i class="fa-solid fa-cake-candles"></i>   
-                                    ${student.DOB 
-                                    ? new Date(student.DOB)
-                                    .toLocaleDateString('en-GB', {
-                                        day: '2-digit',
-                                        month: 'long',
-                                        year: 'numeric'
-                                    })
-                                    .replace(/ /g,'-')
-                                    : 'N/A'}
+                                    ${student.DOB
+                ? new Date(student.DOB)
+                    .toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                    })
+                    .replace(/ /g, '-')
+                : 'N/A'}
                                 </span>
                             
 
@@ -684,30 +699,31 @@ function renderStudents() {
     `).join('');
 
 
-    renderStudentsPagination();
-}
+        renderStudentsPagination();
+    }
 
-function sendWhatsApp(studentId){
+    function sendWhatsApp(studentId) {
 
-    const student = currentStudents.find(s => s._id === studentId);
-    if (!student) return;
+        const student = currentStudents.find(s => s._id === studentId);
+        if (!student) return;
 
-    const name = student.FirstName ;
-    const libraryId = student.LibraryID || 'N/A';
-    const batchTiming = student.batchTiming || 'N/A';
-    const planDuration = student.planDuration || 'N/A';
-    const batchType = student.batchType || 'N/A';
-    const seatNo = student.SeatNo || 'N/A';
-    const joiningDate = new Date(student.JoiningDate).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        timeZone: 'Asia/Kolkata'
-    });
+        const name = student.FirstName;
+        const libraryId = student.LibraryID || 'N/A';
+        const batchTiming = student.batchTiming || 'N/A';
+        const planDuration = student.planDuration || 'N/A';
+        const batchType = student.batchType || 'N/A';
+        const seatNo = student.SeatNo || 'N/A';
+        const joiningDate = new Date(student.JoiningDate).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'Asia/Kolkata'
+        });
 
 
-   
-    const msg = `Hello ${name},
+
+
+        const msg = `Hello ${name},
 
     Welcome to *Knowledge Nook Library*!
 
@@ -727,107 +743,111 @@ function sendWhatsApp(studentId){
     Happy Studying!
     — Knowledge Nook Library`;
 
-    const url = `https://wa.me/91${student.Contact}?text=${encodeURIComponent(msg)}`;
+        const url = `https://wa.me/91${student.Contact}?text=${encodeURIComponent(msg)}`;
 
-    window.open(url, "_blank");
-}
-
-// Personal SMS Confirmation
-
-// function sendSMS(studentId){
-
-// const student = currentStudents.find(s => s._id === studentId);
-// if(!student) return;
-
-//     const name = student.FullName || (student.FirstName + ' ' + (student.LastName || ''));
-//     const libraryId = student.LibraryID || 'N/A';
-//     const batchTiming = student.batchTiming || 'N/A';
-//     const planDuration = student.planDuration || 'N/A';
-//     const batchType = student.batchType || 'N/A';
-//     const seatNo = student.SeatNo || 'N/A';
-//     const joiningDate = new Date(student.JoiningDate).toLocaleDateString('en-GB', {
-//         day: '2-digit',
-//         month: 'long',
-//         year: 'numeric',
-//         timeZone: 'Asia/Kolkata'
-//     });
-
-//     const msg = `Hello ${name},
-
-//     Welcome to Knowledge Nook Library!
-
-//     Your seat has been successfully confirmed. Here are your details:
-
-//     Library ID: ${libraryId}
-//     Seat No: ${seatNo}
-//     Batch Type: ${batchType}
-//     Timing: ${batchTiming}
-//     Plan: ${planDuration}
-//     Joining Date: ${joiningDate}
-
-//     Please follow the library rules and maintain a peaceful study environment.
-
-//     If you need any assistance, feel free to contact us.
-
-//     Happy Studying!
-//     — Knowledge Nook Library`;
-
-// const url = `sms:${student.Contact}?body=${encodeURIComponent(msg)}`;
-
-// window.open(url);
-// }
-
-
-function renderStudentsPagination() {
-    const pagination = document.getElementById('studentsPagination');
-    const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
-
-    if (totalPages <= 1) {
-        pagination.innerHTML = '';
-        return;
+        window.open(url, "_blank");
     }
 
-    let html = '';
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentStudentsPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeStudentsPage(${currentStudentsPage - 1})"`}>Prev</button>`;
+    // Personal SMS Confirmation
 
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentStudentsPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeStudentsPage(${i})">${i}</button>`;
+    // function sendSMS(studentId){
+
+    // const student = currentStudents.find(s => s._id === studentId);
+    // if(!student) return;
+
+    //     const name = student.FullName || (student.FirstName + ' ' + (student.LastName || ''));
+    //     const libraryId = student.LibraryID || 'N/A';
+    //     const batchTiming = student.batchTiming || 'N/A';
+    //     const planDuration = student.planDuration || 'N/A';
+    //     const batchType = student.batchType || 'N/A';
+    //     const seatNo = student.SeatNo || 'N/A';
+    //     const joiningDate = new Date(student.JoiningDate).toLocaleDateString('en-GB', {
+    //         day: '2-digit',
+    //         month: 'long',
+    //         year: 'numeric',
+    //         timeZone: 'Asia/Kolkata'
+    //     });
+
+    //     const msg = `Hello ${name},
+
+    //     Welcome to Knowledge Nook Library!
+
+    //     Your seat has been successfully confirmed. Here are your details:
+
+    //     Library ID: ${libraryId}
+    //     Seat No: ${seatNo}
+    //     Batch Type: ${batchType}
+    //     Timing: ${batchTiming}
+    //     Plan: ${planDuration}
+    //     Joining Date: ${joiningDate}
+
+    //     Please follow the library rules and maintain a peaceful study environment.
+
+    //     If you need any assistance, feel free to contact us.
+
+    //     Happy Studying!
+    //     — Knowledge Nook Library`;
+
+    // const url = `sms:${student.Contact}?body=${encodeURIComponent(msg)}`;
+
+    // window.open(url);
+    // }
+
+
+    function renderStudentsPagination() {
+        const pagination = document.getElementById('studentsPagination');
+        const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentStudentsPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeStudentsPage(${currentStudentsPage - 1})"`}>Prev</button>`;
+
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentStudentsPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeStudentsPage(${i})">${i}</button>`;
+        }
+
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentStudentsPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeStudentsPage(${currentStudentsPage + 1})"`}>Next</button>`;
+
+        pagination.innerHTML = html;
     }
 
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentStudentsPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeStudentsPage(${currentStudentsPage + 1})"`}>Next</button>`;
-
-    pagination.innerHTML = html;
-}
-
-function changeStudentsPage(page) {
-    if (page < 1 || page > Math.ceil(filteredStudents.length / studentsPerPage)) return;
-    currentStudentsPage = page;
-    renderStudents();
-}
-
-function performGlobalSearch() {
-    const query = document.getElementById('globalStudentSearch').value.toLowerCase().trim();
-    const resultsContainer = document.getElementById('globalSearchResults');
-
-    if (!query) {
-        resultsContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Enter search criteria above to find a student.</p>';
-        return;
+    function changeStudentsPage(page) {
+        if (page < 1 || page > Math.ceil(filteredStudents.length / studentsPerPage)) return;
+        currentStudentsPage = page;
+        renderStudents();
     }
 
-    const matches = currentStudents.filter(s => {
-        return (s.LibraryID && s.LibraryID.toLowerCase().includes(query)) ||
-               (s.Contact && s.Contact.toLowerCase().includes(query)) ||
-               (s.Email && s.Email.toLowerCase().includes(query)) ||
-               (s.AadharNumber && s.AadharNumber.toLowerCase().includes(query)) ||
-               ((s.FullName || s.FirstName + ' ' + (s.LastName || '')).toLowerCase().includes(query));
-    });
+    function performGlobalSearch() {
+        const query = document.getElementById('globalStudentSearch').value.toLowerCase().trim();
+        const resultsContainer = document.getElementById('globalSearchResults');
 
-    if (matches.length === 0) {
-        resultsContainer.innerHTML = '<p style="color: var(--error-color); text-align: center; padding: 20px;">No student found matching this criteria.</p>';
-        return;
-    }
+        if (!query) {
+            resultsContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Enter search criteria above to find a student.</p>';
+            return;
+        }
 
-    resultsContainer.innerHTML = matches.map(student => `
+        const matches = currentStudents.filter(s => {
+            return (s.LibraryID && s.LibraryID.toLowerCase().includes(query)) ||
+                (s.Contact && s.Contact.toLowerCase().includes(query)) ||
+                (s.Email && s.Email.toLowerCase().includes(query)) ||
+                (s.AadharNumber && s.AadharNumber.toLowerCase().includes(query)) ||
+                ((s.FullName || s.FirstName + ' ' + (s.LastName || '')).toLowerCase().includes(query));
+            (s.Contact && s.Contact.toLowerCase().includes(query)) ||
+                (s.Email && s.Email.toLowerCase().includes(query)) ||
+                (s.AadharNumber && s.AadharNumber.toLowerCase().includes(query)) ||
+                ((s.FullName || s.FirstName + ' ' + (s.LastName || '')).toLowerCase().includes(query));
+        });
+
+        if (matches.length === 0) {
+            resultsContainer.innerHTML = '<p style="color: var(--error-color); text-align: center; padding: 20px;">No student found matching this criteria.</p>';
+            return;
+        }
+
+        resultsContainer.innerHTML = matches.map(student => `
         <div onclick="viewStudent('${student._id}', true)" style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -854,37 +874,37 @@ function performGlobalSearch() {
             </div>
         </div>
     `).join('');
-}
-// Interested Students Paginations Logic
-let currentInterested = [];
-let interestedPage = 1;
-const interestedPerPage = 10;
-
-async function loadInterestedStudents() {
-    const list = document.getElementById('interestedList');
-    list.innerHTML = 'Loading interested students...';
-    try {
-        const data = await apiFetch('/admin/interested-students');
-        if (data && data.length > 0) {
-            currentInterested = data;
-            interestedPage = 1;
-            renderInterestedStudents();
-        } else {
-            list.innerHTML = '<p>No interested students found.</p>';
-            if (document.getElementById('interestedPagination')) document.getElementById('interestedPagination').innerHTML = '';
-        }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
     }
-}
+    // Interested Students Paginations Logic
+    let currentInterested = [];
+    let interestedPage = 1;
+    const interestedPerPage = 10;
 
-function renderInterestedStudents() {
-    const list = document.getElementById('interestedList');
-    const startIndex = (interestedPage - 1) * interestedPerPage;
-    const endIndex = startIndex + interestedPerPage;
-    const paginatedData = currentInterested.slice(startIndex, endIndex);
+    async function loadInterestedStudents() {
+        const list = document.getElementById('interestedList');
+        list.innerHTML = 'Loading interested students...';
+        try {
+            const data = await apiFetch('/admin/interested-students');
+            if (data && data.length > 0) {
+                currentInterested = data;
+                interestedPage = 1;
+                renderInterestedStudents();
+            } else {
+                list.innerHTML = '<p>No interested students found.</p>';
+                if (document.getElementById('interestedPagination')) document.getElementById('interestedPagination').innerHTML = '';
+            }
+        } catch (error) {
+            list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+    }
 
-    list.innerHTML = paginatedData.map(student => `
+    function renderInterestedStudents() {
+        const list = document.getElementById('interestedList');
+        const startIndex = (interestedPage - 1) * interestedPerPage;
+        const endIndex = startIndex + interestedPerPage;
+        const paginatedData = currentInterested.slice(startIndex, endIndex);
+
+        list.innerHTML = paginatedData.map(student => `
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--card-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <div>
@@ -911,195 +931,273 @@ function renderInterestedStudents() {
                 </div>
             `).join('');
 
-    renderInterestedPagination();
-}
-
-function renderInterestedPagination() {
-    const pagination = document.getElementById('interestedPagination');
-    if (!pagination) return;
-    const totalPages = Math.ceil(currentInterested.length / interestedPerPage);
-    if (totalPages <= 1) {
-        pagination.innerHTML = '';
-        return;
+        renderInterestedPagination();
     }
-    let html = '';
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${interestedPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeInterestedPage(${interestedPage - 1})"`}>Prev</button>`;
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${interestedPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeInterestedPage(${i})">${i}</button>`;
+
+    function renderInterestedPagination() {
+        const pagination = document.getElementById('interestedPagination');
+        if (!pagination) return;
+        const totalPages = Math.ceil(currentInterested.length / interestedPerPage);
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+        let html = '';
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${interestedPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeInterestedPage(${interestedPage - 1})"`}>Prev</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${interestedPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeInterestedPage(${i})">${i}</button>`;
+        }
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${interestedPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeInterestedPage(${interestedPage + 1})"`}>Next</button>`;
+        pagination.innerHTML = html;
     }
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${interestedPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeInterestedPage(${interestedPage + 1})"`}>Next</button>`;
-    pagination.innerHTML = html;
-}
 
-window.changeInterestedPage = function(page) {
-    if (page < 1 || page > Math.ceil(currentInterested.length / interestedPerPage)) return;
-    interestedPage = page;
-    renderInterestedStudents();
-}
 
-async function reviewInterestedStudent(id) {
-    if (!await showConfirm('Mark this student as reviewed?')) return;
-    try {
-        await apiFetch(`/admin/interested-students/${id}/review`, { method: 'PUT' });
-        showToast('Student marked as reviewed successfully', 'success');
-        loadInterestedStudents();
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
+    window.changeInterestedPage = function (page) {
+        if (page < 1 || page > Math.ceil(currentInterested.length / interestedPerPage)) return;
+        interestedPage = page;
+        renderInterestedStudents();
     }
-}
 
-async function rejectInterestedStudent(id) {
-    const reason = await showPrompt('Please enter a reason for rejection:');
-    if (reason === null) return; // User cancelled
-
-    try {
-        await apiFetch(`/admin/interested-students/${id}/reject`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ Reason: reason || 'Not specified' })
-        });
-        showToast('Application rejected', 'success');
-        loadInterestedStudents();
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-    }
-}
-
-function promptConvertStudent(id) {
-    document.getElementById('convertStudentId').value = id;
-    document.getElementById('convertDate').valueAsDate = new Date();
-    document.getElementById('convertMsg').textContent = '';
-    document.getElementById('convertStudentModal').style.display = 'block';
-}
-
-function closeConvertModal() {
-    document.getElementById('convertStudentModal').style.display = 'none';
-}
-
-async function submitConvertStudent(e) {
-    e.preventDefault();
-    const id = document.getElementById('convertStudentId').value;
-    const msg = document.getElementById('convertMsg');
-
-    const payload = {
-        LibraryID: document.getElementById('convertLibraryID').value,
-        Email: document.getElementById('convertEmail').value || undefined,
-        SeatNo: document.getElementById('convertSeatNo').value,
-        planDuration: document.getElementById('convertPlanDuration').value,
-        batchType: document.getElementById('convertBatchType').value,
-        batchTiming: document.getElementById('convertBatchTiming').value,
-        amount: document.getElementById('convertAmount').value,
-        JoiningDate: document.getElementById('convertDate').value
-    };
-
-    try {
-        msg.style.color = 'var(--text-secondary)';
-        msg.textContent = 'Creating account...';
-
-        const data = await apiFetch(`/admin/convert-student/${id}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        msg.style.color = 'var(--success-color)';
-        msg.textContent = `Success! Default Password: ${data.defaultPassword}`;
-
-        setTimeout(() => {
-            closeConvertModal();
+    async function reviewInterestedStudent(id) {
+        if (!await showConfirm('Mark this student as reviewed?')) return;
+        try {
+            await apiFetch(`/admin/interested-students/${id}/review`, { method: 'PUT' });
+            showToast('Student marked as reviewed successfully', 'success');
             loadInterestedStudents();
             loadDashboardStats();
-        }, 3000);
-
-    } catch (error) {
-        msg.style.color = 'var(--error-color)';
-        msg.textContent = error.message;
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        }
     }
-}
 
-async function updateStudentStatus(id, status) {
-    if (!await showConfirm(`Are you sure you want to change this student's status to "${status}"?`)) {
-        // Re-render to revert the dropdown if user cancels.
-        renderStudents();
-        return;
+    async function rejectInterestedStudent(id) {
+        const reason = await showPrompt('Please enter a reason for rejection:');
+        if (reason === null) return; // User cancelled
+
+        try {
+            await apiFetch(`/admin/interested-students/${id}/reject`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Reason: reason || 'Not specified' })
+            });
+            showToast('Application rejected', 'success');
+            loadInterestedStudents();
+            loadDashboardStats();
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        }
     }
-    try {
-        await apiFetch('/admin/students/' + id, {
-            method: 'PUT',
-            body: JSON.stringify({ AccountStatus: status })
+
+    async function promptConvertStudent(id) {
+        if (!currentSeatConfig || !currentSeatConfig.halls || currentSeatConfig.halls.length === 0) {
+            await loadSeatConfig();
+        }
+
+        document.getElementById('convertStudentId').value = id;
+        document.getElementById('convertDate').valueAsDate = new Date();
+        document.getElementById('convertMsg').textContent = '';
+
+        const hallSelect = document.getElementById('convertAssignedHall');
+        if (hallSelect && currentSeatConfig.halls) {
+            hallSelect.innerHTML = '<option value="">Select Hall...</option>' +
+                currentSeatConfig.halls.map(h => `<option value="${h.name}">${h.name} (${h.start}-${h.end})</option>`).join('');
+        }
+        const seatSelect = document.getElementById('convertSeatNo');
+        if (seatSelect) seatSelect.innerHTML = '<option value="">Select Hall & Timing first</option>';
+
+        document.getElementById('convertStudentModal').style.display = 'block';
+    }
+
+    function closeConvertModal() {
+        document.getElementById('convertStudentModal').style.display = 'none';
+    }
+
+    async function submitConvertStudent(e) {
+        e.preventDefault();
+        const id = document.getElementById('convertStudentId').value;
+        const msg = document.getElementById('convertMsg');
+
+        const payload = {
+            LibraryID: document.getElementById('convertLibraryID').value,
+            Email: document.getElementById('convertEmail').value || undefined,
+            SeatNo: document.getElementById('convertSeatNo').value,
+            planDuration: document.getElementById('convertPlanDuration').value,
+            batchType: document.getElementById('convertBatchType').value,
+            batchTiming: document.getElementById('convertBatchTiming').value,
+            amount: document.getElementById('convertAmount').value,
+            JoiningDate: document.getElementById('convertDate').value
+        };
+
+        try {
+            msg.style.color = 'var(--text-secondary)';
+            msg.textContent = 'Creating account...';
+
+            const data = await apiFetch(`/admin/convert-student/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            msg.style.color = 'var(--success-color)';
+            msg.textContent = `Success! Default Password: ${data.defaultPassword}`;
+
+            setTimeout(() => {
+                closeConvertModal();
+                loadInterestedStudents();
+                loadDashboardStats();
+            }, 3000);
+
+        } catch (error) {
+            msg.style.color = 'var(--error-color)';
+            msg.textContent = error.message;
+        }
+    }
+
+    window.updateAvailableSeatsInConvertModal = function () {
+        const hallSelect = document.getElementById('convertAssignedHall');
+        const timingInput = document.getElementById('convertBatchTiming');
+        const seatSelect = document.getElementById('convertSeatNo');
+
+        if (!hallSelect || !seatSelect || !timingInput) return;
+
+        const selectedHallName = hallSelect.value;
+        const currentTiming = timingInput.value.trim().toLowerCase();
+
+        if (!selectedHallName) {
+            seatSelect.innerHTML = '<option value="">Select Hall first...</option>';
+            return;
+        }
+        if (!currentTiming) {
+            seatSelect.innerHTML = '<option value="">Enter Batch Timing first...</option>';
+            return;
+        }
+
+        const hall = currentSeatConfig.halls.find(h => h.name === selectedHallName);
+        if (!hall) return;
+
+        const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
+
+        const occupiedSeats = new Set();
+        activeStudents.forEach(s => {
+            if (s.SeatNo && s.batchTiming && s.batchTiming.trim().toLowerCase() === currentTiming) {
+                const num = parseInt(s.SeatNo.replace(/\D/g, ''), 10);
+                if (!isNaN(num)) occupiedSeats.add(num);
+            }
         });
-        // Update local data to prevent it from reverting on next filter/sort.
+
+        seatSelect.innerHTML = '<option value="">Select an available seat...</option>';
+        let hasAvailable = false;
+
+        for (let i = hall.start; i <= hall.end; i++) {
+            if (!occupiedSeats.has(i)) {
+                hasAvailable = true;
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `Seat ${i}`;
+                seatSelect.appendChild(option);
+            }
+        }
+
+        if (!hasAvailable) {
+            seatSelect.innerHTML = '<option value="">No seats available for this timing</option>';
+        }
+    }
+
+    async function updateStudentStatus(id, status) {
+        if (!await showConfirm(`Are you sure you want to change this student's status to "${status}"?`)) {
+            // Re-render to revert the dropdown if user cancels.
+            renderStudents();
+            return;
+        }
+        try {
+            await apiFetch('/admin/students/' + id, {
+                method: 'PUT',
+                body: JSON.stringify({ AccountStatus: status })
+            });
+            // Update local data to prevent it from reverting on next filter/sort.
+            const student = currentStudents.find(s => s._id === id);
+            if (student) student.AccountStatus = status;
+            loadDashboardStats();
+        } catch (error) {
+            showToast('Error updating status: ' + error.message, 'error');
+            renderStudents(); // Re-render on error to show correct state
+        }
+    }
+
+    async function approveStudent(id) {
+        if (!await showConfirm('Are you sure you want to approve this student account?')) return;
+        try {
+            await apiFetch('/admin/students/' + id, {
+                method: 'PUT',
+                body: JSON.stringify({ AccountStatus: 'Active' })
+            });
+            loadStudents();
+            loadDashboardStats();
+        } catch (error) {
+            showToast('Error approving student: ' + error.message, 'error');
+        }
+    }
+
+    async function verifyAadhar(id, status) {
+        if (!await showConfirm('Mark Aadhar as Verified?')) return;
+        try {
+            await apiFetch(`/admin/students/${id}/verify-aadhar`, {
+                method: 'PUT',
+                body: JSON.stringify({ status: 'Verified' })
+            });
+            if (window.location.hash === '#aadhar') {
+                loadAadhar();
+            } else {
+                loadStudents();
+            }
+            loadDashboardStats();
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        }
+    }
+
+    async function rejectAadhar(id) {
+        const reason = await showPrompt("Please enter the reason for rejecting the Aadhar proof:");
+        if (reason === null) return;
+
+        try {
+            await apiFetch(`/admin/students/${id}/verify-aadhar`, {
+                method: 'PUT',
+                body: JSON.stringify({ status: 'Rejected', reason: reason || 'Invalid Document' })
+            });
+            if (window.location.hash === '#aadhar') {
+                loadAadhar();
+            } else {
+                loadStudents();
+            }
+            loadDashboardStats();
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        }
+    }
+
+
+    async function viewStudent(id, isReadOnly = false) {
         const student = currentStudents.find(s => s._id === id);
-        if (student) student.AccountStatus = status;
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error updating status: ' + error.message, 'error');
-        renderStudents(); // Re-render on error to show correct state
-    }
-}
+        if (!student) return;
 
-async function approveStudent(id) {
-    if (!await showConfirm('Are you sure you want to approve this student account?')) return;
-    try {
-        await apiFetch('/admin/students/' + id, {
-            method: 'PUT',
-            body: JSON.stringify({ AccountStatus: 'Active' })
-        });
-        loadStudents();
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error approving student: ' + error.message, 'error');
-    }
-}
-
-async function verifyAadhar(id, status) {
-    if (!await showConfirm('Mark Aadhar as Verified?')) return;
-    try {
-        await apiFetch(`/admin/students/${id}/verify-aadhar`, {
-            method: 'PUT',
-            body: JSON.stringify({ status: 'Verified' })
-        });
-        if (window.location.hash === '#aadhar') {
-            loadAadhar();
-        } else {
-            loadStudents();
+        if (!currentSeatConfig || !currentSeatConfig.halls || currentSeatConfig.halls.length === 0) {
+            await loadSeatConfig();
         }
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-    }
-}
 
-async function rejectAadhar(id) {
-    const reason = await showPrompt("Please enter the reason for rejecting the Aadhar proof:");
-    if (reason === null) return;
-
-    try {
-        await apiFetch(`/admin/students/${id}/verify-aadhar`, {
-            method: 'PUT',
-            body: JSON.stringify({ status: 'Rejected', reason: reason || 'Invalid Document' })
-        });
-        if (window.location.hash === '#aadhar') {
-            loadAadhar();
-        } else {
-            loadStudents();
+        let currentHallName = '';
+        if (student.SeatNo) {
+            const numericSeat = parseInt(student.SeatNo.replace(/\D/g, ''), 10);
+            if (!isNaN(numericSeat) && currentSeatConfig && currentSeatConfig.halls) {
+                const hall = currentSeatConfig.halls.find(h => numericSeat >= h.start && numericSeat <= h.end);
+                if (hall) currentHallName = hall.name;
+            }
         }
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-    }
-}
 
-function viewStudent(id, isReadOnly = false) {
-    const student = currentStudents.find(s => s._id === id);
-    if (!student) return;
+        const modal = document.getElementById('studentModal');
+        const content = document.getElementById('studentModalContent');
 
-    const modal = document.getElementById('studentModal');
-    const content = document.getElementById('studentModalContent');
-
-    content.innerHTML = `
+        content.innerHTML = `
         <div style="grid-column: 1 / -1; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--card-border);">
             <h3 style="margin: 0; color: var(--primary-color); font-size: 1.1em;"><i class="fa-solid fa-book-open-reader"></i> Library & Account Details</h3>
         </div>
@@ -1144,6 +1242,10 @@ function viewStudent(id, isReadOnly = false) {
         <div class="form-group">
             <label>Calculated Amount (₹)</label>
             <input type="number" id="modalAmount" value="${student.amount || ''}" placeholder="E.g., 1000">
+        </div>
+        <div class="form-group">
+            <label>Joining Date</label>
+            <input type="date" id="modalJoiningDate" value="${student.JoiningDate ? new Date(student.JoiningDate).toISOString().split('T')[0] : ''}">
         </div>
 
         <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--card-border);">
@@ -1206,118 +1308,183 @@ function viewStudent(id, isReadOnly = false) {
         </div>
     `;
 
-    const modalTitle = document.querySelector('#studentModal h2');
-    const submitBtn = document.querySelector('#updateStudentForm button[type="submit"]');
+        const modalTitle = document.querySelector('#studentModal h2');
+        const submitBtn = document.querySelector('#updateStudentForm button[type="submit"]');
 
-    if (isReadOnly) {
-        modalTitle.textContent = 'Student Profile (View Only)';
-        if (submitBtn) submitBtn.style.display = 'none';
-        
-        const formElements = content.querySelectorAll('input, select');
-        formElements.forEach(el => {
-            el.disabled = true;
-            el.style.backgroundColor = 'var(--bg-color)';
-            el.style.cursor = 'not-allowed';
+        if (isReadOnly) {
+            modalTitle.textContent = 'Student Profile (View Only)';
+            if (submitBtn) submitBtn.style.display = 'none';
+
+
+            const formElements = content.querySelectorAll('input, select');
+            formElements.forEach(el => {
+                el.disabled = true;
+                el.style.backgroundColor = 'var(--bg-color)';
+                el.style.cursor = 'not-allowed';
+            });
+        } else {
+            modalTitle.textContent = 'Edit Student Profile';
+            if (submitBtn) submitBtn.style.display = 'inline-block';
+            setTimeout(updateAvailableSeatsInModal, 100);
+        }
+
+        document.getElementById('modalStudentId').value = student._id;
+        modal.style.display = 'block';
+    }
+
+    window.updateAvailableSeatsInModal = function () {
+        const hallSelect = document.getElementById('modalAssignedHall');
+        const timingInput = document.getElementById('modalBatchTiming');
+        const seatSelect = document.getElementById('modalSeatNo');
+        const studentIdInput = document.getElementById('modalStudentId');
+
+        if (!hallSelect || !seatSelect || !timingInput || !studentIdInput) return;
+
+        const studentId = studentIdInput.value;
+        const selectedHallName = hallSelect.value;
+        const currentTiming = timingInput.value.trim().toLowerCase();
+
+        if (!selectedHallName) {
+            seatSelect.innerHTML = '<option value="">Select Hall first...</option>';
+            return;
+        }
+        if (!currentTiming) {
+            seatSelect.innerHTML = '<option value="">Enter Batch Timing first...</option>';
+            return;
+        }
+
+        const hall = currentSeatConfig.halls.find(h => h.name === selectedHallName);
+        if (!hall) return;
+
+        const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
+
+        const occupiedSeats = new Set();
+        activeStudents.forEach(s => {
+            if (s._id !== studentId && s.SeatNo && s.batchTiming && s.batchTiming.trim().toLowerCase() === currentTiming) {
+                const num = parseInt(s.SeatNo.replace(/\D/g, ''), 10);
+                if (!isNaN(num)) occupiedSeats.add(num);
+            }
         });
-    } else {
-        modalTitle.textContent = 'Edit Student Profile';
-        if (submitBtn) submitBtn.style.display = 'inline-block';
+
+        let currentSeatNum = null;
+        const student = currentStudents.find(s => s._id === studentId);
+        if (student && student.SeatNo) {
+            currentSeatNum = parseInt(student.SeatNo.replace(/\D/g, ''), 10);
+        }
+
+        seatSelect.innerHTML = '<option value="">Select an available seat...</option>';
+        let hasAvailable = false;
+
+        for (let i = hall.start; i <= hall.end; i++) {
+            if (!occupiedSeats.has(i)) {
+                hasAvailable = true;
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `Seat ${i}`;
+                if (currentSeatNum === i && (student.batchTiming || '').trim().toLowerCase() === currentTiming) {
+                    option.selected = true;
+                }
+                seatSelect.appendChild(option);
+            }
+        }
+
+        if (!hasAvailable) {
+            seatSelect.innerHTML = '<option value="">No seats available for this timing</option>';
+        }
     }
 
-    document.getElementById('modalStudentId').value = student._id;
-    modal.style.display = 'block';
-}
+    async function resetStudentPassword(id) {
+        if (!await showConfirm('Are you sure you want to reset this student\'s password to the default ("library@123")?')) return;
 
-async function resetStudentPassword(id) {
-    if (!await showConfirm('Are you sure you want to reset this student\'s password to the default ("library@123")?')) return;
-    
-    try {
-        await apiFetch('/admin/students/' + id, {
-            method: 'PUT',
-            body: JSON.stringify({ ResetPassword: true })
-        });
-        showToast('Password reset to "library@123" successfully.', 'success');
-    } catch(e) {
-        showToast('Error resetting password: ' + e.message, 'error');
+
+        try {
+            await apiFetch('/admin/students/' + id, {
+                method: 'PUT',
+                body: JSON.stringify({ ResetPassword: true })
+            });
+            showToast('Password reset to "library@123" successfully.', 'success');
+        } catch (e) {
+            showToast('Error resetting password: ' + e.message, 'error');
+        }
     }
-}
 
-function closeStudentModal() {
-    document.getElementById('studentModal').style.display = 'none';
-}
-
-// --- Manual Notification Logic ---
-function openNotifyModal(id) {
-    document.getElementById('notifyStudentId').value = id;
-    document.getElementById('notifyForm').reset();
-    document.getElementById('customMessageContainer').style.display = 'none';
-    document.getElementById('notifyStudentModal').style.display = 'block';
-}
-
-function closeNotifyModal() {
-    document.getElementById('notifyStudentModal').style.display = 'none';
-}
-
-window.sendEmailReminder = async function(id) {
-    if (!await showConfirm('Send an email verification reminder push notification to this student?')) return;
-    try {
-        const response = await apiFetch('/admin/students/' + id + '/notify', {
-            method: 'POST',
-            body: JSON.stringify({ type: 'email_reminder' })
-        });
-        showToast(response.message || 'Reminder sent!', 'success');
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
+    function closeStudentModal() {
+        document.getElementById('studentModal').style.display = 'none';
     }
-}
 
-function toggleCustomMessageField() {
-    const type = document.getElementById('notifyType').value;
-    const container = document.getElementById('customMessageContainer');
-    const customInput = document.getElementById('notifyCustomMessage');
-    if (type === 'custom') {
-        container.style.display = 'block';
-        customInput.required = true;
-    } else {
-        container.style.display = 'none';
-        customInput.required = false;
+    // --- Manual Notification Logic ---
+    function openNotifyModal(id) {
+        document.getElementById('notifyStudentId').value = id;
+        document.getElementById('notifyForm').reset();
+        document.getElementById('customMessageContainer').style.display = 'none';
+        document.getElementById('notifyStudentModal').style.display = 'block';
     }
-}
 
-async function submitManualNotification(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = 'Sending...';
-    btn.disabled = true;
-
-    try {
-        const payload = {
-            type: document.getElementById('notifyType').value,
-            customMessage: document.getElementById('notifyCustomMessage').value
-        };
-        const response = await apiFetch(`/admin/students/${document.getElementById('notifyStudentId').value}/notify`, {
-            method: 'POST', body: JSON.stringify(payload)
-        });
-        showToast(response.message, 'success');
-        closeNotifyModal();
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
+    function closeNotifyModal() {
+        document.getElementById('notifyStudentModal').style.display = 'none';
     }
-}
 
-async function viewNotificationHistory(id) {
-    document.getElementById('notificationHistoryModal').style.display = 'block';
-    const list = document.getElementById('notificationHistoryList');
-    list.innerHTML = 'Loading history...';
-    
-    try {
-        const data = await apiFetch(`/admin/students/${id}/notifications`);
-        if (data && data.length > 0) {
-            list.innerHTML = data.map(n => `
+    window.sendEmailReminder = async function (id) {
+        if (!await showConfirm('Send an email verification reminder push notification to this student?')) return;
+        try {
+            const response = await apiFetch('/admin/students/' + id + '/notify', {
+                method: 'POST',
+                body: JSON.stringify({ type: 'email_reminder' })
+            });
+            showToast(response.message || 'Reminder sent!', 'success');
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        }
+    }
+
+    function toggleCustomMessageField() {
+        const type = document.getElementById('notifyType').value;
+        const container = document.getElementById('customMessageContainer');
+        const customInput = document.getElementById('notifyCustomMessage');
+        if (type === 'custom') {
+            container.style.display = 'block';
+            customInput.required = true;
+        } else {
+            container.style.display = 'none';
+            customInput.required = false;
+        }
+    }
+
+    async function submitManualNotification(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Sending...';
+        btn.disabled = true;
+
+        try {
+            const payload = {
+                type: document.getElementById('notifyType').value,
+                customMessage: document.getElementById('notifyCustomMessage').value
+            };
+            const response = await apiFetch(`/admin/students/${document.getElementById('notifyStudentId').value}/notify`, {
+                method: 'POST', body: JSON.stringify(payload)
+            });
+            showToast(response.message, 'success');
+            closeNotifyModal();
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function viewNotificationHistory(id) {
+        document.getElementById('notificationHistoryModal').style.display = 'block';
+        const list = document.getElementById('notificationHistoryList');
+        list.innerHTML = 'Loading history...';
+
+
+        try {
+            const data = await apiFetch(`/admin/students/${id}/notifications`);
+            if (data && data.length > 0) {
+                list.innerHTML = data.map(n => `
                 <div style="padding: 15px; border: 1px solid var(--card-border); margin-bottom: 10px; border-radius: 8px; background: var(--bg-color); border-left: 4px solid var(--primary-color);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                         <strong style="color: var(--primary-color); font-size: 1.05em;">${n.Title}</strong>
@@ -1332,129 +1499,132 @@ async function viewNotificationHistory(id) {
                     </div>
                 </div>
             `).join('');
-        } else {
-            list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No notifications sent to this student yet.</p>';
+            } else {
+                list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No notifications sent to this student yet.</p>';
+            }
+        } catch (error) {
+            list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
         }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
     }
-}
 
-function closeNotificationHistoryModal() {
-    document.getElementById('notificationHistoryModal').style.display = 'none';
-}
-
-function calculateModalFee() {
-    const duration = document.getElementById('modalPlanDuration').value;
-    const batch = document.getElementById('modalBatchType').value;
-    const amountField = document.getElementById('modalAmount');
-    
-    if (duration && batch && pricingGrid[duration] && pricingGrid[duration][batch]) {
-        amountField.value = pricingGrid[duration][batch];
-    } else {
-        amountField.value = '';
+    function closeNotificationHistoryModal() {
+        document.getElementById('notificationHistoryModal').style.display = 'none';
     }
-}
 
-async function submitStudentUpdate(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = 'Saving...';
-    btn.disabled = true;
+    function calculateModalFee() {
+        const duration = document.getElementById('modalPlanDuration').value;
+        const batch = document.getElementById('modalBatchType').value;
+        const amountField = document.getElementById('modalAmount');
 
-    try {
-        const id = document.getElementById('modalStudentId').value;
-        const payload = {
-            LibraryID: document.getElementById('modalLibraryID').value || undefined,
-            FirstName: document.getElementById('modalFirstName').value,
-            LastName: document.getElementById('modalLastName').value,
-            Email: document.getElementById('modalEmail').value || undefined,
-            Contact: document.getElementById('modalContact').value,
-            DOB: document.getElementById('modalDOB').value || undefined,
-            Gender: document.getElementById('modalGender').value,
-            AadharNumber: document.getElementById('modalAadhar').value,
-            FatherName: document.getElementById('modalFatherName').value,
-            City: document.getElementById('modalCity').value,
-            Area: document.getElementById('modalArea').value,
-            Pincode: document.getElementById('modalPincode').value,
-            AccountStatus: document.getElementById('modalStatus').value,
-            SeatNo: document.getElementById('modalSeatNo').value,
-            planDuration: document.getElementById('modalPlanDuration').value,
-            batchType: document.getElementById('modalBatchType').value,
-            batchTiming: document.getElementById('modalBatchTiming').value,
-            amount: document.getElementById('modalAmount').value
+
+        if (duration && batch && pricingGrid[duration] && pricingGrid[duration][batch]) {
+            amountField.value = pricingGrid[duration][batch];
+        } else {
+            amountField.value = '';
+        }
+    }
+
+    async function submitStudentUpdate(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Saving...';
+        btn.disabled = true;
+
+        try {
+            const id = document.getElementById('modalStudentId').value;
+            const payload = {
+                LibraryID: document.getElementById('modalLibraryID').value || undefined,
+                FirstName: document.getElementById('modalFirstName').value,
+                LastName: document.getElementById('modalLastName').value,
+                Email: document.getElementById('modalEmail').value || undefined,
+                Contact: document.getElementById('modalContact').value,
+                DOB: document.getElementById('modalDOB').value || undefined,
+                Gender: document.getElementById('modalGender').value,
+                AadharNumber: document.getElementById('modalAadhar').value,
+                FatherName: document.getElementById('modalFatherName').value,
+                City: document.getElementById('modalCity').value,
+                Area: document.getElementById('modalArea').value,
+                Pincode: document.getElementById('modalPincode').value,
+                AccountStatus: document.getElementById('modalStatus').value,
+                SeatNo: document.getElementById('modalSeatNo').value,
+                planDuration: document.getElementById('modalPlanDuration').value,
+                batchType: document.getElementById('modalBatchType').value,
+                batchTiming: document.getElementById('modalBatchTiming').value,
+                amount: document.getElementById('modalAmount').value,
+                JoiningDate: document.getElementById('modalJoiningDate') ? document.getElementById('modalJoiningDate').value : undefined
+            };
+
+            await apiFetch('/admin/students/' + id, {
+                method: 'PUT',
+                body: JSON.stringify(payload)
+            });
+
+            showToast('Student profile updated successfully!', 'success');
+            closeStudentModal();
+            loadStudents(); // Refresh the list
+        } catch (error) {
+            showToast(error.message, 'error');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function loadFees() {
+        const list = document.getElementById('feesList');
+        list.innerHTML = 'Loading fees...';
+        try {
+            const data = await apiFetch('/fees');
+            if (data && data.length > 0) {
+                currentFees = data;
+                filterFees(true);
+            } else {
+                list.innerHTML = '<p>No fee records found.</p>';
+                document.getElementById('feesPagination').innerHTML = '';
+            }
+        } catch (error) {
+            list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+    }
+
+    function filterFees(immediate = false) {
+        const searchInput = document.getElementById('feeSearch');
+        const query = searchInput ? searchInput.value.toLowerCase() : '';
+        const statusFilter = document.getElementById('filterFeeStatus') ? document.getElementById('filterFeeStatus').value : '';
+
+        if (searchTimeout) clearTimeout(searchTimeout);
+
+        const executeFilter = () => {
+            filteredFees = currentFees.filter(fee => {
+                const studentName = fee.StudentId ? (fee.StudentId.FullName || '').toLowerCase() : '';
+                const libId = fee.StudentId ? (fee.StudentId.LibraryID || '').toLowerCase() : '';
+                const month = (fee.Month || '').toLowerCase();
+                const feeStatus = (fee.Status || '');
+                const batch = (fee.Batch || (fee.StudentId?.batchType || '')).toLowerCase();
+                const amount = String(fee.Amount || '');
+
+
+                const matchesQuery = studentName.includes(query) || libId.includes(query) || month.includes(query) || feeStatus.toLowerCase().includes(query) || batch.includes(query) || amount.includes(query);
+                const matchesStatus = statusFilter === '' || feeStatus === statusFilter;
+
+                return matchesQuery && matchesStatus;
+            });
+            currentFeesPage = 1;
+            renderFees();
         };
 
-        await apiFetch('/admin/students/' + id, {
-            method: 'PUT',
-            body: JSON.stringify(payload)
-        });
-
-        showToast('Student profile updated successfully!', 'success');
-        closeStudentModal();
-        loadStudents(); // Refresh the list
-    } catch (error) {
-        showToast(error.message, 'error');
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
+        if (immediate) executeFilter();
+        else searchTimeout = setTimeout(executeFilter, 300);
     }
-}
 
-async function loadFees() {
-    const list = document.getElementById('feesList');
-    list.innerHTML = 'Loading fees...';
-    try {
-        const data = await apiFetch('/fees');
-        if (data && data.length > 0) {
-            currentFees = data;
-            filterFees(true);
-        } else {
-            list.innerHTML = '<p>No fee records found.</p>';
-            document.getElementById('feesPagination').innerHTML = '';
-        }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
-    }
-}
+    function renderFees() {
+        const list = document.getElementById('feesList');
+        const startIndex = (currentFeesPage - 1) * feesPerPage;
+        const endIndex = startIndex + feesPerPage;
+        const paginatedFees = filteredFees.slice(startIndex, endIndex);
 
-function filterFees(immediate = false) {
-    const searchInput = document.getElementById('feeSearch');
-    const query = searchInput ? searchInput.value.toLowerCase() : '';
-    const statusFilter = document.getElementById('filterFeeStatus') ? document.getElementById('filterFeeStatus').value : '';
-
-    if (searchTimeout) clearTimeout(searchTimeout);
-
-    const executeFilter = () => {
-        filteredFees = currentFees.filter(fee => {
-            const studentName = fee.StudentId ? (fee.StudentId.FullName || '').toLowerCase() : '';
-            const libId = fee.StudentId ? (fee.StudentId.LibraryID || '').toLowerCase() : '';
-            const month = (fee.Month || '').toLowerCase();
-            const feeStatus = (fee.Status || '');
-            const batch = (fee.Batch || (fee.StudentId?.batchType || '')).toLowerCase();
-            const amount = String(fee.Amount || '');
-            
-            const matchesQuery = studentName.includes(query) || libId.includes(query) || month.includes(query) || feeStatus.toLowerCase().includes(query) || batch.includes(query) || amount.includes(query);
-            const matchesStatus = statusFilter === '' || feeStatus === statusFilter;
-
-            return matchesQuery && matchesStatus;
-        });
-        currentFeesPage = 1;
-        renderFees();
-    };
-
-    if (immediate) executeFilter();
-    else searchTimeout = setTimeout(executeFilter, 300);
-}
-
-function renderFees() {
-    const list = document.getElementById('feesList');
-    const startIndex = (currentFeesPage - 1) * feesPerPage;
-    const endIndex = startIndex + feesPerPage;
-    const paginatedFees = filteredFees.slice(startIndex, endIndex);
-
-    list.innerHTML = paginatedFees.map(fee => `
+        list.innerHTML = paginatedFees.map(fee => `
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <strong>${fee.StudentId ? `${fee.StudentId.FullName} (ID: ${fee.StudentId.LibraryID || 'N/A'})` : 'Unknown Student'}</strong>
@@ -1467,13 +1637,18 @@ function renderFees() {
                     </div>
                     <div style="font-size: 0.95em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 15px; padding-top: 10px; border-top: 1px solid var(--card-border);">
                         <div><strong>Month:</strong> ${(fee.Month || 'N/A').charAt(0).toUpperCase() + (fee.Month || '').slice(1)}</div>
-                        <div><strong>Batch:</strong> ${
-                            fee.Batch || 
-                            (fee.StudentId 
-                                ? `${fee.StudentId.planDuration || 'N/A'} (${fee.StudentId.batchType || 'N/A'})`
-                                : 'N/A'
-                            )
-                        }</div>
+                        <div><strong>Batch:</strong> ${fee.Batch ||
+            (fee.StudentId
+                ? `${fee.StudentId.planDuration || 'N/A'} (${fee.StudentId.batchType || 'N/A'})`
+                : 'N/A'
+            )
+            }</div>
+                        <div><strong>Batch:</strong> ${fee.Batch ||
+            (fee.StudentId
+                ? `${fee.StudentId.planDuration || 'N/A'} (${fee.StudentId.batchType || 'N/A'})`
+                : 'N/A'
+            )
+            }</div>
                         <div><strong>Amount:</strong> ₹${fee.Amount || 0}</div>
                     </div>
                     <div style="margin-bottom: 15px;">
@@ -1529,166 +1704,166 @@ function renderFees() {
                 </div>
             `).join('');
 
-    renderFeesPagination();
-}
-
-function renderFeesPagination() {
-    const pagination = document.getElementById('feesPagination');
-    const totalPages = Math.ceil(filteredFees.length / feesPerPage);
-
-    if (totalPages <= 1) {
-        pagination.innerHTML = '';
-        return;
+        renderFeesPagination();
     }
 
-    let html = '';
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentFeesPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeFeesPage(${currentFeesPage - 1})"`}>Prev</button>`;
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentFeesPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeFeesPage(${i})">${i}</button>`;
-    }
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentFeesPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeFeesPage(${currentFeesPage + 1})"`}>Next</button>`;
-    pagination.innerHTML = html;
-}
+    function renderFeesPagination() {
+        const pagination = document.getElementById('feesPagination');
+        const totalPages = Math.ceil(filteredFees.length / feesPerPage);
 
-function changeFeesPage(page) {
-    if (page < 1 || page > Math.ceil(filteredFees.length / feesPerPage)) return;
-    currentFeesPage = page;
-    renderFees();
-}
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
 
-async function updateFeeStatus(id, newStatus) {
-    let payload = { Status: newStatus };
-
-    if (newStatus === 'Rejected') {
-        const note = await showPrompt('Please enter a reason for rejection (Admin Note):');
-        if (note === null) {
-            // User cancelled the prompt, revert the dropdown
-            loadFees();
-            return;
+        let html = '';
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentFeesPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeFeesPage(${currentFeesPage - 1})"`}>Prev</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentFeesPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeFeesPage(${i})">${i}</button>`;
         }
-        if (!note.trim()) {
-            showToast('A rejection reason is required.', 'warning');
-            loadFees();
-            return;
-        }
-        payload.AdminNote = note.trim();
-        payload.deleteReceipt = true; // Flag for backend to delete image file
-    } else if (newStatus === 'Paid') {
-        const transId = await showPrompt('Please enter the Transaction ID:');
-        if (transId === null) {
-            loadFees();
-            return;
-        }
-        if (!transId.trim()) {
-            showToast('Transaction ID is required to mark as Paid.', 'warning');
-            loadFees();
-            return;
-        }
-        const transDate = await showPrompt('Please enter the Payment Date:');
-        if (transDate === null) {
-            loadFees();
-            return;
-        }
-        if (!transDate.trim()) {
-            showToast('Payment Date is required.', 'warning');
-            loadFees();
-            return;
-        }
-        payload.AdminNote = `Txn ID: ${transId.trim()} | Date: ${transDate.trim()}`;
-        payload.deleteReceipt = true; // Flag for backend to delete image file
-    } else {
-        if (!await showConfirm(`Are you sure you want to mark this payment as ${newStatus}?`)) {
-            loadFees(); // Revert dropdown
-            return;
-        }
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentFeesPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeFeesPage(${currentFeesPage + 1})"`}>Next</button>`;
+        pagination.innerHTML = html;
     }
 
-    try {
-        await apiFetch('/fees/' + id + '/verify', {
-            method: 'PUT',
-            body: JSON.stringify(payload)
-        });
-        loadFees();
-        if (typeof loadPaymentHistory === 'function') loadPaymentHistory(); // Refresh the history table automatically
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error updating fee status: ' + error.message, 'error');
-        loadFees();
-    }
-}
-
-async function deleteReceiptImage(id) {
-    if (!await showConfirm('Are you sure you want to delete this receipt image? This cannot be undone.')) return;
-    try {
-        await apiFetch('/fees/' + id + '/receipt', {
-            method: 'DELETE'
-        });
-        showToast('Receipt image deleted successfully', 'success');
-        loadFees();
-    } catch (error) {
-        showToast('Error deleting receipt: ' + error.message, 'error');
-    }
-}
-
-async function updateRemark(id) {
-
-    const note = document.getElementById(`note-${id}`).value.trim();
-
-    if (!note) {
-        showToast("Remark cannot be empty", "warning");
-        return;
+    function changeFeesPage(page) {
+        if (page < 1 || page > Math.ceil(filteredFees.length / feesPerPage)) return;
+        currentFeesPage = page;
+        renderFees();
     }
 
-    try {
+    async function updateFeeStatus(id, newStatus) {
+        let payload = { Status: newStatus };
 
-        await apiFetch('/fees/' + id + '/verify', {
-            method: 'PUT',
-            body: JSON.stringify({
-                AdminNote: note
-            })
-        });
-
-        showToast("Remark updated", "success");
-
-        loadFees();
-
-    } catch (err) {
-
-        showToast("Error updating remark", "error");
-
-    }
-
-}
-// Profile Update Req Paginations
-let currentRequests = [];
-let requestsPage = 1;
-const requestsPerPage = 10;
-
-async function loadRequests() {
-    const list = document.getElementById('requestsList');
-    list.innerHTML = 'Loading requests...';
-    try {
-        const data = await apiFetch('/admin/profile-requests');
-        if (data && data.length > 0) {
-            currentRequests = data;
-            requestsPage = 1;
-            renderRequests();
+        if (newStatus === 'Rejected') {
+            const note = await showPrompt('Please enter a reason for rejection (Admin Note):');
+            if (note === null) {
+                // User cancelled the prompt, revert the dropdown
+                loadFees();
+                return;
+            }
+            if (!note.trim()) {
+                showToast('A rejection reason is required.', 'warning');
+                loadFees();
+                return;
+            }
+            payload.AdminNote = note.trim();
+            payload.deleteReceipt = true; // Flag for backend to delete image file
+        } else if (newStatus === 'Paid') {
+            const transId = await showPrompt('Please enter the Transaction ID:');
+            if (transId === null) {
+                loadFees();
+                return;
+            }
+            if (!transId.trim()) {
+                showToast('Transaction ID is required to mark as Paid.', 'warning');
+                loadFees();
+                return;
+            }
+            const transDate = await showPrompt('Please enter the Payment Date:');
+            if (transDate === null) {
+                loadFees();
+                return;
+            }
+            if (!transDate.trim()) {
+                showToast('Payment Date is required.', 'warning');
+                loadFees();
+                return;
+            }
+            payload.AdminNote = `Txn ID: ${transId.trim()} | Date: ${transDate.trim()}`;
+            payload.deleteReceipt = true; // Flag for backend to delete image file
         } else {
-            list.innerHTML = '<p>No active profile requests.</p>';
-            if (document.getElementById('requestsPagination')) document.getElementById('requestsPagination').innerHTML = '';
+            if (!await showConfirm(`Are you sure you want to mark this payment as ${newStatus}?`)) {
+                loadFees(); // Revert dropdown
+                return;
+            }
         }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+
+        try {
+            await apiFetch('/fees/' + id + '/verify', {
+                method: 'PUT',
+                body: JSON.stringify(payload)
+            });
+            loadFees();
+            if (typeof loadPaymentHistory === 'function') loadPaymentHistory(); // Refresh the history table automatically
+            loadDashboardStats();
+        } catch (error) {
+            showToast('Error updating fee status: ' + error.message, 'error');
+            loadFees();
+        }
     }
-}
 
-function renderRequests() {
-    const list = document.getElementById('requestsList');
-    const startIndex = (requestsPage - 1) * requestsPerPage;
-    const endIndex = startIndex + requestsPerPage;
-    const paginatedData = currentRequests.slice(startIndex, endIndex);
+    async function deleteReceiptImage(id) {
+        if (!await showConfirm('Are you sure you want to delete this receipt image? This cannot be undone.')) return;
+        try {
+            await apiFetch('/fees/' + id + '/receipt', {
+                method: 'DELETE'
+            });
+            showToast('Receipt image deleted successfully', 'success');
+            loadFees();
+        } catch (error) {
+            showToast('Error deleting receipt: ' + error.message, 'error');
+        }
+    }
 
-    list.innerHTML = paginatedData.map(req => `
+    async function updateRemark(id) {
+
+        const note = document.getElementById(`note-${id}`).value.trim();
+
+        if (!note) {
+            showToast("Remark cannot be empty", "warning");
+            return;
+        }
+
+        try {
+
+            await apiFetch('/fees/' + id + '/verify', {
+                method: 'PUT',
+                body: JSON.stringify({
+                    AdminNote: note
+                })
+            });
+
+            showToast("Remark updated", "success");
+
+            loadFees();
+
+        } catch (err) {
+
+            showToast("Error updating remark", "error");
+
+        }
+
+    }
+    // Profile Update Req Paginations
+    let currentRequests = [];
+    let requestsPage = 1;
+    const requestsPerPage = 10;
+
+    async function loadRequests() {
+        const list = document.getElementById('requestsList');
+        list.innerHTML = 'Loading requests...';
+        try {
+            const data = await apiFetch('/admin/profile-requests');
+            if (data && data.length > 0) {
+                currentRequests = data;
+                requestsPage = 1;
+                renderRequests();
+            } else {
+                list.innerHTML = '<p>No active profile requests.</p>';
+                if (document.getElementById('requestsPagination')) document.getElementById('requestsPagination').innerHTML = '';
+            }
+        } catch (error) {
+            list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+    }
+
+    function renderRequests() {
+        const list = document.getElementById('requestsList');
+        const startIndex = (requestsPage - 1) * requestsPerPage;
+        const endIndex = startIndex + requestsPerPage;
+        const paginatedData = currentRequests.slice(startIndex, endIndex);
+
+        list.innerHTML = paginatedData.map(req => `
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <strong>Request from: ${req.StudentId ? `${req.StudentId.FullName} (ID: ${req.StudentId.LibraryID || 'N/A'})` : 'Unknown'}</strong>
@@ -1700,8 +1875,8 @@ function renderRequests() {
                     <div style="background: rgba(0,0,0,0.02); padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--card-border);">
                         <h5 style="margin-bottom:8px; color:var(--text-secondary);">Requested Changes (Check to approve):</h5>
                         ${Object.entries(req.ProposedData).map(([key, val]) => {
-                            const currentVal = req.StudentId && req.StudentId[key] ? req.StudentId[key] : '<em style="opacity: 0.5;">(empty)</em>';
-                            return `
+            const currentVal = req.StudentId && req.StudentId[key] ? req.StudentId[key] : '<em style="opacity: 0.5;">(empty)</em>';
+            return `
                             <div style="display:flex; align-items:center; gap:10px; font-size:0.9em; margin-bottom:6px;">
                                 <input type="checkbox" id="req_${req._id}_${key}" value="${key}" checked style="cursor: pointer; width: 16px; height: 16px;">
                                 <span style="font-weight:600; color:var(--text-primary); width:120px;">${key}:</span>
@@ -1725,142 +1900,142 @@ function renderRequests() {
                 </div>
             `).join('');
 
-    renderRequestsPagination();
-}
-
-function renderRequestsPagination() {
-    const pagination = document.getElementById('requestsPagination');
-    if (!pagination) return;
-    const totalPages = Math.ceil(currentRequests.length / requestsPerPage);
-    if (totalPages <= 1) {
-        pagination.innerHTML = '';
-        return;
+        renderRequestsPagination();
     }
-    let html = '';
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${requestsPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeRequestsPage(${requestsPage - 1})"`}>Prev</button>`;
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${requestsPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeRequestsPage(${i})">${i}</button>`;
+
+    function renderRequestsPagination() {
+        const pagination = document.getElementById('requestsPagination');
+        if (!pagination) return;
+        const totalPages = Math.ceil(currentRequests.length / requestsPerPage);
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+        let html = '';
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${requestsPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeRequestsPage(${requestsPage - 1})"`}>Prev</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${requestsPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeRequestsPage(${i})">${i}</button>`;
+        }
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${requestsPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeRequestsPage(${requestsPage + 1})"`}>Next</button>`;
+        pagination.innerHTML = html;
     }
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${requestsPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeRequestsPage(${requestsPage + 1})"`}>Next</button>`;
-    pagination.innerHTML = html;
-}
 
-window.changeRequestsPage = function(page) {
-    if (page < 1 || page > Math.ceil(currentRequests.length / requestsPerPage)) return;
-    requestsPage = page;
-    renderRequests();
-}
+    window.changeRequestsPage = function (page) {
+        if (page < 1 || page > Math.ceil(currentRequests.length / requestsPerPage)) return;
+        requestsPage = page;
+        renderRequests();
+    }
 
-async function handleRequestAction(id, selectElement) {
-    const action = selectElement.value;
-    if (!action) return;
+    async function handleRequestAction(id, selectElement) {
+        const action = selectElement.value;
+        if (!action) return;
 
-    if (action === 'Approve') {
-        await approveRequest(id, selectElement);
-    } else if (action === 'Reject') {
-        await rejectRequest(id, selectElement);
-    } else if (action === 'Under Review') {
+        if (action === 'Approve') {
+            await approveRequest(id, selectElement);
+        } else if (action === 'Reject') {
+            await rejectRequest(id, selectElement);
+        } else if (action === 'Under Review') {
+            try {
+                await apiFetch(`/admin/profile-requests/${id}/status`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ Status: 'Under Review' })
+                });
+                loadRequests();
+                loadDashboardStats();
+            } catch (error) {
+                showToast(error.message, 'error');
+                if (selectElement) selectElement.value = '';
+            }
+        }
+    }
+
+    async function approveRequest(id, selectElement) {
+        const request = currentRequests.find(r => r._id === id);
+        if (!request) return;
+
+        const approvedFields = [];
+        Object.keys(request.ProposedData).forEach(key => {
+            const checkbox = document.getElementById(`req_${id}_${key}`);
+            if (checkbox && checkbox.checked) {
+                approvedFields.push(key);
+            }
+        });
+
+        if (approvedFields.length === 0) {
+            showToast('Please select at least one field to approve, or choose Reject instead.', 'warning');
+            if (selectElement) selectElement.value = '';
+            return;
+        }
+
+        if (!await showConfirm(`Approve ${approvedFields.length} selected change(s)?`)) {
+            if (selectElement) selectElement.value = '';
+            return;
+        }
         try {
-            await apiFetch(`/admin/profile-requests/${id}/status`, {
+            await apiFetch('/admin/profile-requests/' + id + '/approve', {
                 method: 'PUT',
-                body: JSON.stringify({ Status: 'Under Review' })
+                body: JSON.stringify({ approvedFields })
             });
             loadRequests();
             loadDashboardStats();
-        } catch (error) { 
-            showToast(error.message, 'error'); 
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
             if (selectElement) selectElement.value = '';
         }
     }
-}
 
-async function approveRequest(id, selectElement) {
-    const request = currentRequests.find(r => r._id === id);
-    if (!request) return;
-
-    const approvedFields = [];
-    Object.keys(request.ProposedData).forEach(key => {
-        const checkbox = document.getElementById(`req_${id}_${key}`);
-        if (checkbox && checkbox.checked) {
-            approvedFields.push(key);
+    async function rejectRequest(id, selectElement) {
+        const reason = await showPrompt("Please provide a reason for rejecting this request (optional, will be shown to the student).");
+        if (reason === null) {
+            if (selectElement) selectElement.value = '';
+            return; // User clicked cancel
         }
-    });
 
-    if (approvedFields.length === 0) {
-        showToast('Please select at least one field to approve, or choose Reject instead.', 'warning');
-        if (selectElement) selectElement.value = '';
-        return;
-    }
-
-    if (!await showConfirm(`Approve ${approvedFields.length} selected change(s)?`)) {
-        if (selectElement) selectElement.value = '';
-        return;
-    }
-    try {
-        await apiFetch('/admin/profile-requests/' + id + '/approve', { 
-            method: 'PUT',
-            body: JSON.stringify({ approvedFields })
-        });
-        loadRequests();
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-        if (selectElement) selectElement.value = '';
-    }
-}
-
-async function rejectRequest(id, selectElement) {
-    const reason = await showPrompt("Please provide a reason for rejecting this request (optional, will be shown to the student).");
-    if (reason === null) {
-        if (selectElement) selectElement.value = '';
-        return; // User clicked cancel
-    }
-
-    try {
-        await apiFetch('/admin/profile-requests/' + id + '/reject', {
-            method: 'PUT',
-            body: JSON.stringify({
-                reason: reason || 'No reason provided.'
-            })
-        });
-        loadRequests();
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-        if (selectElement) selectElement.value = '';
-    }
-}
-
-// Announcements Logic & Paginations
-let currentAnnouncementsAdmin = [];
-let announcementsAdminPage = 1;
-const announcementsAdminPerPage = 5; // Smaller count since these are larger cards
-
-async function loadAnnouncements() {
-    const list = document.getElementById('announcementsList');
-    list.innerHTML = 'Loading announcements...';
-    try {
-        const data = await apiFetch('/announcements');
-        if (data && data.length > 0) {
-            currentAnnouncementsAdmin = data;
-            announcementsAdminPage = 1;
-            renderAnnouncementsAdmin();
-        } else {
-            list.innerHTML = '<p>No previous announcements.</p>';
-            if (document.getElementById('announcementsPagination')) document.getElementById('announcementsPagination').innerHTML = '';
+        try {
+            await apiFetch('/admin/profile-requests/' + id + '/reject', {
+                method: 'PUT',
+                body: JSON.stringify({
+                    reason: reason || 'No reason provided.'
+                })
+            });
+            loadRequests();
+            loadDashboardStats();
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+            if (selectElement) selectElement.value = '';
         }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
     }
-}
 
-function renderAnnouncementsAdmin() {
-    const list = document.getElementById('announcementsList');
-    const startIndex = (announcementsAdminPage - 1) * announcementsAdminPerPage;
-    const endIndex = startIndex + announcementsAdminPerPage;
-    const paginatedData = currentAnnouncementsAdmin.slice(startIndex, endIndex);
+    // Announcements Logic & Paginations
+    let currentAnnouncementsAdmin = [];
+    let announcementsAdminPage = 1;
+    const announcementsAdminPerPage = 5; // Smaller count since these are larger cards
 
-    list.innerHTML = paginatedData.map(ann => `
+    async function loadAnnouncements() {
+        const list = document.getElementById('announcementsList');
+        list.innerHTML = 'Loading announcements...';
+        try {
+            const data = await apiFetch('/announcements');
+            if (data && data.length > 0) {
+                currentAnnouncementsAdmin = data;
+                announcementsAdminPage = 1;
+                renderAnnouncementsAdmin();
+            } else {
+                list.innerHTML = '<p>No previous announcements.</p>';
+                if (document.getElementById('announcementsPagination')) document.getElementById('announcementsPagination').innerHTML = '';
+            }
+        } catch (error) {
+            list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+    }
+
+    function renderAnnouncementsAdmin() {
+        const list = document.getElementById('announcementsList');
+        const startIndex = (announcementsAdminPage - 1) * announcementsAdminPerPage;
+        const endIndex = startIndex + announcementsAdminPerPage;
+        const paginatedData = currentAnnouncementsAdmin.slice(startIndex, endIndex);
+
+        list.innerHTML = paginatedData.map(ann => `
                 <div style="border-bottom: 2px solid black; padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px;">
                         <div style="font-size: 1.1em; font-weight: 600; color: var(--primary-color);"><i class="fa-solid fa-tag"></i> ${ann.Title}</div>
@@ -1871,6 +2046,8 @@ function renderAnnouncementsAdmin() {
                         <span>
                             <i class="fa-solid fa-calendar-days" style="margin-right:4px;"></i>
                             ${new Date(ann.createdAt)
+                .toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+                .replace(/ /g, '-')}
                             .toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})
                             .replace(/ /g,'-')}
                         </span>
@@ -1878,6 +2055,7 @@ function renderAnnouncementsAdmin() {
                         <span>
                             <i class="fa-solid fa-clock" style="margin-right:4px;"></i>
                             ${new Date(ann.createdAt)
+                .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                             .toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}
                         </span>
                         
@@ -1888,185 +2066,191 @@ function renderAnnouncementsAdmin() {
                 </div>
             `).join('');
 
-    renderAnnouncementsPagination();
-}
-
-function renderAnnouncementsPagination() {
-    const pagination = document.getElementById('announcementsPagination');
-    if (!pagination) return;
-    const totalPages = Math.ceil(currentAnnouncementsAdmin.length / announcementsAdminPerPage);
-    if (totalPages <= 1) {
-        pagination.innerHTML = '';
-        return;
+        renderAnnouncementsPagination();
     }
-    let html = '';
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${announcementsAdminPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAnnouncementsPage(${announcementsAdminPage - 1})"`}>Prev</button>`;
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${announcementsAdminPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeAnnouncementsPage(${i})">${i}</button>`;
-    }
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${announcementsAdminPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAnnouncementsPage(${announcementsAdminPage + 1})"`}>Next</button>`;
-    pagination.innerHTML = html;
-}
 
-window.changeAnnouncementsPage = function(page) {
-    if (page < 1 || page > Math.ceil(currentAnnouncementsAdmin.length / announcementsAdminPerPage)) return;
-    announcementsAdminPage = page;
-    renderAnnouncementsAdmin();
-}
-
-window.toggleAnnouncementForm = function() {
-    const container = document.getElementById('announcementFormContainer');
-    const btn = document.getElementById('toggleAnnBtn');
-    
-    if (container.style.display === 'none') {
-        container.style.display = 'block';
-        if (btn) {
-            btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Close';
-            btn.classList.replace('btn', 'btn-outline');
+    function renderAnnouncementsPagination() {
+        const pagination = document.getElementById('announcementsPagination');
+        if (!pagination) return;
+        const totalPages = Math.ceil(currentAnnouncementsAdmin.length / announcementsAdminPerPage);
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
         }
-    } else {
-        container.style.display = 'none';
-        if (btn) {
-            btn.innerHTML = '<i class="fa-solid fa-plus"></i> New Post';
-            btn.classList.replace('btn-outline', 'btn');
+        let html = '';
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${announcementsAdminPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAnnouncementsPage(${announcementsAdminPage - 1})"`}>Prev</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${announcementsAdminPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeAnnouncementsPage(${i})">${i}</button>`;
         }
-        document.getElementById('announcementForm').reset();
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${announcementsAdminPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAnnouncementsPage(${announcementsAdminPage + 1})"`}>Next</button>`;
+        pagination.innerHTML = html;
     }
-}
 
-async function createAnnouncement(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = 'Posting...';
-    btn.disabled = true;
 
-    try {
-        const title = document.getElementById('announcementTitle').value;
-        const content = document.getElementById('announcementContent').value;
-        const imageFile = document.getElementById('announcementImage').files[0];
-
-        const formData = new FormData();
-        formData.append('Title', title);
-        formData.append('Message', content);
-        if (imageFile) {
-            formData.append('image', imageFile);
-        }
-
-        await apiFetch('/announcements', {
-            method: 'POST',
-            body: formData
-        });
-
-        document.getElementById('announcementTitle').value = '';
-        document.getElementById('announcementContent').value = '';
-        document.getElementById('announcementImage').value = '';
-        showToast('Announcement posted successfully!', 'success');
-        toggleAnnouncementForm(); // Auto-collapse the form after successful post
-        loadAnnouncements();
-    } catch (error) {
-        showToast('Error posting announcement: ' + error.message, 'error');
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
+    window.changeAnnouncementsPage = function (page) {
+        if (page < 1 || page > Math.ceil(currentAnnouncementsAdmin.length / announcementsAdminPerPage)) return;
+        announcementsAdminPage = page;
+        renderAnnouncementsAdmin();
     }
-}
 
-async function deleteAnnouncement(id) {
-    if (!await showConfirm('Are you sure you want to delete this announcement?')) return;
-    try {
-        await apiFetch('/announcements/' + id, { method: 'DELETE' });
-        loadAnnouncements();
-    } catch (error) {
-        showToast('Error deleting announcement: ' + error.message, 'error');
-    }
-}
+    window.toggleAnnouncementForm = function () {
+        const container = document.getElementById('announcementFormContainer');
+        const btn = document.getElementById('toggleAnnBtn');
 
-// --- Aadhar Verification Logic ---
-let currentAadharStudents = [];
-let filteredAadharStudents = [];
-let currentAadharPage = 1;
-const aadharPerPage = 10;
-let aadharSearchTimeout = null;
 
-async function loadAadhar() {
-    const list = document.getElementById('aadharList');
-    if (!list) return;
-    list.innerHTML = 'Loading Aadhar records...';
-    try {
-        const data = await apiFetch('/admin/students');
-        if (data && data.length > 0) {
-            currentAadharStudents = data;
-            filterAadhar(true);
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Close';
+                btn.classList.replace('btn', 'btn-outline');
+            }
         } else {
-            list.innerHTML = '<p>No student records found.</p>';
-            document.getElementById('aadharPagination').innerHTML = '';
+            container.style.display = 'none';
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-plus"></i> New Post';
+                btn.classList.replace('btn-outline', 'btn');
+            }
+            document.getElementById('announcementForm').reset();
         }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
-    }
-}
-
-// Bulk Notify Not Uploaded
-async function bulkNotifyNotUploaded() {
-    if (!await showConfirm('Are you sure you want to send a push notification reminder to ALL students who have "Not Uploaded" their Aadhar?')) return;
-    
-    try {
-        showToast('Sending notifications...', 'info');
-        const res = await apiFetch('/admin/aadhar/notify-not-uploaded', { method: 'POST' });
-        showToast(res.message, 'success');
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-    }
-}
-
-window.filterAadhar = function(immediate = false) {
-    const searchInput = document.getElementById('aadharSearch');
-    const query = searchInput ? searchInput.value.toLowerCase() : '';
-    const statusFilter = document.getElementById('filterAadharStatus') ? document.getElementById('filterAadharStatus').value : '';
-
-    if (aadharSearchTimeout) clearTimeout(aadharSearchTimeout);
-
-    const executeFilter = () => {
-        filteredAadharStudents = currentAadharStudents.filter(student => {
-            const name = (student.FullName || student.FirstName + ' ' + (student.LastName || '')).toLowerCase();
-            const contact = (student.Contact || '').toLowerCase();
-            const libId = (student.LibraryID || '').toLowerCase();
-            const aadhar = (student.AadharNumber || '').toLowerCase();
-            
-            const matchesQuery = name.includes(query) || contact.includes(query) || libId.includes(query) || aadhar.includes(query);
-            
-            const actualStatus = student.AadharStatus || 'Not Uploaded';
-            const matchesStatus = statusFilter === '' || actualStatus === statusFilter;
-
-            return matchesQuery && matchesStatus;
-        });
-        currentAadharPage = 1;
-        renderAadhar();
-    };
-
-    if (immediate) executeFilter();
-    else aadharSearchTimeout = setTimeout(executeFilter, 300);
-}
-
-function renderAadhar() {
-    const list = document.getElementById('aadharList');
-    if (!list) return;
-
-    const startIndex = (currentAadharPage - 1) * aadharPerPage;
-    const endIndex = startIndex + aadharPerPage;
-    const paginatedStudents = filteredAadharStudents.slice(startIndex, endIndex);
-
-    if (paginatedStudents.length === 0) {
-        list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No records match your search.</p>';
-        document.getElementById('aadharPagination').innerHTML = '';
-        return;
     }
 
-    list.innerHTML = paginatedStudents.map(student => {
-        const status = student.AadharStatus || 'Not Uploaded';
-        return `
-        <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
+    async function createAnnouncement(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Posting...';
+        btn.disabled = true;
+
+        try {
+            const title = document.getElementById('announcementTitle').value;
+            const content = document.getElementById('announcementContent').value;
+            const imageFile = document.getElementById('announcementImage').files[0];
+
+            const formData = new FormData();
+            formData.append('Title', title);
+            formData.append('Message', content);
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
+
+            await apiFetch('/announcements', {
+                method: 'POST',
+                body: formData
+            });
+
+            document.getElementById('announcementTitle').value = '';
+            document.getElementById('announcementContent').value = '';
+            document.getElementById('announcementImage').value = '';
+            showToast('Announcement posted successfully!', 'success');
+            toggleAnnouncementForm(); // Auto-collapse the form after successful post
+            loadAnnouncements();
+        } catch (error) {
+            showToast('Error posting announcement: ' + error.message, 'error');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function deleteAnnouncement(id) {
+        if (!await showConfirm('Are you sure you want to delete this announcement?')) return;
+        try {
+            await apiFetch('/announcements/' + id, { method: 'DELETE' });
+            loadAnnouncements();
+        } catch (error) {
+            showToast('Error deleting announcement: ' + error.message, 'error');
+        }
+    }
+
+    // --- Aadhar Verification Logic ---
+    let currentAadharStudents = [];
+    let filteredAadharStudents = [];
+    let currentAadharPage = 1;
+    const aadharPerPage = 10;
+    let aadharSearchTimeout = null;
+
+    async function loadAadhar() {
+        const list = document.getElementById('aadharList');
+        if (!list) return;
+        list.innerHTML = 'Loading Aadhar records...';
+        try {
+            const data = await apiFetch('/admin/students');
+            if (data && data.length > 0) {
+                currentAadharStudents = data;
+                filterAadhar(true);
+            } else {
+                list.innerHTML = '<p>No student records found.</p>';
+                document.getElementById('aadharPagination').innerHTML = '';
+            }
+        } catch (error) {
+            list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+    }
+
+    // Bulk Notify Not Uploaded
+    async function bulkNotifyNotUploaded() {
+        if (!await showConfirm('Are you sure you want to send a push notification reminder to ALL students who have "Not Uploaded" their Aadhar?')) return;
+
+
+        try {
+            showToast('Sending notifications...', 'info');
+            const res = await apiFetch('/admin/aadhar/notify-not-uploaded', { method: 'POST' });
+            showToast(res.message, 'success');
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        }
+    }
+
+   
+        window.filterAadhar = function (immediate = false) {
+            const searchInput = document.getElementById('aadharSearch');
+            const query = searchInput ? searchInput.value.toLowerCase() : '';
+            const statusFilter = document.getElementById('filterAadharStatus') ? document.getElementById('filterAadharStatus').value : '';
+
+            if (aadharSearchTimeout) clearTimeout(aadharSearchTimeout);
+
+            const executeFilter = () => {
+                filteredAadharStudents = currentAadharStudents.filter(student => {
+                    const name = (student.FullName || student.FirstName + ' ' + (student.LastName || '')).toLowerCase();
+                    const contact = (student.Contact || '').toLowerCase();
+                    const libId = (student.LibraryID || '').toLowerCase();
+                    const aadhar = (student.AadharNumber || '').toLowerCase();
+
+
+                    const matchesQuery = name.includes(query) || contact.includes(query) || libId.includes(query) || aadhar.includes(query);
+
+
+                    const actualStatus = student.AadharStatus || 'Not Uploaded';
+                    const matchesStatus = statusFilter === '' || actualStatus === statusFilter;
+
+                    return matchesQuery && matchesStatus;
+                });
+                currentAadharPage = 1;
+                renderAadhar();
+            };
+
+            if (immediate) executeFilter();
+            else aadharSearchTimeout = setTimeout(executeFilter, 300);
+        }
+
+        function renderAadhar() {
+            const list = document.getElementById('aadharList');
+            if (!list) return;
+
+            const startIndex = (currentAadharPage - 1) * aadharPerPage;
+            const endIndex = startIndex + aadharPerPage;
+            const paginatedStudents = filteredAadharStudents.slice(startIndex, endIndex);
+
+            if (paginatedStudents.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No records match your search.</p>';
+                document.getElementById('aadharPagination').innerHTML = '';
+                return;
+            }
+
+            list.innerHTML = paginatedStudents.map(student => {
+                const status = student.AadharStatus || 'Not Uploaded';
+                return `
+            <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <img src="${student.ProfilePictureURL || '/img/default-avatar.png'}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--card-border);">
@@ -2081,13 +2265,22 @@ function renderAadhar() {
                     ${status === 'Pending' ? `<span style="font-size: 0.85em; color: var(--warning-color); padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;"><i class="fa-solid fa-clock"></i> Pending</span>` : ''}
                     ${status === 'Not Uploaded' ? `<span style="font-size: 0.85em; color: var(--text-secondary); padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;"><i class="fa-solid fa-circle-exclamation"></i> Not Uploaded</span>` : ''}
 
-                    ${student.AadharProofURL ? 
-                        `<button onclick="window.open('${student.AadharProofURL}', '_blank')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: #6B7280; color: #6B7280; border-radius: 6px; font-size: 0.85em;" title="View Aadhar Document"><i class="fa-solid fa-file-image"></i> View Document</button>` 
+                    ${student.AadharProofURL ?
+                        `<button onclick="window.open('${student.AadharProofURL}', '_blank')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: #6B7280; color: #6B7280; border-radius: 6px; font-size: 0.85em;" title="View Aadhar Document"><i class="fa-solid fa-file-image"></i> View Document</button>`
                         : ''
                     }
-                    ${(status === 'Pending' || (status === 'Not Uploaded' && student.AadharProofURL)) ? 
+                    ${(status === 'Pending' || (status === 'Not Uploaded' && student.AadharProofURL)) ?
                         `<button onclick="verifyAadhar('${student._id}', 'Verified')" class="btn" style="padding: 0.3rem 0.6rem; background: var(--success-color); border-color: var(--success-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-check"></i> Approve</button>
-                        <button onclick="rejectAadhar('${student._id}')" class="btn" style="padding: 0.3rem 0.6rem; background: var(--error-color); border-color: var(--error-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-xmark"></i> Reject</button>` 
+                        <button onclick="rejectAadhar('${student._id}')" class="btn" style="padding: 0.3rem 0.6rem; background: var(--error-color); border-color: var(--error-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-xmark"></i> Reject</button>`
+                        : ''
+                    }
+                    ${student.AadharProofURL ?
+                        `<button onclick="window.open('${student.AadharProofURL}', '_blank')" class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: #6B7280; color: #6B7280; border-radius: 6px; font-size: 0.85em;" title="View Aadhar Document"><i class="fa-solid fa-file-image"></i> View Document</button>`
+                        : ''
+                    }
+                    ${(status === 'Pending' || (status === 'Not Uploaded' && student.AadharProofURL)) ?
+                        `<button onclick="verifyAadhar('${student._id}', 'Verified')" class="btn" style="padding: 0.3rem 0.6rem; background: var(--success-color); border-color: var(--success-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-check"></i> Approve</button>
+                        <button onclick="rejectAadhar('${student._id}')" class="btn" style="padding: 0.3rem 0.6rem; background: var(--error-color); border-color: var(--error-color); border-radius: 6px; font-size: 0.85em;"><i class="fa-solid fa-xmark"></i> Reject</button>`
                         : ''
                     }
                 </div>
@@ -2096,93 +2289,96 @@ function renderAadhar() {
         </div>
     `}).join('');
 
-    renderAadharPagination();
-}
-
-function renderAadharPagination() {
-    const pagination = document.getElementById('aadharPagination');
-    if (!pagination) return;
-    const totalPages = Math.ceil(filteredAadharStudents.length / aadharPerPage);
-
-    if (totalPages <= 1) {
-        pagination.innerHTML = '';
-        return;
-    }
-
-    let html = '';
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentAadharPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAadharPage(${currentAadharPage - 1})"`}>Prev</button>`;
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentAadharPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeAadharPage(${i})">${i}</button>`;
-    }
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentAadharPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAadharPage(${currentAadharPage + 1})"`}>Next</button>`;
-    pagination.innerHTML = html;
-}
-
-window.changeAadharPage = function(page) {
-    if (page < 1 || page > Math.ceil(filteredAadharStudents.length / aadharPerPage)) return;
-    currentAadharPage = page;
-    renderAadhar();
-}
-
-// Issues Logic
-async function loadIssues() {
-    const list = document.getElementById('issuesList');
-    list.innerHTML = 'Loading issues...';
-    try {
-        const data = await apiFetch('/issues');
-        if (data && data.length > 0) {
-            currentIssues = data;
-            filterIssues(true);
-        } else {
-            list.innerHTML = '<p>No issues reported.</p>';
-            document.getElementById('issuesPagination').innerHTML = '';
+            renderAadharPagination();
         }
-    } catch (error) {
-        list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
-    }
-}
 
-function filterIssues(immediate = false) {
-    const searchInput = document.getElementById('issueSearch');
-    const query = searchInput ? searchInput.value.toLowerCase() : '';
-    const statusFilter = document.getElementById('filterIssueStatus') ? document.getElementById('filterIssueStatus').value : '';
+        function renderAadharPagination() {
+            const pagination = document.getElementById('aadharPagination');
+            if (!pagination) return;
+            const totalPages = Math.ceil(filteredAadharStudents.length / aadharPerPage);
 
-    if (searchTimeout) clearTimeout(searchTimeout);
-
-    const executeFilter = () => {
-        filteredIssues = currentIssues.filter(issue => {
-            const title = (issue.IssueTitle || '').toLowerCase();
-            const desc = (issue.Description || '').toLowerCase();
-            const studentName = issue.StudentId ? (issue.StudentId.FullName || '').toLowerCase() : '';
-            const libId = issue.StudentId ? (issue.StudentId.LibraryID || '').toLowerCase() : '';
-            const issueStatus = (issue.Status || '');
-            
-            const matchesQuery = title.includes(query) || desc.includes(query) || studentName.includes(query) || libId.includes(query) || issueStatus.toLowerCase().includes(query);
-            
-            let matchesStatus = true;
-            if (statusFilter === 'Open') {
-                matchesStatus = ['Pending', 'Seen by Admin', 'In Progress'].includes(issueStatus);
-            } else if (statusFilter !== '') {
-                matchesStatus = issueStatus === statusFilter;
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
             }
 
-            return matchesQuery && matchesStatus;
-        });
-        currentIssuesPage = 1;
-        renderIssues();
-    };
+            let html = '';
+            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentAadharPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAadharPage(${currentAadharPage - 1})"`}>Prev</button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentAadharPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeAadharPage(${i})">${i}</button>`;
+            }
+            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentAadharPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAadharPage(${currentAadharPage + 1})"`}>Next</button>`;
+            pagination.innerHTML = html;
+        }
 
-    if (immediate) executeFilter();
-    else searchTimeout = setTimeout(executeFilter, 300);
-}
+       
+            window.changeAadharPage = function (page) {
+                if (page < 1 || page > Math.ceil(filteredAadharStudents.length / aadharPerPage)) return;
+                currentAadharPage = page;
+                renderAadhar();
+            }
 
-function renderIssues() {
-    const list = document.getElementById('issuesList');
-    const startIndex = (currentIssuesPage - 1) * issuesPerPage;
-    const endIndex = startIndex + issuesPerPage;
-    const paginatedIssues = filteredIssues.slice(startIndex, endIndex);
+            // Issues Logic
+            async function loadIssues() {
+                const list = document.getElementById('issuesList');
+                list.innerHTML = 'Loading issues...';
+                try {
+                    const data = await apiFetch('/issues');
+                    if (data && data.length > 0) {
+                        currentIssues = data;
+                        filterIssues(true);
+                    } else {
+                        list.innerHTML = '<p>No issues reported.</p>';
+                        document.getElementById('issuesPagination').innerHTML = '';
+                    }
+                } catch (error) {
+                    list.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                }
+            }
 
-    list.innerHTML = paginatedIssues.map(issue => `
+            function filterIssues(immediate = false) {
+                const searchInput = document.getElementById('issueSearch');
+                const query = searchInput ? searchInput.value.toLowerCase() : '';
+                const statusFilter = document.getElementById('filterIssueStatus') ? document.getElementById('filterIssueStatus').value : '';
+
+                if (searchTimeout) clearTimeout(searchTimeout);
+
+                const executeFilter = () => {
+                    filteredIssues = currentIssues.filter(issue => {
+                        const title = (issue.IssueTitle || '').toLowerCase();
+                        const desc = (issue.Description || '').toLowerCase();
+                        const studentName = issue.StudentId ? (issue.StudentId.FullName || '').toLowerCase() : '';
+                        const libId = issue.StudentId ? (issue.StudentId.LibraryID || '').toLowerCase() : '';
+                        const issueStatus = (issue.Status || '');
+
+
+                        const matchesQuery = title.includes(query) || desc.includes(query) || studentName.includes(query) || libId.includes(query) || issueStatus.toLowerCase().includes(query);
+
+
+                        let matchesStatus = true;
+                        if (statusFilter === 'Open') {
+                            matchesStatus = ['Pending', 'Seen by Admin', 'In Progress'].includes(issueStatus);
+                        } else if (statusFilter !== '') {
+                            matchesStatus = issueStatus === statusFilter;
+                        }
+
+                        return matchesQuery && matchesStatus;
+                    });
+                    currentIssuesPage = 1;
+                    renderIssues();
+                };
+
+                if (immediate) executeFilter();
+                else searchTimeout = setTimeout(executeFilter, 300);
+            }
+
+            function renderIssues() {
+                const list = document.getElementById('issuesList');
+                const startIndex = (currentIssuesPage - 1) * issuesPerPage;
+                const endIndex = startIndex + issuesPerPage;
+                const paginatedIssues = filteredIssues.slice(startIndex, endIndex);
+
+                list.innerHTML = paginatedIssues.map(issue => `
                 <div style="border-bottom: 1px solid red; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <div>
@@ -2228,91 +2424,91 @@ function renderIssues() {
                 </div>
             `).join('');
 
-    renderIssuesPagination();
-}
+                renderIssuesPagination();
+            }
 
-function renderIssuesPagination() {
-    const pagination = document.getElementById('issuesPagination');
-    const totalPages = Math.ceil(filteredIssues.length / issuesPerPage);
+            function renderIssuesPagination() {
+                const pagination = document.getElementById('issuesPagination');
+                const totalPages = Math.ceil(filteredIssues.length / issuesPerPage);
 
-    if (totalPages <= 1) {
-        pagination.innerHTML = '';
-        return;
-    }
+                if (totalPages <= 1) {
+                    pagination.innerHTML = '';
+                    return;
+                }
 
-    let html = '';
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentIssuesPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeIssuesPage(${currentIssuesPage - 1})"`}>Prev</button>`;
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentIssuesPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeIssuesPage(${i})">${i}</button>`;
-    }
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentIssuesPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeIssuesPage(${currentIssuesPage + 1})"`}>Next</button>`;
-    pagination.innerHTML = html;
-}
+                let html = '';
+                html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentIssuesPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeIssuesPage(${currentIssuesPage - 1})"`}>Prev</button>`;
+                for (let i = 1; i <= totalPages; i++) {
+                    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentIssuesPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeIssuesPage(${i})">${i}</button>`;
+                }
+                html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentIssuesPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeIssuesPage(${currentIssuesPage + 1})"`}>Next</button>`;
+                pagination.innerHTML = html;
+            }
 
-function changeIssuesPage(page) {
-    if (page < 1 || page > Math.ceil(filteredIssues.length / issuesPerPage)) return;
-    currentIssuesPage = page;
-    renderIssues();
-}
+            function changeIssuesPage(page) {
+                if (page < 1 || page > Math.ceil(filteredIssues.length / issuesPerPage)) return;
+                currentIssuesPage = page;
+                renderIssues();
+            }
 
-async function updateIssueStatus(id, newStatus) {
-    try {
-        await apiFetch('/issues/' + id, {
-            method: 'PUT',
-            body: JSON.stringify({ Status: newStatus })
-        });
-        // loadIssues(); // Optional: reload to refresh UI, or just trust the select change
-        // We can reload to get correct styling on the badge
-        loadIssues();
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error updating status: ' + error.message, 'error');
-        loadIssues(); // reload to revert a failed change
-    }
-}
+            async function updateIssueStatus(id, newStatus) {
+                try {
+                    await apiFetch('/issues/' + id, {
+                        method: 'PUT',
+                        body: JSON.stringify({ Status: newStatus })
+                    });
+                    // loadIssues(); // Optional: reload to refresh UI, or just trust the select change
+                    // We can reload to get correct styling on the badge
+                    loadIssues();
+                    loadDashboardStats();
+                } catch (error) {
+                    showToast('Error updating status: ' + error.message, 'error');
+                    loadIssues(); // reload to revert a failed change
+                }
+            }
 
-async function replyToIssue(id) {
-    const reply = await showPrompt('Enter your reply/note for this issue (students will see this):');
-    if (reply === null) return;
+            async function replyToIssue(id) {
+                const reply = await showPrompt('Enter your reply/note for this issue (students will see this):');
+                if (reply === null) return;
 
-    try {
-        await apiFetch('/issues/' + id, {
-            method: 'PUT',
-            body: JSON.stringify({ AdminResponse: reply })
-        });
-        showToast('Reply saved successfully', 'success');
-        loadIssues();
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error saving reply: ' + error.message, 'error');
-    }
-}
+                try {
+                    await apiFetch('/issues/' + id, {
+                        method: 'PUT',
+                        body: JSON.stringify({ AdminResponse: reply })
+                    });
+                    showToast('Reply saved successfully', 'success');
+                    loadIssues();
+                    loadDashboardStats();
+                } catch (error) {
+                    showToast('Error saving reply: ' + error.message, 'error');
+                }
+            }
 
-async function deleteIssue(id) {
-    if (!await showConfirm('Are you sure you want to delete this resolved issue?')) return;
-    try {
-        await apiFetch('/issues/' + id, { method: 'DELETE' });
-        loadIssues();
-        loadDashboardStats();
-    } catch (error) {
-        showToast('Error deleting issue: ' + error.message, 'error');
-    }
-}
+            async function deleteIssue(id) {
+                if (!await showConfirm('Are you sure you want to delete this resolved issue?')) return;
+                try {
+                    await apiFetch('/issues/' + id, { method: 'DELETE' });
+                    loadIssues();
+                    loadDashboardStats();
+                } catch (error) {
+                    showToast('Error deleting issue: ' + error.message, 'error');
+                }
+            }
 
-// --- Custom UI Helpers ---
-function injectCustomUI() {
-    // Toast Container
-    if (!document.getElementById('toast-container')) {
-        const div = document.createElement('div');
-        div.id = 'toast-container';
-        document.body.appendChild(div);
-    }
-    // Custom Confirm/Prompt Modal
-    if (!document.getElementById('customModalOverlay')) {
-        const div = document.createElement('div');
-        div.id = 'customModalOverlay';
-        div.className = 'custom-modal-overlay';
-        div.innerHTML = `
+            // --- Custom UI Helpers ---
+            function injectCustomUI() {
+                // Toast Container
+                if (!document.getElementById('toast-container')) {
+                    const div = document.createElement('div');
+                    div.id = 'toast-container';
+                    document.body.appendChild(div);
+                }
+                // Custom Confirm/Prompt Modal
+                if (!document.getElementById('customModalOverlay')) {
+                    const div = document.createElement('div');
+                    div.id = 'customModalOverlay';
+                    div.className = 'custom-modal-overlay';
+                    div.innerHTML = `
             <div class="custom-box">
                 <h3 id="customModalTitle">Confirm</h3>
                 <p id="customModalMessage" style="white-space: pre-wrap; margin-bottom: 15px; line-height: 1.4;"></p>
@@ -2326,191 +2522,199 @@ function injectCustomUI() {
                 </div>
             </div>
         `;
-        document.body.appendChild(div);
-    }
-}
-
-function showToast(message, type = 'info') { 
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    
-    let icon = '<i class="fa-solid fa-circle-info" style="color:var(--primary-color)"></i>';
-    if (type === 'success') icon = '<i class="fa-solid fa-circle-check" style="color:#10B981"></i>';
-    if (type === 'error') icon = '<i class="fa-solid fa-circle-exclamation" style="color:#EF4444"></i>';
-    if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation" style="color:#F59E0B"></i>';
-
-    toast.innerHTML = `<div style="display:flex; align-items:center; gap:10px;">${icon} <span>${message}</span></div>`;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-function showConfirm(message) {
-    return showPrompt(message, false);
-}
-
-
-function showPrompt(message, isPrompt = true, defaultValue = '') {
-    return new Promise((resolve) => {
-        const overlay = document.getElementById('customModalOverlay');
-        const inputContainer = document.getElementById('customModalInputContainer');
-        const input = document.getElementById('customModalInput');
-        
-        document.getElementById('customModalTitle').textContent = isPrompt ? 'Input Required' : 'Confirm';
-        document.getElementById('customModalMessage').textContent = message;
-        inputContainer.style.display = isPrompt ? 'block' : 'none';
-        input.value = '';
-        input.value = defaultValue;
-
-        const confirmBtn = document.getElementById('customModalConfirm');
-        const cancelBtn = document.getElementById('customModalCancel');
-
-        const cleanup = () => {
-            overlay.classList.remove('active');
-            confirmBtn.onclick = null;
-            cancelBtn.onclick = null;
-        };
-
-        confirmBtn.onclick = () => { cleanup(); resolve(isPrompt ? input.value : true); };
-        cancelBtn.onclick = () => { cleanup(); resolve(isPrompt ? null : false); };
-
-        overlay.classList.add('active');
-        if(isPrompt) input.focus();
-    });
-}
-
-// Initialize UI Helpers immediately
-injectCustomUI();
-
-// --- Theme / Dark Mode Logic ---
-function initTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    const icon = document.getElementById('themeIcon');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
-    }
-}
-
-window.toggleTheme = function() {
-    document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
-    const icon = document.getElementById('themeIcon');
-
-    if (isDark) {
-        localStorage.setItem('theme', 'dark');
-        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
-    } else {
-        localStorage.setItem('theme', 'light');
-        if (icon) icon.classList.replace('fa-sun', 'fa-moon');
-    }
-}
-
-function openImageModal(url) {
-    document.getElementById('modalImage').src = url;
-    document.getElementById('imageModal').style.display = 'flex';
-}
-
-window.closeImageModal = function() {
-    document.getElementById('imageModal').style.display = 'none';
-    document.getElementById('modalImage').src = '';
-}
-
-// --- Payment History Table Logic & Paginations ---
-let currentPaymentHistory = [];
-let filteredPaymentHistory = [];
-let paymentHistoryPage = 1;
-const paymentHistoryPerPage = 10;
-let paymentHistorySearchTimeout = null;
-
-window.loadPaymentHistory = async function() {
-    const list = document.getElementById('paymentHistoryList');
-    if (!list) return; 
-    list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Loading payment history...</td></tr>';
-    try {
-        const data = await apiFetch('/fees'); 
-        if (data && data.length > 0) {
-            // Filter only fees that are successfully paid/approved
-            currentPaymentHistory = data.filter(fee => fee.Status === 'Paid' || fee.Status === 'Approved');
-            filterPaymentHistory(true);
-        } else {
-            list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-secondary);">No payment history found.</td></tr>';
-            document.getElementById('paymentHistoryPagination').innerHTML = '';
-        }
-    } catch (error) {
-        list.innerHTML = `<tr><td colspan="7" style="color: red; text-align: center; padding: 20px;">Error: ${error.message}</td></tr>`;
-    }
-}
-
-window.filterPaymentHistory = function(immediate = false) {
-    const searchInput = document.getElementById('paymentHistorySearch');
-    const query = searchInput ? searchInput.value.toLowerCase() : '';
-
-    if (paymentHistorySearchTimeout) clearTimeout(paymentHistorySearchTimeout);
-
-    const executeFilter = () => {
-        filteredPaymentHistory = currentPaymentHistory.filter(fee => {
-            const studentName = fee.StudentId ? (fee.StudentId.FullName || '').toLowerCase() : '';
-            const libId = fee.StudentId ? (fee.StudentId.LibraryID || '').toLowerCase() : '';
-            const month = (fee.Month || '').toLowerCase();
-            const batch = (fee.Batch || (fee.StudentId?.batchType || '')).toLowerCase();
-            const amount = String(fee.Amount || '');
-            const note = (fee.AdminNote || '').toLowerCase();
-            
-            return studentName.includes(query) || libId.includes(query) || month.includes(query) || batch.includes(query) || amount.includes(query) || note.includes(query);
-        });
-        paymentHistoryPage = 1;
-        renderPaymentHistory();
-    };
-
-    if (immediate) executeFilter();
-    else paymentHistorySearchTimeout = setTimeout(executeFilter, 300);
-}
-
-function renderPaymentHistory() {
-    const list = document.getElementById('paymentHistoryList');
-    if (!list) return;
-
-    const startIndex = (paymentHistoryPage - 1) * paymentHistoryPerPage;
-    const endIndex = startIndex + paymentHistoryPerPage;
-    const paginatedHistory = filteredPaymentHistory.slice(startIndex, endIndex);
-
-    if (paginatedHistory.length === 0) {
-        list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-secondary);">No payment history matches your search.</td></tr>';
-        document.getElementById('paymentHistoryPagination').innerHTML = '';
-        return;
-    }
-
-    list.innerHTML = paginatedHistory.map(fee => {
-        const studentName = fee.StudentId ? fee.StudentId.FullName : 'Unknown';
-        const libId = fee.StudentId ? (fee.StudentId.LibraryID || 'N/A') : 'N/A';
-        const plan = fee.StudentId ? (fee.StudentId.planDuration || 'N/A') : 'N/A';
-        const batch = fee.Batch || (fee.StudentId ? fee.StudentId.batchType : 'N/A');
-        
-        // Parse the formatted AdminNote to cleanly extract Txn ID and Date
-        let txnId = 'N/A';
-        let userPaidDate = 'N/A';
-        if (fee.AdminNote) {
-            const parts = fee.AdminNote.split('|');
-            if (parts.length >= 2) {
-                txnId = parts[0].replace('Txn ID:', '').trim();
-                userPaidDate = parts[1].replace('Date:', '').trim();
-            } else {
-                txnId = fee.AdminNote; 
+                    document.body.appendChild(div);
+                }
             }
-        }
 
-        // Format digital signature timestamp to IST
-        const verifiedDate = new Date(fee.updatedAt).toLocaleString('en-IN', {
-            timeZone: 'Asia/Kolkata',
-            day: '2-digit', month: 'long', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', hour12: true
-        });
+            function showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                    const toast = document.createElement('div');
+                    toast.className = `toast ${type}`;
 
-        return `
+
+                    let icon = '<i class="fa-solid fa-circle-info" style="color:var(--primary-color)"></i>';
+                    if (type === 'success') icon = '<i class="fa-solid fa-circle-check" style="color:#10B981"></i>';
+                    if (type === 'error') icon = '<i class="fa-solid fa-circle-exclamation" style="color:#EF4444"></i>';
+                    if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation" style="color:#F59E0B"></i>';
+
+                    toast.innerHTML = `<div style="display:flex; align-items:center; gap:10px;">${icon} <span>${message}</span></div>`;
+                    container.appendChild(toast);
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                }
+
+                function showConfirm(message) {
+                    return showPrompt(message, false);
+                }
+
+
+                function showPrompt(message, isPrompt = true, defaultValue = '') {
+                    return new Promise((resolve) => {
+                        const overlay = document.getElementById('customModalOverlay');
+                        const inputContainer = document.getElementById('customModalInputContainer');
+                        const input = document.getElementById('customModalInput');
+
+
+                        document.getElementById('customModalTitle').textContent = isPrompt ? 'Input Required' : 'Confirm';
+                        document.getElementById('customModalMessage').textContent = message;
+                        inputContainer.style.display = isPrompt ? 'block' : 'none';
+                        input.value = '';
+                        input.value = defaultValue;
+
+                        const confirmBtn = document.getElementById('customModalConfirm');
+                        const cancelBtn = document.getElementById('customModalCancel');
+
+                        const cleanup = () => {
+                            overlay.classList.remove('active');
+                            confirmBtn.onclick = null;
+                            cancelBtn.onclick = null;
+                        };
+
+                        confirmBtn.onclick = () => { cleanup(); resolve(isPrompt ? input.value : true); };
+                        cancelBtn.onclick = () => { cleanup(); resolve(isPrompt ? null : false); };
+
+                        overlay.classList.add('active');
+                        if (isPrompt) input.focus();
+                        if (isPrompt) input.focus();
+                    });
+                }
+
+                // Initialize UI Helpers immediately
+                injectCustomUI();
+
+                // --- Theme / Dark Mode Logic ---
+                function initTheme() {
+                    const savedTheme = localStorage.getItem('theme');
+                    const icon = document.getElementById('themeIcon');
+                    if (savedTheme === 'dark') {
+                        document.body.classList.add('dark-mode');
+                        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+                    }
+                }
+
+                
+                    window.toggleTheme = function () {
+                        document.body.classList.toggle('dark-mode');
+                        const isDark = document.body.classList.contains('dark-mode');
+                        const icon = document.getElementById('themeIcon');
+
+                        if (isDark) {
+                            localStorage.setItem('theme', 'dark');
+                            if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+                        } else {
+                            localStorage.setItem('theme', 'light');
+                            if (icon) icon.classList.replace('fa-sun', 'fa-moon');
+                        }
+                    }
+
+                    function openImageModal(url) {
+                        document.getElementById('modalImage').src = url;
+                        document.getElementById('imageModal').style.display = 'flex';
+                    }
+
+                  
+                        window.closeImageModal = function () {
+                            document.getElementById('imageModal').style.display = 'none';
+                            document.getElementById('modalImage').src = '';
+                        }
+
+                        // --- Payment History Table Logic & Paginations ---
+                        let currentPaymentHistory = [];
+                        let filteredPaymentHistory = [];
+                        let paymentHistoryPage = 1;
+                        const paymentHistoryPerPage = 10;
+                        let paymentHistorySearchTimeout = null;
+
+                        window.loadPaymentHistory = async function () {
+                            const list = document.getElementById('paymentHistoryList');
+                            if (!list) return;
+                            list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Loading payment history...</td></tr>';
+                            try {
+                                const data = await apiFetch('/fees');
+                                if (data && data.length > 0) {
+                                    // Filter only fees that are successfully paid/approved
+                                    currentPaymentHistory = data.filter(fee => fee.Status === 'Paid' || fee.Status === 'Approved');
+                                    filterPaymentHistory(true);
+                                } else {
+                                    list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-secondary);">No payment history found.</td></tr>';
+                                    document.getElementById('paymentHistoryPagination').innerHTML = '';
+                                }
+                            } catch (error) {
+                                list.innerHTML = `<tr><td colspan="7" style="color: red; text-align: center; padding: 20px;">Error: ${error.message}</td></tr>`;
+                            }
+                        }
+
+                        window.filterPaymentHistory = function (immediate = false) {
+                            const searchInput = document.getElementById('paymentHistorySearch');
+                            const query = searchInput ? searchInput.value.toLowerCase() : '';
+
+                            if (paymentHistorySearchTimeout) clearTimeout(paymentHistorySearchTimeout);
+
+                            const executeFilter = () => {
+                                filteredPaymentHistory = currentPaymentHistory.filter(fee => {
+                                    const studentName = fee.StudentId ? (fee.StudentId.FullName || '').toLowerCase() : '';
+                                    const libId = fee.StudentId ? (fee.StudentId.LibraryID || '').toLowerCase() : '';
+                                    const month = (fee.Month || '').toLowerCase();
+                                    const batch = (fee.Batch || (fee.StudentId?.batchType || '')).toLowerCase();
+                                    const amount = String(fee.Amount || '');
+                                    const note = (fee.AdminNote || '').toLowerCase();
+
+
+                                    return studentName.includes(query) || libId.includes(query) || month.includes(query) || batch.includes(query) || amount.includes(query) || note.includes(query);
+                                });
+                                paymentHistoryPage = 1;
+                                renderPaymentHistory();
+                            };
+
+                            if (immediate) executeFilter();
+                            else paymentHistorySearchTimeout = setTimeout(executeFilter, 300);
+                        }
+
+                        function renderPaymentHistory() {
+                            const list = document.getElementById('paymentHistoryList');
+                            if (!list) return;
+
+                            const startIndex = (paymentHistoryPage - 1) * paymentHistoryPerPage;
+                            const endIndex = startIndex + paymentHistoryPerPage;
+                            const paginatedHistory = filteredPaymentHistory.slice(startIndex, endIndex);
+
+                            if (paginatedHistory.length === 0) {
+                                list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-secondary);">No payment history matches your search.</td></tr>';
+                                document.getElementById('paymentHistoryPagination').innerHTML = '';
+                                return;
+                            }
+
+                            list.innerHTML = paginatedHistory.map(fee => {
+                                const studentName = fee.StudentId ? fee.StudentId.FullName : 'Unknown';
+                                const libId = fee.StudentId ? (fee.StudentId.LibraryID || 'N/A') : 'N/A';
+                                const plan = fee.StudentId ? (fee.StudentId.planDuration || 'N/A') : 'N/A';
+                                const batch = fee.Batch || (fee.StudentId ? fee.StudentId.batchType : 'N/A');
+
+
+                                // Parse the formatted AdminNote to cleanly extract Txn ID and Date
+                                let txnId = 'N/A';
+                                let userPaidDate = 'N/A';
+                                if (fee.AdminNote) {
+                                    const parts = fee.AdminNote.split('|');
+                                    if (parts.length >= 2) {
+                                        txnId = parts[0].replace('Txn ID:', '').trim();
+                                        userPaidDate = parts[1].replace('Date:', '').trim();
+                                    } else {
+                                        txnId = fee.AdminNote;
+                                        txnId = fee.AdminNote;
+                                    }
+                                }
+
+                                // Format digital signature timestamp to IST
+                                const verifiedDate = new Date(fee.updatedAt).toLocaleString('en-IN', {
+                                    timeZone: 'Asia/Kolkata',
+                                    day: '2-digit', month: 'long', year: 'numeric',
+                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                });
+
+                                return `
             <tr style="border-bottom: 1px solid var(--card-border); background: var(--card-bg);">
                 <td style="padding: 12px 15px;">
                     <div style="font-weight: 600; color: var(--text-primary);">${studentName}</div>
@@ -2534,394 +2738,426 @@ function renderPaymentHistory() {
                 </td>
             </tr>
         `;
-    }).join('');
+                            }).join('');
 
-    renderPaymentHistoryPagination();
-}
-
-function renderPaymentHistoryPagination() {
-    const pagination = document.getElementById('paymentHistoryPagination');
-    if (!pagination) return;
-    
-    const totalPages = Math.ceil(filteredPaymentHistory.length / paymentHistoryPerPage);
-
-    if (totalPages <= 1) {
-        pagination.innerHTML = '';
-        return;
-    }
-
-    let html = '';
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${paymentHistoryPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changePaymentHistoryPage(${paymentHistoryPage - 1})"`}>Prev</button>`;
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${paymentHistoryPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changePaymentHistoryPage(${i})">${i}</button>`;
-    }
-    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${paymentHistoryPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changePaymentHistoryPage(${paymentHistoryPage + 1})"`}>Next</button>`;
-    pagination.innerHTML = html;
-}
-
-window.changePaymentHistoryPage = function(page) {
-    if (page < 1 || page > Math.ceil(filteredPaymentHistory.length / paymentHistoryPerPage)) return;
-    paymentHistoryPage = page;
-    renderPaymentHistory();
-}
-
-// --- Attendance Logic ---
-let currentAttendance = [];
-let filteredAttendance = [];
-
-window.loadAttendance = async function() {
-    const dateInput = document.getElementById('attendanceDateFilter');
-    const todayStr = new Date().toLocaleDateString('en-CA');
-    
-    if (dateInput && !dateInput.value) {
-        dateInput.value = todayStr;
-    }
-    const dateVal = dateInput ? dateInput.value : todayStr;
-    const list = document.getElementById('attendanceList');
-    
-    if(list) list.innerHTML = 'Loading attendance data...';
-    try {
-        const records = await apiFetch(`/admin/attendance?date=${dateVal}`);
-        currentAttendance = records;
-        filterAttendance();
-    } catch (e) {
-        if(list) list.innerHTML = `<p style="color:red;">Error loading records: ${e.message}</p>`;
-    }
-}
-
-window.filterAttendance = function() {
-    const searchInput = document.getElementById('attendanceSearch');
-    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-
-    if (!query) {
-        filteredAttendance = [...currentAttendance];
-    } else {
-        filteredAttendance = currentAttendance.filter(r => {
-            const stuName = (r.StudentId && r.StudentId.FullName) ? r.StudentId.FullName.toLowerCase() : '';
-            const libId = r.LibraryID ? r.LibraryID.toLowerCase() : (r.StudentId && r.StudentId.LibraryID ? r.StudentId.LibraryID.toLowerCase() : '');
-            return stuName.includes(query) || libId.includes(query);
-        });
-    }
-    renderAttendance(filteredAttendance);
-}
-
-function renderAttendance(records) {
-    const list = document.getElementById('attendanceList');
-    if(!records || records.length === 0) {
-        list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No attendance records found for this date.</p>';
-        return;
-    }
-
-    let html = '<style>.attendance-swipe-container::-webkit-scrollbar { display: none; }</style>';
-
-    html += records.map(r => {
-        const inTime = r.CheckInTime ? new Date(r.CheckInTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '--';
-        
-        let outTime = r.CheckOutTime ? new Date(r.CheckOutTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '--';
-        if (r.CheckOutTime && r.CheckOutMethod === 'Admin') {
-            outTime += ` <span style="color: var(--warning-color); font-weight: bold; font-size: 0.85em; margin-left: 2px;" title="Checked out manually by Admin">(A)</span>`;
-        } else if (r.CheckOutTime && r.CheckOutMethod === 'Auto') {
-            outTime += ` <span style="color: var(--text-secondary); font-weight: bold; font-size: 0.85em; margin-left: 2px;" title="Auto Checked Out">(Auto)</span>`;
-        }
-
-        let hrs = '--';
-        if (r.TotalHours) {
-            hrs = String(Math.floor(Math.round(r.TotalHours * 60) / 60)).padStart(2, '0') + ':' + String(Math.round(r.TotalHours * 60) % 60).padStart(2, '0') + ' hrs';
-        } else if (r.CheckInTime) {
-            const diffMins = Math.floor((new Date() - new Date(r.CheckInTime)) / 60000);
-            const h = Math.floor(diffMins / 60);
-            const m = diffMins % 60;
-            hrs = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' hrs <span style="color: var(--success-color); font-size: 0.8em; margin-left: 4px;" title="Currently in library"><i class="fa-solid fa-circle-dot fa-fade"></i></span>';
-        }
-
-        const stuName = r.StudentId ? r.StudentId.FullName : 'Unknown Student';
-        const libId = r.LibraryID || (r.StudentId ? r.StudentId.LibraryID : '--');
-        
-        return `<div style="border: 1px solid var(--card-border); padding: 12px; border-radius: 8px; margin-bottom: 12px; background: var(--input-bg);">
-            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
-                <div style="flex: 1 1 200px; min-width: 0;">
-                    <strong style="color: var(--primary-color); font-size: 1.05em; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${stuName}</strong>
-                    <div style="font-size:0.85em; color:var(--text-secondary);">ID: ${libId}</div>
-                </div>
-                <div class="attendance-swipe-container" style="display: flex; flex: 1 1 100%; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px;">
-                    <div style="flex: 1 0 100px; scroll-snap-align: center; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); text-align: center;">
-                        <span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 4px;">In</span> 
-                        <strong style="color:var(--success-color); font-size: 0.95em; white-space: nowrap;">${inTime}</strong>
-                    </div>
-                    <div style="flex: 1 0 100px; scroll-snap-align: center; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); text-align: center; display: flex; flex-direction: column; justify-content: center;">
-                        <span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 4px;">Out</span> 
-                        ${r.CheckOutTime 
-                            ? `<strong style="color:var(--error-color); font-size: 0.95em; white-space: nowrap;">${outTime}</strong>`
-                            : `<button onclick="manualCheckOut('${r._id}')" class="btn-outline" style="padding: 3px 8px; font-size: 0.75em; border-color: var(--error-color); color: var(--error-color); width: 100%; border-radius: 6px;">Manual Out</button>`
+                            renderPaymentHistoryPagination();
                         }
-                    </div>
-                    <div style="flex: 1 0 100px; scroll-snap-align: center; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); text-align: center;">
-                        <span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 4px;">Total</span> 
-                        <strong style="font-size: 0.95em; white-space: nowrap;">${hrs}</strong>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
 
-    list.innerHTML = html;
-}
+                        function renderPaymentHistoryPagination() {
+                            const pagination = document.getElementById('paymentHistoryPagination');
+                            if (!pagination) return;
 
-window.manualCheckOut = async function(id) {
-    if (!await showConfirm('Are you sure you want to manually check out this student now?')) return;
-    try {
-        await apiFetch(`/admin/attendance/${id}/checkout`, { method: 'PUT' });
-        showToast('Student checked out successfully.', 'success');
-        loadAttendance();
-    } catch (e) {
-        showToast(e.message, 'error');
-    }
-}
 
-window.openManualCheckInModal = async function() {
-    if (currentStudents.length === 0) await loadStudents();
-    const select = document.getElementById('manualCheckInStudentId');
-    
-    const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
-    select.innerHTML = '<option value="" disabled selected>Select an active student...</option>' + 
-        activeStudents.map(s => `<option value="${s._id}">${s.FullName} (${s.LibraryID || 'No ID'})</option>`).join('');
-        
-    document.getElementById('manualCheckInModal').style.display = 'block';
-}
+                            const totalPages = Math.ceil(filteredPaymentHistory.length / paymentHistoryPerPage);
 
-window.closeManualCheckInModal = function() {
-    document.getElementById('manualCheckInModal').style.display = 'none';
-}
+                            if (totalPages <= 1) {
+                                pagination.innerHTML = '';
+                                return;
+                            }
 
-window.submitManualCheckIn = async function(e) {
-    e.preventDefault();
-    const studentId = document.getElementById('manualCheckInStudentId').value;
-    const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
-    btn.disabled = true; btn.innerHTML = 'Checking In...';
-    try {
-        await apiFetch('/admin/attendance', { method: 'POST', body: JSON.stringify({ studentId }) });
-        showToast('Checked in successfully!', 'success');
-        closeManualCheckInModal();
-        loadAttendance();
-    } catch (err) {
-        showToast(err.message, 'error');
-    } finally {
-        btn.disabled = false; btn.innerHTML = originalText;
-    }
-}
+                            let html = '';
+                            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${paymentHistoryPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changePaymentHistoryPage(${paymentHistoryPage - 1})"`}>Prev</button>`;
+                            for (let i = 1; i <= totalPages; i++) {
+                                html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${paymentHistoryPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changePaymentHistoryPage(${i})">${i}</button>`;
+                            }
+                            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${paymentHistoryPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changePaymentHistoryPage(${paymentHistoryPage + 1})"`}>Next</button>`;
+                            pagination.innerHTML = html;
+                        }
 
-function initTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    const icon = document.getElementById('themeIcon');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
-    }
-}
 
-window.toggleTheme = function() {
-    document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
-    const icon = document.getElementById('themeIcon');
+                            window.changePaymentHistoryPage = function (page) {
+                                if (page < 1 || page > Math.ceil(filteredPaymentHistory.length / paymentHistoryPerPage)) return;
+                                paymentHistoryPage = page;
+                                renderPaymentHistory();
+                            }
 
-    if (isDark) {
-        localStorage.setItem('theme', 'dark');
-        if (icon) icon.classList.replace('fa-moon', 'fa-sun');
-    } else {
-        localStorage.setItem('theme', 'light');
-        if (icon) icon.classList.replace('fa-sun', 'fa-moon');
-    }
-}
+                            // --- Attendance Logic ---
+                            let currentAttendance = [];
+                            let filteredAttendance = [];
 
-// --- Wi-Fi Settings Management ---
-window.switchSettingsTab = function(tab) {
-    const tabs = ['wifi', 'attendance', 'seats'];
-    tabs.forEach(t => {
-        const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
-        const content = document.getElementById('settingsTab' + t.charAt(0).toUpperCase() + t.slice(1) + 'Content');
-        
-        if (t === tab) {
-            if(btn) {
-                btn.className = 'btn';
-                btn.style.cssText = 'padding:8px 16px; border-radius:8px; font-size:0.95em; display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;';
-            }
-            if(content) content.style.display = 'block';
-        } else {
-            if(btn) {
-                btn.className = 'btn-outline';
-                btn.style.cssText = 'padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;';
-            }
-            if(content) content.style.display = 'none';
-        }
-    });
-}
+                         
+                                window.loadAttendance = async function () {
+                                    const dateInput = document.getElementById('attendanceDateFilter');
+                                    const todayStr = new Date().toLocaleDateString('en-CA');
 
-window.loadWifiSettings = async function() {
-    try {
-        const data = await apiFetch('/config/wifi');
-        if (document.getElementById('wifiHall1Network')) {
-            if(document.getElementById('wifiHall1Title')) document.getElementById('wifiHall1Title').value = data.hall1.title || 'Hall 01';
-            document.getElementById('wifiHall1Network').value = data.hall1.network;
-            document.getElementById('wifiHall1Password').value = data.hall1.password;
-            if(document.getElementById('wifiHall2Title')) document.getElementById('wifiHall2Title').value = data.hall2.title || 'Hall 02 + Premium Rooms';
-            document.getElementById('wifiHall2Network').value = data.hall2.network;
-            document.getElementById('wifiHall2Password').value = data.hall2.password;
-        }
 
-        // Also load IP Settings
-        const locData = await apiFetch('/config/location');
-        if (document.getElementById('libIP')) {
-            document.getElementById('libIP').value = locData.ip || locData.lat || '';
-        }
-    } catch (error) {
-        console.error('Error loading Wi-Fi config', error);
-    }
-}
+                                    if (dateInput && !dateInput.value) {
+                                        dateInput.value = todayStr;
+                                    }
+                                    const dateVal = dateInput ? dateInput.value : todayStr;
+                                    const list = document.getElementById('attendanceList');
 
-window.saveWifiSettings = async function(e) {
-    if (e) e.preventDefault();
-    
-    const btn = e.target.querySelector('button[type="submit"]');
-    if (btn) { btn.disabled = true; btn.innerHTML = 'Saving...'; }
+                                    if (list) list.innerHTML = 'Loading attendance data...';
 
-    const payload = {
-        hall1: { 
-            title: document.getElementById('wifiHall1Title') ? document.getElementById('wifiHall1Title').value : 'Hall 01',
-            network: document.getElementById('wifiHall1Network').value, 
-            password: document.getElementById('wifiHall1Password').value 
-        },
-        hall2: { 
-            title: document.getElementById('wifiHall2Title') ? document.getElementById('wifiHall2Title').value : 'Hall 02 + Premium Rooms',
-            network: document.getElementById('wifiHall2Network').value, 
-            password: document.getElementById('wifiHall2Password').value 
-        }
-    };
+                                    if (list) list.innerHTML = 'Loading attendance data...';
+                                    try {
+                                        const records = await apiFetch(`/admin/attendance?date=${dateVal}`);
+                                        currentAttendance = records;
+                                        filterAttendance();
+                                    } catch (e) {
+                                        if (list) list.innerHTML = `<p style="color:red;">Error loading records: ${e.message}</p>`;
+                                        if (list) list.innerHTML = `<p style="color:red;">Error loading records: ${e.message}</p>`;
+                                    }
+                                }
 
-    try {
-        await apiFetch('/admin/config/wifi', { method: 'PUT', body: JSON.stringify(payload) });
-        showToast('Wi-Fi settings updated successfully!', 'success');
-    } catch (error) {
-        showToast('Error saving Wi-Fi settings: ' + error.message, 'error');
-    } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Settings'; }
-    }
-}
+                                
+                                    window.filterAttendance = function () {
+                                        const searchInput = document.getElementById('attendanceSearch');
+                                        const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
-window.saveIPSettings = async function(e) {
-    if (e) e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    if (btn) { btn.disabled = true; btn.innerHTML = 'Saving...'; }
-    try {
-        const ipValue = document.getElementById('libIP').value;
-        // Send lat/lng as well to bypass strict database schemas that ignore 'ip'
-        const payload = { ip: ipValue, lat: ipValue, lng: '0' };
-        await apiFetch('/admin/config/location', { method: 'PUT', body: JSON.stringify(payload) });
-        showToast('Library IP saved securely!', 'success');
-    } catch (error) {
-        showToast('Error saving IP: ' + error.message, 'error');
-    } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Library IP'; }
-    }
-}
+                                        if (!query) {
+                                            filteredAttendance = [...currentAttendance];
+                                        } else {
+                                            filteredAttendance = currentAttendance.filter(r => {
+                                                const stuName = (r.StudentId && r.StudentId.FullName) ? r.StudentId.FullName.toLowerCase() : '';
+                                                const libId = r.LibraryID ? r.LibraryID.toLowerCase() : (r.StudentId && r.StudentId.LibraryID ? r.StudentId.LibraryID.toLowerCase() : '');
+                                                return stuName.includes(query) || libId.includes(query);
+                                            });
+                                        }
+                                        renderAttendance(filteredAttendance);
+                                    }
 
-window.autoDetectIP = async function() {
-    showToast('Detecting Public IP...', 'info');
-    try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        if (document.getElementById('libIP')) document.getElementById('libIP').value = data.ip;
-        showToast('IP detected! Click Save Library IP.', 'success');
-    } catch (error) {
-        showToast('Failed to detect IP. Are you connected to the internet?', 'error');
-    }
-}
+                                    function renderAttendance(records) {
+                                        const list = document.getElementById('attendanceList');
+                                        if (!records || records.length === 0) {
+                                                list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No attendance records found for this date.</p>';
+                                                return;
+                 
+                                            }
 
-function openImageModal(url) {
-    document.getElementById('modalImage').src = url;
-    document.getElementById('imageModal').style.display = 'flex';
-}
+                                            let html = '<style>.attendance-swipe-container::-webkit-scrollbar { display: none; }</style>';
 
-window.closeImageModal = function() {
-    document.getElementById('imageModal').style.display = 'none';
-    document.getElementById('modalImage').src = '';
-}
+                                            html += records.map(r => {
+                                                const inTime = r.CheckInTime ? new Date(r.CheckInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--';
+                                                let outTime = r.CheckOutTime ? new Date(r.CheckOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--';
 
-window.downloadQRCode = function() {
-    showToast('Downloading QR Code...', 'info');
-    const url = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=KNL_OFFICIAL_DOOR_QR_V1';
-    fetch(url)
-        .then(res => res.blob())
-        .then(blob => {
-            const blobUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = blobUrl;
-            a.download = 'KnowledgeNook_Door_QR.png';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(blobUrl);
-            a.remove();
-            showToast('QR Code downloaded successfully!', 'success');
-        })
-        .catch(() => {
-            window.open(url, '_blank');
-        });
-}
+                                                if (r.CheckOutTime && r.CheckOutMethod === 'Admin') {
+                                                    outTime += ` <span style="color: var(--warning-color); font-weight: bold; font-size: 0.85em; margin-left: 2px;" title="Checked out manually by Admin">(A)</span>`;
+                                                } else if (r.CheckOutTime && r.CheckOutMethod === 'Auto') {
+                                                    outTime += ` <span style="color: var(--text-secondary); font-weight: bold; font-size: 0.85em; margin-left: 2px;" title="Auto Checked Out">(Auto)</span>`;
+                                                }
 
-window.printQRCode = function() {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Print QR Poster</title>
-            <style>
-                body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: Arial, sans-serif; background: #fff; }
-                .poster { text-align: center; border: 5px solid #000; padding: 60px; border-radius: 30px; max-width: 600px; width: 100%; box-sizing: border-box; }
-                .poster h1 { font-size: 3.2em; margin: 0 0 30px 0; color: #000; }
-                .poster img { width: 400px; height: 400px; margin-bottom: 30px; border: 2px solid #ccc; border-radius: 10px; }
-                .poster h2 { font-size: 2.8em; margin: 0 0 20px 0; color: #000; letter-spacing: 2px; }
-                .poster p { font-size: 1.6em; margin: 0; color: #444; line-height: 1.5; font-weight: bold; }
-            </style>
-        </head>
-        <body>
-            <div class="poster">
-                <h1>Knowledge Nook Library</h1>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=KNL_OFFICIAL_DOOR_QR_V1" alt="QR Code">
-                <h2>SCAN TO CHECK-IN</h2>
-                <p>Please connect to the library Wi-Fi<br>before scanning via your dashboard.</p>
-            </div>
-            <script>
-                setTimeout(() => { window.print(); window.close(); }, 800);
-            </script>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-}
+                                                let hrs = '--';
+                                                if (r.TotalHours) {
+                                                    hrs = String(Math.floor(Math.round(r.TotalHours * 60) / 60)).padStart(2, '0') + ':' + String(Math.round(r.TotalHours * 60) % 60).padStart(2, '0') + ' hrs';
+                                                } else if (r.CheckInTime) {
+                                                    const diffMins = Math.floor((new Date() - new Date(r.CheckInTime)) / 60000);
+                                                    const h = Math.floor(diffMins / 60);
+                                                    const m = diffMins % 60;
+                                                    hrs = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' hrs <span style="color: var(--success-color); font-size: 0.8em; margin-left: 4px;" title="Currently in library"><i class="fa-solid fa-circle-dot fa-fade"></i></span>';
+                                                }
 
-// --- Live Seat Layout & Configuration Logic ---
-let currentSeatConfig = { halls: [] };
+                                                const stuName = r.StudentId ? r.StudentId.FullName : 'Unknown Student';
+                                                const libId = r.LibraryID || (r.StudentId ? r.StudentId.LibraryID : '--');
 
-window.loadSeatConfig = async function() {
-    try {
-        const data = await apiFetch('/admin/config/seats');
-        currentSeatConfig = data || { halls: [] };
-        renderHallConfigList();
-    } catch (error) {
-        console.error('Error loading seat config', error);
-    }
-}
 
-window.renderHallConfigList = function() {
-    const list = document.getElementById('hallConfigList');
-    if (!list) return;
-    if (!currentSeatConfig.halls || currentSeatConfig.halls.length === 0) {
-        list.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px; border: 1px dashed var(--card-border); border-radius: 8px;">No halls configured. Click "Add New Hall" below.</p>';
-        return;
-    }
-    list.innerHTML = currentSeatConfig.halls.map((h, i) => `
+                                                return `
+                                                <div style="border: 1px solid var(--card-border); padding: 12px; border-radius: 8px; margin-bottom: 12px; background: var(--input-bg);">
+                                                <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+                                                    <div style="flex: 1 1 200px; min-width: 0;">
+                                                        <strong style="color: var(--primary-color); font-size: 1.05em; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${stuName}</strong>
+                                                        <div style="font-size:0.85em; color:var(--text-secondary);">ID: ${libId}</div>
+                                                    </div>
+                                                    <div class="attendance-swipe-container" style="display: flex; flex: 1 1 100%; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px;">
+                                                        <div style="flex: 1 0 100px; scroll-snap-align: center; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); text-align: center;">
+                                                            <span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 4px;">In</span> 
+                                                            <strong style="color:var(--success-color); font-size: 0.95em; white-space: nowrap;">${inTime}</strong>
+                                                        </div>
+                                                        <div style="flex: 1 0 100px; scroll-snap-align: center; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                                                            <span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 4px;">Out</span> 
+                                                            ${r.CheckOutTime
+                                                                                            ? `<strong style="color:var(--error-color); font-size: 0.95em; white-space: nowrap;">${outTime}</strong>`
+                                                                                            : `<button onclick="manualCheckOut('${r._id}')" class="btn-outline" style="padding: 3px 8px; font-size: 0.75em; border-color: var(--error-color); color: var(--error-color); width: 100%; border-radius: 6px;">Manual Out</button>`
+                                                                                        }
+                                                            }
+                                                        </div>
+                                                        <div style="flex: 1 0 100px; scroll-snap-align: center; background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); text-align: center;">
+                                                            <span style="color:var(--text-secondary); font-size: 0.8em; display:block; margin-bottom: 4px;">Total</span> 
+                                                            <strong style="font-size: 0.95em; white-space: nowrap;">${hrs}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>`;
+                                            }).join('');
+
+                                            list.innerHTML = html;
+                                        }
+
+
+                                        window.manualCheckOut = async function (id) {
+                                            if (!await showConfirm('Are you sure you want to manually check out this student now?')) return;
+                                            try {
+                                                await apiFetch(`/admin/attendance/${id}/checkout`, { method: 'PUT' });
+                                                showToast('Student checked out successfully.', 'success');
+                                                loadAttendance();
+                                            } catch (e) {
+                                                showToast(e.message, 'error');
+                                            }
+                                        }
+
+                                        window.openManualCheckInModal = async function () {
+                                            if (currentStudents.length === 0) await loadStudents();
+                                            const select = document.getElementById('manualCheckInStudentId');
+
+
+                                            const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
+                                            select.innerHTML = '<option value="" disabled selected>Select an active student...</option>' +
+                                                activeStudents.map(s => `<option value="${s._id}">${s.FullName} (${s.LibraryID || 'No ID'})</option>`).join('');
+
+
+                                            document.getElementById('manualCheckInModal').style.display = 'block';
+                                        }
+
+                                        window.closeManualCheckInModal = function () {
+                                            document.getElementById('manualCheckInModal').style.display = 'none';
+                                        }
+
+                                        window.submitManualCheckIn = async function (e) {
+                                            e.preventDefault();
+                                            const studentId = document.getElementById('manualCheckInStudentId').value;
+                                            const btn = e.target.querySelector('button[type="submit"]');
+                                            const originalText = btn.innerHTML;
+                                            btn.disabled = true; btn.innerHTML = 'Checking In...';
+                                            try {
+                                                await apiFetch('/admin/attendance', { method: 'POST', body: JSON.stringify({ studentId }) });
+                                                showToast('Checked in successfully!', 'success');
+                                                closeManualCheckInModal();
+                                                loadAttendance();
+                                            } catch (err) {
+                                                showToast(err.message, 'error');
+                                            } finally {
+                                                btn.disabled = false; btn.innerHTML = originalText;
+                                            }
+                                        }
+
+                                        function initTheme() {
+                                            const savedTheme = localStorage.getItem('theme');
+                                            const icon = document.getElementById('themeIcon');
+                                            if (savedTheme === 'dark') {
+                                                document.body.classList.add('dark-mode');
+                                                if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+                                            }
+                                        }
+
+
+                                        window.toggleTheme = function () {
+                                            document.body.classList.toggle('dark-mode');
+                                            const isDark = document.body.classList.contains('dark-mode');
+                                            const icon = document.getElementById('themeIcon');
+
+                                            if (isDark) {
+                                                localStorage.setItem('theme', 'dark');
+                                                if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+                                            } else {
+                                                localStorage.setItem('theme', 'light');
+                                                if (icon) icon.classList.replace('fa-sun', 'fa-moon');
+                                            }
+                                        }
+
+                                        // --- Wi-Fi Settings Management ---
+
+                                        window.switchSettingsTab = function (tab) {
+                                            const tabs = ['wifi', 'attendance', 'seats', 'pricing']; // Example if you add pricing
+                                            tabs.forEach(t => {
+                                                const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+                                                const content = document.getElementById('settingsTab' + t.charAt(0).toUpperCase() + t.slice(1) + 'Content');
+
+
+                                                if (t === tab) {
+                                                    if (btn) {
+                                                        btn.className = 'btn';
+                                                        btn.style.cssText = 'padding:8px 16px; border-radius:8px; font-size:0.95em; display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;';
+                                                    }
+                                                    if (content) content.style.display = 'block';
+                                                    if (btn) btn.classList.replace('btn-outline', 'btn');
+                                                    if (content) content.style.display = 'block';
+                                                } else {
+                                                    if (btn) {
+                                                        btn.className = 'btn-outline';
+                                                        btn.style.cssText = 'padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;';
+                                                    }
+                                                    if (content) content.style.display = 'none';
+                                                    if (btn) btn.classList.replace('btn', 'btn-outline');
+                                                    if (content) content.style.display = 'none';
+                                                }
+                                            });
+                                        }
+
+
+                                        window.loadWifiSettings = async function () {
+                                            try {
+                                                const data = await apiFetch('/config/wifi');
+                                                if (document.getElementById('wifiHall1Network')) {
+                                                    if (document.getElementById('wifiHall1Title')) document.getElementById('wifiHall1Title').value = data.hall1.title || 'Hall 01';
+                                                    if (document.getElementById('wifiHall1Title')) document.getElementById('wifiHall1Title').value = data.hall1.title || 'Hall 01';
+                                                    document.getElementById('wifiHall1Network').value = data.hall1.network;
+                                                    document.getElementById('wifiHall1Password').value = data.hall1.password;
+                                                    if (document.getElementById('wifiHall2Title')) document.getElementById('wifiHall2Title').value = data.hall2.title || 'Hall 02 + Premium Rooms';
+                                                    if (document.getElementById('wifiHall2Title')) document.getElementById('wifiHall2Title').value = data.hall2.title || 'Hall 02 + Premium Rooms';
+                                                    document.getElementById('wifiHall2Network').value = data.hall2.network;
+                                                    document.getElementById('wifiHall2Password').value = data.hall2.password;
+                                                }
+
+                                                // Also load IP Settings
+                                                const locData = await apiFetch('/config/location');
+                                                if (document.getElementById('libIP')) {
+                                                    document.getElementById('libIP').value = locData.ip || locData.lat || '';
+                                                }
+                                            } catch (error) {
+                                                console.error('Error loading Wi-Fi config', error);
+                                            }
+                                        }
+
+                                        window.saveWifiSettings = async function (e) {
+                                            if (e) e.preventDefault();
+
+
+                                            const btn = e.target.querySelector('button[type="submit"]');
+                                            if (btn) { btn.disabled = true; btn.innerHTML = 'Saving...'; }
+
+                                            const payload = {
+                                                hall1: {
+                                                    title: document.getElementById('wifiHall1Title') ? document.getElementById('wifiHall1Title').value : 'Hall 01',
+                                                    network: document.getElementById('wifiHall1Network').value,
+                                                    password: document.getElementById('wifiHall1Password').value
+                                                },
+                                                hall2: {
+                                                    title: document.getElementById('wifiHall2Title') ? document.getElementById('wifiHall2Title').value : 'Hall 02 + Premium Rooms',
+                                                    network: document.getElementById('wifiHall2Network').value,
+                                                    password: document.getElementById('wifiHall2Password').value
+                                                }
+                                            };
+
+                                            try {
+                                                await apiFetch('/admin/config/wifi', { method: 'PUT', body: JSON.stringify(payload) });
+                                                showToast('Wi-Fi settings updated successfully!', 'success');
+                                            } catch (error) {
+                                                showToast('Error saving Wi-Fi settings: ' + error.message, 'error');
+                                            } finally {
+                                                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Settings'; }
+                                            }
+                                        }
+
+
+                                        window.saveIPSettings = async function (e) {
+                                            if (e) e.preventDefault();
+                                            const btn = e.target.querySelector('button[type="submit"]');
+                                            if (btn) { btn.disabled = true; btn.innerHTML = 'Saving...'; }
+                                            try {
+                                                const ipValue = document.getElementById('libIP').value;
+                                                // Send lat/lng as well to bypass strict database schemas that ignore 'ip'
+                                                const payload = { ip: ipValue, lat: ipValue, lng: '0' };
+                                                await apiFetch('/admin/config/location', { method: 'PUT', body: JSON.stringify(payload) });
+                                                showToast('Library IP saved securely!', 'success');
+                                            } catch (error) {
+                                                showToast('Error saving IP: ' + error.message, 'error');
+                                            } finally {
+                                                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Library IP'; }
+                                            }
+                                        }
+
+                                        window.autoDetectIP = async function () {
+                                            showToast('Detecting Public IP...', 'info');
+                                            try {
+                                                const response = await fetch('https://api.ipify.org?format=json');
+                                                const data = await response.json();
+                                                if (document.getElementById('libIP')) document.getElementById('libIP').value = data.ip;
+                                                showToast('IP detected! Click Save Library IP.', 'success');
+                                            } catch (error) {
+                                                showToast('Failed to detect IP. Are you connected to the internet?', 'error');
+                                            }
+                                        }
+
+                                        function openImageModal(url) {
+                                            document.getElementById('modalImage').src = url;
+                                            document.getElementById('imageModal').style.display = 'flex';
+                                        }
+
+
+                                        window.closeImageModal = function () {
+                                            document.getElementById('imageModal').style.display = 'none';
+                                            document.getElementById('modalImage').src = '';
+                                        }
+
+
+                                        window.downloadQRCode = function () {
+                                            showToast('Downloading QR Code...', 'info');
+                                            const url = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=KNL_OFFICIAL_DOOR_QR_V1';
+                                            fetch(url)
+                                                .then(res => res.blob())
+                                                .then(blob => {
+                                                    const blobUrl = window.URL.createObjectURL(blob);
+                                                    const a = document.createElement('a');
+                                                    a.style.display = 'none';
+                                                    a.href = blobUrl;
+                                                    a.download = 'KnowledgeNook_Door_QR.png';
+                                                    document.body.appendChild(a);
+                                                    a.click();
+                                                    window.URL.revokeObjectURL(blobUrl);
+                                                    a.remove();
+                                                    showToast('QR Code downloaded successfully!', 'success');
+                                                })
+                                                .catch(() => {
+                                                    window.open(url, '_blank');
+                                                });
+                                        }
+
+
+                                        window.printQRCode = function () {
+                                            const printWindow = window.open('', '_blank');
+                                            printWindow.document.write(`
+                                                <!DOCTYPE html>
+                                                <html>
+                                                <head>
+                                                    <title>Print QR Poster</title>
+                                                    <style>
+                                                        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: Arial, sans-serif; background: #fff; }
+                                                        .poster { text-align: center; border: 5px solid #000; padding: 60px; border-radius: 30px; max-width: 600px; width: 100%; box-sizing: border-box; }
+                                                        .poster h1 { font-size: 3.2em; margin: 0 0 30px 0; color: #000; }
+                                                        .poster img { width: 400px; height: 400px; margin-bottom: 30px; border: 2px solid #ccc; border-radius: 10px; }
+                                                        .poster h2 { font-size: 2.8em; margin: 0 0 20px 0; color: #000; letter-spacing: 2px; }
+                                                        .poster p { font-size: 1.6em; margin: 0; color: #444; line-height: 1.5; font-weight: bold; }
+                                                    </style>
+                                                </head>
+                                                <body>
+                                                    <div class="poster">
+                                                        <h1>Knowledge Nook Library</h1>
+                                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=KNL_OFFICIAL_DOOR_QR_V1" alt="QR Code">
+                                                        <h2>SCAN TO CHECK-IN</h2>
+                                                        <p>Please connect to the library Wi-Fi<br>before scanning via your dashboard.</p>
+                                                    </div>
+                                                    <script>
+                                                        setTimeout(() => { window.print(); window.close(); }, 800);
+                                                    </script>
+                                                </body>
+                                                </html>
+                                            `);
+                                            printWindow.document.close();
+                                        }
+
+                                        // --- Live Seat Layout & Configuration Logic ---
+                                        let currentSeatConfig = { halls: [] };
+
+
+                                        window.loadSeatConfig = async function () {
+                                            try {
+                                                const data = await apiFetch('/admin/config/seats');
+                                                currentSeatConfig = data || { halls: [] };
+                                                renderHallConfigList();
+                                            } catch (error) {
+                                                console.error('Error loading seat config', error);
+                                            }
+                                        }
+
+
+                                        window.renderHallConfigList = function () {
+                                            const list = document.getElementById('hallConfigList');
+                                            if (!list) return;
+                                            if (!currentSeatConfig.halls || currentSeatConfig.halls.length === 0) {
+                                                list.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px; border: 1px dashed var(--card-border); border-radius: 8px;">No halls configured. Click "Add New Hall" below.</p>';
+                                                return;
+                                            }
+                                            list.innerHTML = currentSeatConfig.halls.map((h, i) => `
         <div style="display:flex; flex-wrap: wrap; gap:10px; margin-bottom:15px; align-items:flex-end; background:var(--bg-color); padding:15px; border-radius:8px; border:1px solid var(--card-border);">
             <div style="flex:1; min-width: 150px;">
                 <label style="font-size:0.8em; font-weight:600; color:var(--text-secondary);">Hall Name</label>
@@ -2938,91 +3174,99 @@ window.renderHallConfigList = function() {
             <button type="button" class="btn-outline" onclick="removeHallConfigRow(${i})" style="color:var(--error-color); border-color:var(--error-color); padding:8px 12px; height: 38px;"><i class="fa-solid fa-trash"></i></button>
         </div>
     `).join('');
-}
+                                        }
 
-window.addHallConfigRow = function() {
-    if(!currentSeatConfig.halls) currentSeatConfig.halls = [];
-    currentSeatConfig.halls.push({ name: '', start: 1, end: 50 });
-    renderHallConfigList();
-}
 
-window.removeHallConfigRow = function(index) {
-    currentSeatConfig.halls.splice(index, 1);
-    renderHallConfigList();
-}
+                                        window.addHallConfigRow = function () {
+                                            if (!currentSeatConfig.halls) currentSeatConfig.halls = [];
+                                            currentSeatConfig.halls.push({ name: '', start: 1, end: 50 });
+                                            renderHallConfigList();
+                                        }
 
-window.saveSeatConfig = async function() {
-    const halls = [];
-    if(currentSeatConfig.halls) {
-        for (let i = 0; i < currentSeatConfig.halls.length; i++) {
-            halls.push({
-                name: document.getElementById(`hallName_${i}`).value,
-                start: parseInt(document.getElementById(`hallStart_${i}`).value),
-                end: parseInt(document.getElementById(`hallEnd_${i}`).value)
-            });
-        }
-    }
-    try {
-        await apiFetch('/admin/config/seats', { method: 'PUT', body: JSON.stringify({ halls }) });
-        showToast('Seat mapping saved successfully!', 'success');
-        currentSeatConfig.halls = halls;
-    } catch (error) {
-        showToast('Error saving seat config: ' + error.message, 'error');
-    }
-}
 
-window.loadSeatLayout = async function() {
-    if (currentStudents.length === 0) await loadStudents();
-    if (!currentSeatConfig || !currentSeatConfig.halls || currentSeatConfig.halls.length === 0) await loadSeatConfig();
-    renderSeatLayout();
-}
+                                        window.removeHallConfigRow = function (index) {
+                                            currentSeatConfig.halls.splice(index, 1);
+                                            renderHallConfigList();
+                                        }
 
-window.renderSeatLayout = function() {
-    const container = document.getElementById('seatLayoutContainer');
-    const batchFilter = document.getElementById('seatBatchFilter') ? document.getElementById('seatBatchFilter').value : '';
 
-    if (!currentSeatConfig || !currentSeatConfig.halls || currentSeatConfig.halls.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:40px; background:var(--bg-color); border-radius:8px; border:1px dashed var(--card-border); color:var(--text-secondary);">No seat configuration found. <br><br> Go to <b>Settings -> Seats Mapping</b> to define your halls.</div>';
-        return;
-    }
+                                        window.saveSeatConfig = async function () {
+                                            const halls = [];
+                                            if (currentSeatConfig.halls) {
+                                                for (let i = 0; i < currentSeatConfig.halls.length; i++) {
+                                                    halls.push({
+                                                        name: document.getElementById(`hallName_${i}`).value,
+                                                        start: parseInt(document.getElementById(`hallStart_${i}`).value),
+                                                        end: parseInt(document.getElementById(`hallEnd_${i}`).value)
+                                                    });
+                                                }
+                                            }
+                                            try {
+                                                await apiFetch('/admin/config/seats', { method: 'PUT', body: JSON.stringify({ halls }) });
+                                                showToast('Seat mapping saved successfully!', 'success');
+                                                currentSeatConfig.halls = halls;
+                                            } catch (error) {
+                                                showToast('Error saving seat config: ' + error.message, 'error');
+                                            }
+                                        }
 
-    const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
-    const filteredStudents = batchFilter ? activeStudents.filter(s => s.batchType === batchFilter) : activeStudents;
 
-    const occupiedSeats = {};
-    filteredStudents.forEach(s => {
-        if (s.SeatNo) {
-            const numericSeat = s.SeatNo.replace(/\D/g, ''); // Extracts pure number from things like "S-12"
-            if (numericSeat) {
-                if (!occupiedSeats[numericSeat]) occupiedSeats[numericSeat] = [];
-                occupiedSeats[numericSeat].push(s);
-            }
-        }
-    });
+                                        window.loadSeatLayout = async function () {
+                                            if (currentStudents.length === 0) await loadStudents();
+                                            if (!currentSeatConfig || !currentSeatConfig.halls || currentSeatConfig.halls.length === 0) await loadSeatConfig();
+                                            renderSeatLayout();
+                                        }
 
-    let html = '';
-    currentSeatConfig.halls.forEach(hall => {
-        let emptyCount = 0; let occupiedCount = 0;
-        let total = (hall.end - hall.start) + 1;
-        
-        let gridHtml = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 10px; margin-top: 20px;">`;
-        
-        for (let i = hall.start; i <= hall.end; i++) {
-            const seatNumStr = i.toString();
-            const occupiers = occupiedSeats[seatNumStr];
-            
-            if (occupiers && occupiers.length > 0) {
-                occupiedCount++;
-                const tooltipStr = `Seat ${i}&#10;` + occupiers.map(o => `• ${o.FullName} (${o.batchType || 'No Batch'})`).join('&#10;');
-                gridHtml += `<div onclick="viewSeatDetails('${seatNumStr}')" style="aspect-ratio: 1; background: var(--error-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 0.9em; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" title="${tooltipStr}">${i}</div>`;
-            } else {
-                emptyCount++;
-                gridHtml += `<div style="aspect-ratio: 1; background: var(--success-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: crosshair; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 0.9em; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" title="Seat ${i} - Available">${i}</div>`;
-            }
-        }
-        gridHtml += `</div>`;
 
-        html += `
+                                        window.renderSeatLayout = function () {
+                                            const container = document.getElementById('seatLayoutContainer');
+                                            const batchFilter = document.getElementById('seatBatchFilter') ? document.getElementById('seatBatchFilter').value : '';
+
+                                            if (!currentSeatConfig || !currentSeatConfig.halls || currentSeatConfig.halls.length === 0) {
+                                                container.innerHTML = '<div style="text-align:center; padding:40px; background:var(--bg-color); border-radius:8px; border:1px dashed var(--card-border); color:var(--text-secondary);">No seat configuration found. <br><br> Go to <b>Settings -> Seats Mapping</b> to define your halls.</div>';
+                                                return;
+                                            }
+
+                                            const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
+                                            const filteredStudents = batchFilter ? activeStudents.filter(s => s.batchType === batchFilter) : activeStudents;
+
+                                            const occupiedSeats = {};
+                                            filteredStudents.forEach(s => {
+                                                if (s.SeatNo) {
+                                                    const numericSeat = s.SeatNo.replace(/\D/g, ''); // Extracts pure number from things like "S-12"
+                                                    if (numericSeat) {
+                                                        if (!occupiedSeats[numericSeat]) occupiedSeats[numericSeat] = [];
+                                                        occupiedSeats[numericSeat].push(s);
+                                                    }
+                                                }
+                                            });
+
+                                            let html = '';
+                                            currentSeatConfig.halls.forEach(hall => {
+                                                let emptyCount = 0; let occupiedCount = 0;
+                                                let total = (hall.end - hall.start) + 1;
+
+
+                                                let gridHtml = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 10px; margin-top: 20px;">`;
+
+
+                                                for (let i = hall.start; i <= hall.end; i++) {
+                                                    const seatNumStr = i.toString();
+                                                    const occupiers = occupiedSeats[seatNumStr];
+
+
+                                                    if (occupiers && occupiers.length > 0) {
+                                                        occupiedCount++;
+                                                        const tooltipStr = `Seat ${i}&#10;` + occupiers.map(o => `• ${o.FullName} (${o.batchType || 'No Batch'})`).join('&#10;');
+                                                        gridHtml += `<div onclick="viewSeatDetails('${seatNumStr}')" style="aspect-ratio: 1; background: var(--error-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 0.9em; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" title="${tooltipStr}">${i}</div>`;
+                                                    } else {
+                                                        emptyCount++;
+                                                        gridHtml += `<div style="aspect-ratio: 1; background: var(--success-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: crosshair; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 0.9em; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" title="Seat ${i} - Available">${i}</div>`;
+                                                    }
+                                                }
+                                                gridHtml += `</div>`;
+
+                                                html += `
             <div style="margin-bottom: 25px; background: var(--bg-color); border: 1px solid var(--card-border); padding: 25px; border-radius: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed var(--card-border); padding-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                     <h4 style="margin: 0; color: var(--primary-color); font-size: 1.2em;">${hall.name}</h4>
@@ -3035,22 +3279,24 @@ window.renderSeatLayout = function() {
                 ${gridHtml}
             </div>
         `;
-    });
+                                            });
 
-    container.innerHTML = html;
-}
+                                            container.innerHTML = html;
+                                        }
 
-window.viewSeatDetails = function(seatNum) {
-    const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
-    const occupiers = activeStudents.filter(s => s.SeatNo && s.SeatNo.replace(/\D/g, '') === seatNum);
-    
-    const listContainer = document.getElementById('seatDetailsList');
-    document.getElementById('seatDetailsTitle').innerHTML = `<i class="fa-solid fa-chair" style="color: var(--primary-color);"></i> Seat ${seatNum} Occupants`;
-    
-    if (occupiers.length === 0) {
-        listContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No students currently assigned to this seat.</p>';
-    } else {
-        listContainer.innerHTML = occupiers.map(s => `
+                                        window.viewSeatDetails = function (seatNum) {
+                                            const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
+                                            const occupiers = activeStudents.filter(s => s.SeatNo && s.SeatNo.replace(/\D/g, '') === seatNum);
+
+
+                                            const listContainer = document.getElementById('seatDetailsList');
+                                            document.getElementById('seatDetailsTitle').innerHTML = `<i class="fa-solid fa-chair" style="color: var(--primary-color);"></i> Seat ${seatNum} Occupants`;
+
+
+                                            if (occupiers.length === 0) {
+                                                listContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No students currently assigned to this seat.</p>';
+                                            } else {
+                                                listContainer.innerHTML = occupiers.map(s => `
             <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <strong style="color: var(--primary-color); font-size: 1.1em; display: flex; align-items: center; gap: 8px;"><img src="${s.ProfilePictureURL || '/img/default-avatar.png'}" style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover;"> ${s.FullName}</strong>
@@ -3063,10 +3309,452 @@ window.viewSeatDetails = function(seatNum) {
                 </div>
             </div>
         `).join('');
-    }
-    document.getElementById('seatDetailsModal').style.display = 'block';
-}
+                                            }
+                                            document.getElementById('seatDetailsModal').style.display = 'block';
+                                        }
 
-window.closeSeatDetailsModal = function() {
-    document.getElementById('seatDetailsModal').style.display = 'none';
-}
+
+                                        window.closeSeatDetailsModal = function () {
+                                            document.getElementById('seatDetailsModal').style.display = 'none';
+                                        }
+
+
+                                        // --- Advanced Fee Timeline Logic ---
+
+                                        window.filterTimelineSearch = function () {
+                                            const input = document.getElementById('timelineSearch').value.toLowerCase().trim();
+                                            const resultsContainer = document.getElementById('timelineSearchResults');
+
+                                            if (!input) {
+                                                resultsContainer.style.display = 'none';
+                                                return;
+                                            }
+
+                                            const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
+                                            const filtered = activeStudents.filter(s =>
+                                                (s.FullName && s.FullName.toLowerCase().includes(input)) ||
+                                                (s.LibraryID && s.LibraryID.toLowerCase().includes(input))
+                                            ).slice(0, 5); // Max 5 results
+
+                                            if (filtered.length === 0) {
+                                                resultsContainer.innerHTML = '<div style="padding: 10px; color: var(--text-secondary); text-align: center;">No students found.</div>';
+                                            } else {
+                                                resultsContainer.innerHTML = filtered.map(s => `
+            <div onclick="selectTimelineStudent('${s._id}')" style="padding: 12px; border-bottom: 1px solid var(--card-border); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--input-bg)'" onmouseout="this.style.background='transparent'">
+                <div style="font-weight: 600; color: var(--primary-color);">${s.FullName}</div>
+                <div style="font-size: 0.85em; color: var(--text-secondary);">ID: ${s.LibraryID || 'N/A'} | Plan: ${s.planDuration || 'N/A'} (₹${s.amount || 0})</div>
+            </div>
+        `).join('');
+                                            }
+                                            resultsContainer.style.display = 'block';
+                                        }
+
+                                        window.selectTimelineStudent = async function (studentId) {
+                                            document.getElementById('timelineSearch').value = '';
+                                            document.getElementById('timelineSearchResults').style.display = 'none';
+
+                                            const student = currentStudents.find(s => s._id === studentId);
+                                            if (!student) return;
+
+                                            document.getElementById('timelineStudentName').textContent = student.FullName;
+
+                                            let joinText = student.JoiningDate ? new Date(student.JoiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Unknown';
+                                            document.getElementById('timelineStudentDetails').innerHTML = `ID: ${student.LibraryID || 'N/A'} &nbsp;|&nbsp; Joined: ${joinText} &nbsp;|&nbsp; Plan: ${student.planDuration || 'N/A'} (${student.batchType || 'N/A'} - ₹${student.amount || 0})`;
+
+                                            document.getElementById('timelineContainer').style.display = 'block';
+                                            const tbody = document.getElementById('timelineMatrixBody');
+                                            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Generating historic timeline...</td></tr>';
+
+                                            try {
+                                                const timeline = await apiFetch(`/admin/students/${studentId}/fee-timeline`);
+
+                                                if (timeline.length === 0) {
+                                                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-secondary);">No timeline data generated yet.</td></tr>';
+                                                    return;
+                                                }
+
+                                                tbody.innerHTML = timeline.map(entry => {
+                                                    let statusBadge = '';
+                                                    let actionBtn = '';
+
+                                                    if (entry.status === 'Paid') {
+                                                        statusBadge = `<span style="background: var(--success-color); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600;"><i class="fa-solid fa-check"></i> Paid</span>`;
+                                                        actionBtn = `<span style="color: var(--text-secondary); font-size: 0.9em;">Verified ✓</span>`;
+                                                    } else if (entry.status === 'Pending') {
+                                                        statusBadge = `<span style="background: var(--warning-color); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600;"><i class="fa-solid fa-clock"></i> Pending Verification</span>`;
+                                                        actionBtn = `<button onclick="goToVerifyUploads('${studentId}')" style="background:none; border:none; cursor:pointer; color: var(--warning-color); font-size: 0.9em; text-decoration: underline; font-weight: bold;"><i class="fa-solid fa-magnifying-glass"></i> Awaiting Verification</button>`;
+                                                    } else {
+                                                        statusBadge = `<span style="background: var(--error-color); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600;"><i class="fa-solid fa-xmark"></i> Unpaid</span>`;
+                                                        actionBtn = `
+                    <button onclick="overrideMarkPaid('${studentId}', '${entry.month}', ${entry.expectedAmount})" class="btn" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px; margin-right: 5px;"><i class="fa-solid fa-money-bill-wave"></i> Mark Paid</button>
+                    <button onclick="sendFeeReminder('${studentId}', '${entry.month}')" class="btn-outline" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-bell"></i> Remind</button>
+                `;
+                                                    }
+
+                                                    return `
+                <tr style="border-bottom: 1px dashed var(--card-border); transition: background 0.2s;" onmouseover="this.style.background='var(--input-bg)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 15px; font-weight: 500; color: var(--text-primary);"><i class="fa-regular fa-calendar" style="color: var(--text-secondary); margin-right: 8px;"></i> ${entry.month}</td>
+                    <td style="padding: 15px; color: var(--text-secondary); font-weight: 600;">₹${entry.expectedAmount}</td>
+                    <td style="padding: 15px;">${statusBadge}</td>
+                    <td style="padding: 15px; text-align: right;">${actionBtn}</td>
+                </tr>
+            `;
+                                                }).join('');
+
+                                            } catch (error) {
+                                                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--error-color); padding: 20px;">Error loading timeline: ${error.message}</td></tr>`;
+                                            }
+                                        }
+
+                                        window.overrideMarkPaid = async function (studentId, month, expectedAmount) {
+                                            if (!await showConfirm(`Are you sure you want to mark ${month} as Paid? This will bypass image upload and instantly verify the student.`)) return;
+
+                                            try {
+                                                await apiFetch(`/admin/students/${studentId}/mark-fee-paid`, {
+                                                    method: 'POST',
+                                                    body: JSON.stringify({ Month: month, Amount: expectedAmount })
+                                                });
+                                                showToast(`Successfully marked ${month} as Paid!`, 'success');
+                                                selectTimelineStudent(studentId);
+                                            } catch (error) {
+                                                showToast('Error marking fee as paid: ' + error.message, 'error');
+                                            }
+                                        }
+
+                                        window.sendFeeReminder = async function (studentId, month) {
+                                            const message = await showPrompt(`Send a reminder for ${month}? Edit message below:`, `Your library fee for ${month} is currently due. Please upload your receipt in the portal!`);
+                                            if (message === null) return;
+
+                                            try {
+                                                await apiFetch(`/admin/students/${studentId}/notify`, {
+                                                    method: 'POST',
+                                                    body: JSON.stringify({ title: `Fee Reminder - ${month}`, message: message })
+                                                });
+                                                showToast(`Reminder sent successfully for ${month}!`, 'success');
+                                            } catch (error) {
+                                                showToast('Error sending reminder: ' + error.message, 'error');
+                                            }
+                                        }
+
+                                        document.addEventListener('click', (e) => {
+                                            const searchResult = document.getElementById('timelineSearchResults');
+                                            const searchInput = document.getElementById('timelineSearch');
+                                            if (searchResult && searchInput && !searchInput.contains(e.target)) {
+                                                searchResult.style.display = 'none';
+                                            }
+                                        });
+
+                                        // Admin Fee Management Internal Tab Switcher
+                                        window.switchFeeTab = function (tab) {
+                                            const timelineBtn = document.getElementById('feeTabTimelineBtn');
+                                            const verifyBtn = document.getElementById('feeTabVerifyBtn');
+                                            const historyBtn = document.getElementById('feeTabHistoryBtn');
+
+                                            const timelineContent = document.getElementById('feeTabTimelineContent');
+                                            const verifyContent = document.getElementById('feeTabVerifyContent');
+                                            const historyContent = document.getElementById('feeTabHistoryContent');
+
+                                            // Reset all buttons
+                                            [timelineBtn, verifyBtn, historyBtn].forEach(btn => {
+                                                if (btn) {
+                                                    btn.className = 'btn-outline';
+                                                    btn.style.color = 'var(--text-secondary)';
+                                                    btn.style.border = 'none';
+                                                }
+                                            });
+
+                                            // Hide all contents
+                                            [timelineContent, verifyContent, historyContent].forEach(content => {
+                                                if (content) content.style.display = 'none';
+                                            });
+
+                                            // Activate selected
+                                            if (tab === 'timeline') {
+                                                if (timelineBtn) { timelineBtn.className = 'btn'; timelineBtn.style.color = ''; }
+                                                if (timelineContent) timelineContent.style.display = 'block';
+                                                if (currentStudents.length === 0) loadStudents();
+                                                setTimeout(() => {
+                                                    const searchInput = document.getElementById('timelineSearch');
+                                                    if (searchInput) searchInput.focus();
+                                                }, 100);
+                                            } else if (tab === 'verify') {
+                                                if (verifyBtn) { verifyBtn.className = 'btn'; verifyBtn.style.color = ''; }
+                                                if (verifyContent) verifyContent.style.display = 'block';
+                                                loadFees();
+                                            } else if (tab === 'history') {
+                                                if (historyBtn) { historyBtn.className = 'btn'; historyBtn.style.color = ''; }
+                                                if (historyContent) historyContent.style.display = 'block';
+                                                loadPaymentHistory();
+                                            }
+                                        };
+
+                                        window.goToVerifyUploads = function (studentId) {
+                                            const student = currentStudents.find(s => s._id === studentId);
+                                            if (student) {
+                                                switchFeeTab('verify');
+
+                                                // 1. Search for the student's name
+                                                const searchInput = document.getElementById('feeSearch');
+                                                if (searchInput) {
+                                                    searchInput.value = student.FullName || student.FirstName;
+                                                }
+
+                                                // 2. Set the dropdown filter to 'Pending'
+                                                const statusDropdown = document.getElementById('filterFeeStatus'); // ADD THIS LINE
+                                                if (statusDropdown) { statusDropdown.value = 'Pending'; }           // ADD THIS LINE
+
+                                                // 3. Trigger the filter function
+                                                filterFees();
+                                            }
+                                        };
+
+
+                                        // Add Student Logic
+                                        window.openAddStudentModal = function () {
+                                            document.getElementById('addStudentForm').reset();
+                                            document.getElementById('addJoiningDate').valueAsDate = new Date();
+                                            document.getElementById('addStudentModal').style.display = 'flex';
+                                        }
+
+                                        window.closeAddStudentModal = function () {
+                                            document.getElementById('addStudentModal').style.display = 'none';
+                                        }
+
+                                        window.submitAddStudent = async function (e) {
+                                            e.preventDefault();
+                                            const btn = e.target.querySelector('button[type="submit"]');
+                                            const originalText = btn.innerHTML;
+                                            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                                            btn.disabled = true;
+
+                                            const payload = {
+                                                FirstName: document.getElementById('addFirstName').value.trim(),
+                                                LastName: document.getElementById('addLastName').value.trim(),
+                                                Contact: document.getElementById('addContact').value.trim(),
+                                                Email: document.getElementById('addEmail').value.trim(),
+                                                LibraryID: document.getElementById('addLibraryID').value.trim(),
+                                                AadharNumber: document.getElementById('addAadhar').value.trim() || undefined,
+                                                JoiningDate: document.getElementById('addJoiningDate').value,
+                                                SeatNo: document.getElementById('addSeatNo').value.trim(),
+                                                planDuration: document.getElementById('addPlanDuration').value,
+                                                batchType: document.getElementById('addBatchType').value,
+                                                amount: Number(document.getElementById('addAmount').value),
+                                                mustChangePassword: true
+                                            };
+
+                                            try {
+                                                await apiFetch('/admin/students', {
+                                                    method: 'POST',
+                                                    body: JSON.stringify(payload)
+                                                });
+                                                showToast('Student successfully added!', 'success');
+                                                closeAddStudentModal();
+                                                loadStudents();
+                                                loadDashboardStats();
+                                            } catch (err) {
+                                                showToast(err.message, 'error');
+                                            } finally {
+                                                btn.innerHTML = originalText;
+                                                btn.disabled = false;
+                                            }
+                                        }
+
+                                        // --- Global Notification Logs Logic ---
+                                        let currentGlobalNotifications = [];
+                                        let filteredGlobalNotifications = [];
+                                        let globalNotificationsPage = 1;
+                                        const globalNotificationsPerPage = 15;
+
+                                        window.loadGlobalNotifications = async function () {
+                                            const list = document.getElementById('globalNotificationList');
+                                            if (!list) return;
+                                            list.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">Loading global notifications...</td></tr>';
+
+                                            try {
+                                                const data = await apiFetch('/admin/notifications/global');
+                                                if (data && data.length > 0) {
+                                                    currentGlobalNotifications = data;
+                                                    filterGlobalNotifications(true);
+                                                } else {
+                                                    list.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">No notifications sent yet.</td></tr>';
+                                                    document.getElementById('globalNotificationPagination').innerHTML = '';
+                                                }
+                                            } catch (error) {
+                                                list.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center; padding: 20px;">Error: ${error.message}</td></tr>`;
+                                            }
+                                        }
+
+                                        window.filterGlobalNotifications = function (immediate = false) {
+                                            const searchInput = document.getElementById('globalNotificationSearch');
+                                            const query = searchInput ? searchInput.value.toLowerCase() : '';
+
+                                            const executeFilter = () => {
+                                                filteredGlobalNotifications = currentGlobalNotifications.filter(notif => {
+                                                    const studentName = notif.StudentId ? (notif.StudentId.FullName || '').toLowerCase() : '';
+                                                    const libId = notif.StudentId ? (notif.StudentId.LibraryID || '').toLowerCase() : '';
+                                                    const title = (notif.Title || '').toLowerCase();
+                                                    const message = (notif.Message || '').toLowerCase();
+
+                                                    return studentName.includes(query) || libId.includes(query) || title.includes(query) || message.includes(query);
+                                                });
+                                                globalNotificationsPage = 1;
+                                                renderGlobalNotifications();
+                                            };
+
+                                            if (immediate) executeFilter();
+                                            else {
+                                                if (window.globalNotifSearchTimeout) clearTimeout(window.globalNotifSearchTimeout);
+                                                window.globalNotifSearchTimeout = setTimeout(executeFilter, 300);
+                                            }
+                                        }
+
+                                        window.renderGlobalNotifications = function () {
+                                            const list = document.getElementById('globalNotificationList');
+                                            if (!list) return;
+
+                                            const startIndex = (globalNotificationsPage - 1) * globalNotificationsPerPage;
+                                            const endIndex = startIndex + globalNotificationsPerPage;
+                                            const paginatedNotifs = filteredGlobalNotifications.slice(startIndex, endIndex);
+
+                                            if (paginatedNotifs.length === 0) {
+                                                list.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">No notifications match your search.</td></tr>';
+                                                document.getElementById('globalNotificationPagination').innerHTML = '';
+                                                return;
+                                            }
+
+                                            list.innerHTML = paginatedNotifs.map(notif => {
+                                                const studentName = notif.StudentId ? notif.StudentId.FullName : '<em style="color:red;">Deleted User</em>';
+                                                const libId = notif.StudentId ? (notif.StudentId.LibraryID || 'N/A') : 'N/A';
+                                                const dateStr = new Date(notif.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).replace(/ /g, ' ');
+
+                                                let statusBadge = notif.IsRead
+                                                    ? `<span style="font-size: 0.85em; color: var(--success-color); padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;"><i class="fa-solid fa-check-double"></i> Read</span>`
+                                                    : `<span style="font-size: 0.85em; color: var(--text-secondary); padding: 4px 8px; border: 1px solid currentColor; background: var(--bg-color); border-radius: 12px;"><i class="fa-solid fa-check"></i> Delivered</span>`;
+
+                                                return `
+                                                    <tr style="border-bottom: 1px dashed var(--card-border); transition: background 0.2s;" onmouseover="this.style.background='var(--input-bg)'" onmouseout="this.style.background='transparent'">
+                                                        <td style="padding: 15px; color: var(--text-secondary); font-size: 0.9em;"><i class="fa-regular fa-clock" style="margin-right: 5px;"></i> ${dateStr}</td>
+                                                        <td style="padding: 15px; font-weight: 500; color: var(--text-primary);">${studentName}</td>
+                                                        <td style="padding: 15px; color: var(--primary-color); font-weight: 600;">${libId}</td>
+                                                        <td style="padding: 15px; font-weight: 600;">${notif.Title || 'Alert'}</td>
+                                                        <td style="padding: 15px; max-width: 300px; white-space: normal; color: var(--text-secondary); font-size: 0.9em;">${notif.Message}</td>
+                                                        <td style="padding: 15px; text-align: center;">${statusBadge}</td>
+                                                    </tr>
+                                                `;
+                                            }).join('');
+
+                                            renderGlobalNotificationsPagination();
+                                        }
+
+                                        window.renderGlobalNotificationsPagination = function () {
+                                            const pagination = document.getElementById('globalNotificationPagination');
+                                            if (!pagination) return;
+
+                                            const totalPages = Math.ceil(filteredGlobalNotifications.length / globalNotificationsPerPage);
+
+                                            if (totalPages <= 1) {
+                                                pagination.innerHTML = '';
+                                                return;
+                                            }
+
+                                            let html = '';
+                                            html += `<button onclick="changeGlobalNotificationsPage(${globalNotificationsPage - 1})" ${globalNotificationsPage === 1 ? 'disabled' : ''} class="btn-outline" style="padding: 5px 10px; border-radius: 6px;"><i class="fa-solid fa-chevron-left"></i></button>`;
+
+                                            for (let i = 1; i <= totalPages; i++) {
+                                                if (i === 1 || i === totalPages || (i >= globalNotificationsPage - 1 && i <= globalNotificationsPage + 1)) {
+                                                    if (i === globalNotificationsPage) {
+                                                        html += `<button class="btn" style="padding: 5px 10px; border-radius: 6px;">${i}</button>`;
+                                                    } else {
+                                                        html += `<button onclick="changeGlobalNotificationsPage(${i})" class="btn-outline" style="padding: 5px 10px; border-radius: 6px;">${i}</button>`;
+                                                    }
+                                                } else if (i === globalNotificationsPage - 2 || i === globalNotificationsPage + 2) {
+                                                    html += `<span style="padding: 5px; color: var(--text-secondary);">...</span>`;
+                                                }
+                                            }
+
+                                            html += `<button onclick="changeGlobalNotificationsPage(${globalNotificationsPage + 1})" ${globalNotificationsPage === totalPages ? 'disabled' : ''} class="btn-outline" style="padding: 5px 10px; border-radius: 6px;"><i class="fa-solid fa-chevron-right"></i></button>`;
+                                            pagination.innerHTML = html;
+                                        }
+
+                                        window.changeGlobalNotificationsPage = function (page) {
+                                            if (page < 1 || page > Math.ceil(filteredGlobalNotifications.length / globalNotificationsPerPage)) return;
+                                            globalNotificationsPage = page;
+                                        }
+
+                                        // --- Data Export (CSV) Logic ---
+                                        window.exportToCSV = function (filename, rows) {
+                                            if (!rows || rows.length === 0) {
+                                                showToast('No data available to export.', 'warning');
+                                                return;
+                                            }
+                                            const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+                                            const encodedUri = encodeURI(csvContent);
+                                            const link = document.createElement("a");
+                                            link.setAttribute("href", encodedUri);
+                                            link.setAttribute("download", filename);
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            link.remove();
+                                        }
+
+                                        window.exportStudentsCSV = function () {
+                                            if (filteredStudents.length === 0) {
+                                                showToast('No students matched current filter.', 'warning');
+                                                return;
+                                            }
+                                            const headers = ["Library ID", "Name", "Contact", "Email", "Gender", "Aadhar No", "Account Status", "Batch", "Plan", "Seat No", "Joining Date"];
+                                            const rows = [headers];
+                                            filteredStudents.forEach(s => {
+                                                rows.push([
+                                                    s.LibraryID || 'N/A',
+                                                    (s.FullName || `${s.FirstName} ${s.LastName}`).replace(/,/g, ''),
+                                                    s.Contact || 'N/A',
+                                                    s.Email || 'N/A',
+                                                    s.Gender || 'N/A',
+                                                    s.AadharNumber || 'N/A',
+                                                    s.AccountStatus || 'N/A',
+                                                    s.batchType || 'N/A',
+                                                    s.planDuration || 'N/A',
+                                                    s.SeatNo || 'N/A',
+                                                    s.JoiningDate ? new Date(s.JoiningDate).toLocaleDateString() : 'N/A'
+                                                ]);
+                                            });
+                                            exportToCSV(`students_export_${new Date().toISOString().split('T')[0]}.csv`, rows);
+                                        }
+
+                                    window.exportPaymentHistoryCSV = function () {
+                                            if (filteredPaymentHistory.length === 0) {
+                                                showToast('No payment history matched current filter.', 'warning');
+                                                return;
+                                            }
+                                            const headers = ["Library ID", "Student Name", "Month", "Amount", "Batch", "Plan", "Payment Date", "Transaction ID/Note", "Status"];
+                                            const rows = [headers];
+                                            filteredPaymentHistory.forEach(fee => {
+                                                let txnId = 'N/A';
+                                                let actDate = 'N/A';
+                                                if (fee.AdminNote) {
+                                                    const lines = fee.AdminNote.split('\\n');
+                                                    if (lines.length >= 2) {
+                                                        txnId = lines[0].replace('TXN ID: ', '').trim();
+                                                        actDate = lines[1].replace('Date: ', '').trim();
+                                                    } else {
+                                                        txnId = fee.AdminNote.replace(/,/g, '');
+                                                    }
+                                                }
+
+                                                rows.push([
+                                                    fee.StudentId ? (fee.StudentId.LibraryID || 'N/A') : 'N/A',
+                                                    fee.StudentId ? (fee.StudentId.FullName || '').replace(/,/g, '') : 'Deleted Student',
+                                                    fee.Month || 'N/A',
+                                                    fee.Amount || '0',
+                                                    fee.Batch || (fee.StudentId ? fee.StudentId.batchType : 'N/A'),
+                                                    fee.StudentId ? fee.StudentId.planDuration : 'N/A',
+                                                    actDate,
+                                                    txnId,
+                                                    fee.Status || 'N/A'
+                                                ]);
+                                            });
+                                            exportToCSV(`payment_history_export_${new Date().toISOString().split('T')[0]}.csv`, rows);
+                                        }
+
+                                    

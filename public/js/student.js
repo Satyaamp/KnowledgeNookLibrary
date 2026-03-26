@@ -323,7 +323,7 @@ async function loadProfile() {
 
             <!-- Today's Attendance Widget -->
             ${attData ? `
-            <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1; margin-top: 1.5rem;">
+            <div style=" padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1; margin-top: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-clock" style="color:var(--primary-color);"></i> Today's Attendance (${attData.DateString.split('-').reverse().join('-')})</div>
                     <div style="display: flex; gap: 8px;">
@@ -346,7 +346,7 @@ async function loadProfile() {
                     </div>
                 </div>
             </div>` : `
-            <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1; margin-top: 1.5rem;">
+            <div style="padding: 1.25rem; border-radius: 12px; border: 1px solid var(--success); grid-column: 1 / -1; margin-top: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-clock" style="color:var(--primary-color);"></i> Today's Attendance</div>
                     <div style="display: flex; gap: 8px;">
@@ -358,12 +358,12 @@ async function loadProfile() {
             </div>
             `}
 
-                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                <div style=" padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-user" style="color:var(--primary-color); font-size:0.9em;"></i> Name</div>
                     <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.FullName}</div>
                 </div>
 
-                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                <div style=" padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-cake-candles" style="color:var(--primary-color); font-size:0.9em;"></i> Date of Birth</div>
                     <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;"> 
                        ${data.DOB 
@@ -378,7 +378,7 @@ async function loadProfile() {
                     </div>
                 </div>
 
-                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                <div style=" padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-envelope" style="color:var(--primary-color); font-size:0.9em;"></i> Email</div>
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 5px; gap: 10px; flex-wrap: wrap;">
                         <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; word-break: break-all;">${data.Email}</div>
@@ -390,7 +390,7 @@ async function loadProfile() {
                         </span>
                     </div>
                 </div>
-                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                <div style=" padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-phone" style="color:var(--primary-color); font-size:0.9em;"></i> Phone</div>
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 5px; gap: 10px; flex-wrap: wrap;">
                         <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; word-break: break-all;">${data.Contact}</div>
@@ -402,7 +402,7 @@ async function loadProfile() {
                         </span>
                     </div>
                 </div>
-                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                <div style=" padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-id-card" style="color:var(--primary-color); font-size:0.9em;"></i> Aadhar</div>
                         
@@ -444,11 +444,11 @@ async function loadProfile() {
             }
                     </div>
                 </div>
-                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1;">
+                <div style=" padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1;">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-location-dot" style="color:var(--primary-color); font-size:0.9em;"></i> Address</div>
                     <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">${data.FullAddress}</div>
                 </div>
-                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                <div style=" padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-id-card" style="color:var(--primary-color); font-size:0.9em;"></i> Status</div>
                     <div style="font-size: 1.2em; margin-top: 5px;">
                         <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.95em; border: 1px solid currentColor; background: var(--bg-color); color: ${data.AccountStatus === 'Active' ? 'var(--success-color)' : 'var(--warning-color)'}; font-weight: 600;">
@@ -456,7 +456,7 @@ async function loadProfile() {
                         </span>
                     </div>
                 </div>
-                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                <div style=" padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border);">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;"><i class="fa-solid fa-chair" style="color:var(--primary-color); font-size:0.9em;"></i> Seat No</div>
                     <div style="font-size: 1.2em; color: var(--text-primary); font-weight: 500; margin-top: 5px;">
                     ${data.assignedHall || 'N/A'}_${data.SeatNo || 'N/A'}
@@ -464,7 +464,7 @@ async function loadProfile() {
                 </div>
 
                 <!-- Wi-Fi Details Hub -->
-                <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1;">
+                <div style=" padding: 1.25rem; border-radius: 12px; border: 1px solid var(--card-border); grid-column: 1 / -1;">
                     <div style="font-size: 0.95em; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 15px;">
                         <i class="fa-solid fa-wifi" style="color:var(--primary-color); font-size:0.9em;"></i> Library Wi-Fi Access
                     </div>
@@ -477,14 +477,14 @@ async function loadProfile() {
                             <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 10px;"><i class="fa-solid fa-network-wired"></i> ${wifiData.hall1.title || 'Hall 01'}</div>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 5px;">
                                 <span style="font-size: 0.9em; color: var(--text-secondary);">Network:</span>
-                                <div style="display: flex; align-items: center; gap: 8px; background: var(--input-bg); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
+                                <div style="display: flex; align-items: center; gap: 8px;  padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
                                     <strong style="font-size: 0.95em; user-select: all;">${wifiData.hall1.network}</strong>
                                     <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary-color);" onclick="copyToClipboard('${wifiData.hall1.network}')" title="Copy Network Name"></i>
                                 </div>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;">
                                 <span style="font-size: 0.9em; color: var(--text-secondary);">Password:</span>
-                                <div style="display: flex; align-items: center; gap: 8px; background: var(--input-bg); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
+                                <div style="display: flex; align-items: center; gap: 8px;  padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
                                     <strong style="font-size: 0.95em; letter-spacing: 1px; user-select: all;">${wifiData.hall1.password}</strong>
                                     <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary-color);" onclick="copyToClipboard('${wifiData.hall1.password}')" title="Copy Password"></i>
                                 </div>
@@ -496,14 +496,14 @@ async function loadProfile() {
                             <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 10px;"><i class="fa-solid fa-star" style="color: #F59E0B;"></i> ${wifiData.hall2.title || 'Hall 02 + Premium Rooms'}</div>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 5px;">
                                 <span style="font-size: 0.9em; color: var(--text-secondary);">Network:</span>
-                                <div style="display: flex; align-items: center; gap: 8px; background: var(--input-bg); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
+                                <div style="display: flex; align-items: center; gap: 8px;  padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
                                     <strong style="font-size: 0.95em; user-select: all;">${wifiData.hall2.network}</strong>
                                     <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary-color);" onclick="copyToClipboard('${wifiData.hall2.network}')" title="Copy Network Name"></i>
                                 </div>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;">
                                 <span style="font-size: 0.9em; color: var(--text-secondary);">Password:</span>
-                                <div style="display: flex; align-items: center; gap: 8px; background: var(--input-bg); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
+                                <div style="display: flex; align-items: center; gap: 8px;  padding: 4px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
                                     <strong style="font-size: 0.95em; letter-spacing: 1px; user-select: all;">${wifiData.hall2.password}</strong>
                                     <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary-color);" onclick="copyToClipboard('${wifiData.hall2.password}')" title="Copy Password"></i>
                                 </div>
@@ -681,7 +681,7 @@ function renderStudentFees() {
                         ${fee.Status}
                     </span>
 
-                    ${fee.ProofImageURL ? `
+                    ${fee.ProofImageURL && fee.ProofImageURL !== 'N/A' ? `
                     <svg onclick="openImagePreview('${fee.ProofImageURL}')"
                         xmlns="http://www.w3.org/2000/svg"
                         width="20"
@@ -1011,7 +1011,7 @@ async function loadRequestsHistory() {
 
             list.innerHTML = data.requests.map(req => {
                 const changes = Object.entries(req.ProposedData || {})
-                    .map(([key, val]) => `<span style="background: var(--input-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-right: 5px; color: var(--text-primary); border: 1px solid var(--card-border); display: inline-block; margin-bottom: 4px;">${key}: ${val}</span>`)
+                    .map(([key, val]) => `<span style=" padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-right: 5px; color: var(--text-primary); border: 1px solid var(--card-border); display: inline-block; margin-bottom: 4px;">${key}: ${val}</span>`)
                     .join('');
                 
                 const isLocked = ['Pending', 'Under Review'].includes(req.Status);
@@ -2354,7 +2354,6 @@ function renderMsgList(listId, paginationId, items, page, isUnread) {
         padding:15px;
         margin-bottom:12px;
         border-radius:8px;
-        background:var(--input-bg);
         border:1px solid var(--card-border);
     ">
 
