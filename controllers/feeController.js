@@ -126,6 +126,10 @@ const verifyFee = async (req, res) => {
                 fee.AdminNote = req.body.AdminNote;
             }
 
+            if (req.body.ReceiptNo !== undefined) {
+                fee.ReceiptNo = req.body.ReceiptNo;
+            }
+
             // Handle Cloudinary image deletion if flagged by admin
             if (req.body.deleteReceipt === true && fee.ProofImageURL) {
                 try {

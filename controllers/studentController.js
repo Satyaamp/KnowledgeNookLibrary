@@ -338,11 +338,14 @@ const getVapidPublicKey = (req, res) => {
 // @access  Private/Student
 const savePushSubscription = async (req, res) => {
     try {
-        const subscription = req.body;
-        const student = await Student.findById(req.user.id);
+        const subscription = req.bodyufindById(req.user.id);
         
         if (!student) {
             return res.status(404).json({ message: 'Student not found' });
+        }
+
+        if (oldEndpoint) {
+            student.pushSubscriptions = student.pushSubscriptions.filter(sub => sub.endpoint !== oldEndpoint);
         }
 
         // Check if subscription already exists to prevent duplicates on the same device
@@ -350,9 +353,8 @@ const savePushSubscription = async (req, res) => {
         
         if (!exists) {
             student.pushSubscriptions.push(subscription);
-            await student.save();
         }
-
+        await student.save();
         res.status(201).json({ message: 'Subscription saved successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error saving subscription', error: error.message });

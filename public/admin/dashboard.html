@@ -18,6 +18,8 @@
         <!-- <link rel="stylesheet" href="../css/style.css"> -->
         <link rel="stylesheet" href="../css/admin.css">
         <link rel="stylesheet" href="../css/admin-mobile.css">
+
+        
     </head>
 
     <body>
@@ -630,6 +632,7 @@
                                         <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Transaction Details</th>
                                         <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600;">Digital Signature</th>
                                         <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600; text-align: center;">Status</th>
+                                        <th style="padding: 12px 15px; color: var(--text-secondary); font-weight: 600; text-align: center;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="paymentHistoryList">
@@ -640,7 +643,9 @@
                         <div id="paymentHistoryPagination" style="display: flex; gap: 5px; margin-top: 15px; justify-content: flex-end;"></div>
                     </div>
                 </div>
-                </div> <!-- End of view-fee-management -->
+                </div> 
+                
+                <!-- End of view-fee-management -->
 
                 <!-- Requests View -->
                 <div id="view-requests" class="view-section" style="display: none;">
@@ -1103,6 +1108,7 @@
             </div>
         </div>
 
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
         <script src="/js/api.js"></script>
         <script>
             const pricingGrid = {
@@ -1249,6 +1255,9 @@
             });
         </script>
 
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     </body>
 

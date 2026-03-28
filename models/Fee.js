@@ -35,6 +35,9 @@ const feeSchema = new mongoose.Schema({
     isResubmitted: {
         type: Boolean,
         default: false
+    },
+    ReceiptNo: {
+        type: String
     }
 }, { timestamps: true });
 

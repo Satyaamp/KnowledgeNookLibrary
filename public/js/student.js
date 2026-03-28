@@ -2573,9 +2573,41 @@ async function subscribeToPushNotifications(manual = false) {
                 const registration = await navigator.serviceWorker.ready;
                 let subscription = await registration.pushManager.getSubscription();
                 
-                if (!subscription) {
-                    const { publicKey } = await apiFetch('/students/vapid-public-key');
-                    const convertedVapidKey = urlBase64ToUint8Array(publicKey);
+                const { publicKey } = await apiFetch('/students/vapid-public-key');
+                const convertedVapidKey = urlBase64ToUint8Array(publicKey);
+                let needsSubscribe = false;
+                let oldEndpoint = null;
+
+                if (subscription) {
+                    const currentKey = subscription.options.applicationServerKey;
+                    let keysMatch = true;
+                    
+                    if (currentKey) {
+                        const currentKeyArray = new Uint8Array(currentKey);
+                        if (currentKeyArray.length !== convertedVapidKey.length) {
+                            keysMatch = false;
+                        } else {
+                            for (let i = 0; i < currentKeyArray.length; i++) {
+                                if (currentKeyArray[i] !== convertedVapidKey[i]) {
+                                    keysMatch = false;
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        keysMatch = false;
+                    }
+
+                    if (!keysMatch) {
+                        oldEndpoint = subscription.endpoint;
+                        await subscription.unsubscribe();
+                        needsSubscribe = true;
+                    }
+                } else {
+                    needsSubscribe = true;
+                }
+
+                if (needsSubscribe) {
                     subscription = await registration.pushManager.subscribe({
                         userVisibleOnly: true,
                         applicationServerKey: convertedVapidKey
@@ -2584,7 +2616,7 @@ async function subscribeToPushNotifications(manual = false) {
                 
                 await apiFetch('/students/subscribe', {
                     method: 'POST',
-                    body: JSON.stringify(subscription)
+                    body: JSON.stringify({ subscription, oldEndpoint })
                 });
                 
                 if (manual) showToast('Notifications enabled successfully!', 'success');
