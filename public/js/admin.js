@@ -1576,11 +1576,12 @@ function handleBulkStudentUpload(input) {
         list.innerHTML = 'Loading fees...';
         try {
             const data = await apiFetch('/fees');
-            if (data && data.length > 0) {
-                currentFees = data;
+            const pendingOrRejectedFees = data ? data.filter(fee => fee.Status !== 'Paid' && fee.Status !== 'Approved') : [];
+            if (pendingOrRejectedFees.length > 0) {
+                currentFees = pendingOrRejectedFees;
                 filterFees(true);
             } else {
-                list.innerHTML = '<p>No fee records found.</p>';
+                list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No pending fee records to verify.</p>';
                 document.getElementById('feesPagination').innerHTML = '';
             }
         } catch (error) {
@@ -2048,15 +2049,12 @@ function handleBulkStudentUpload(input) {
                             ${new Date(ann.createdAt)
                 .toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
                 .replace(/ /g, '-')}
-                            .toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})
-                            .replace(/ /g,'-')}
                         </span>
 
                         <span>
                             <i class="fa-solid fa-clock" style="margin-right:4px;"></i>
                             ${new Date(ann.createdAt)
                 .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                            .toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}
                         </span>
                         
 
@@ -2675,6 +2673,12 @@ function handleBulkStudentUpload(input) {
                         function renderPaymentHistory() {
                             const list = document.getElementById('paymentHistoryList');
                             if (!list) return;
+
+                            const totalAmount = filteredPaymentHistory.reduce((sum, fee) => sum + (Number(fee.Amount) || 0), 0);
+                            const totalAmountEl = document.getElementById('paymentHistoryTotalAmount');
+                            if (totalAmountEl) {
+                                totalAmountEl.textContent = '₹' + totalAmount.toLocaleString('en-IN');
+                            }
 
                             const startIndex = (paymentHistoryPage - 1) * paymentHistoryPerPage;
                             const endIndex = startIndex + paymentHistoryPerPage;
@@ -3368,42 +3372,211 @@ function handleBulkStudentUpload(input) {
                                             try {
                                                 const timeline = await apiFetch(`/admin/students/${studentId}/fee-timeline`);
 
-                                                if (timeline.length === 0) {
-                                                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-secondary);">No timeline data generated yet.</td></tr>';
+                                                const filteredTimeline = timeline.filter(entry => entry.status === 'Paid' || entry.status === 'Pending' || entry.status === 'Approved');
+
+                                                if (filteredTimeline.length === 0) {
+                                                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-secondary);">No paid or pending records found for this student. Unpaid records can be found in the Unpaid Fees tab.</td></tr>';
                                                     return;
                                                 }
 
-                                                tbody.innerHTML = timeline.map(entry => {
+                                                tbody.innerHTML = filteredTimeline.map(entry => {
                                                     let statusBadge = '';
                                                     let actionBtn = '';
 
-                                                    if (entry.status === 'Paid') {
+                                                    if (entry.status === 'Paid' || entry.status === 'Approved') {
                                                         statusBadge = `<span style="background: var(--success-color); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600;"><i class="fa-solid fa-check"></i> Paid</span>`;
                                                         actionBtn = `<span style="color: var(--text-secondary); font-size: 0.9em;">Verified ✓</span>`;
                                                     } else if (entry.status === 'Pending') {
                                                         statusBadge = `<span style="background: var(--warning-color); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600;"><i class="fa-solid fa-clock"></i> Pending Verification</span>`;
                                                         actionBtn = `<button onclick="goToVerifyUploads('${studentId}')" style="background:none; border:none; cursor:pointer; color: var(--warning-color); font-size: 0.9em; text-decoration: underline; font-weight: bold;"><i class="fa-solid fa-magnifying-glass"></i> Awaiting Verification</button>`;
-                                                    } else {
-                                                        statusBadge = `<span style="background: var(--error-color); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600;"><i class="fa-solid fa-xmark"></i> Unpaid</span>`;
-                                                        actionBtn = `
-                    <button onclick="overrideMarkPaid('${studentId}', '${entry.month}', ${entry.expectedAmount})" class="btn" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px; margin-right: 5px;"><i class="fa-solid fa-money-bill-wave"></i> Mark Paid</button>
-                    <button onclick="sendFeeReminder('${studentId}', '${entry.month}')" class="btn-outline" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-bell"></i> Remind</button>
-                `;
                                                     }
 
                                                     return `
-                <tr style="border-bottom: 1px dashed var(--card-border); transition: background 0.2s;" onmouseover="this.style.background='var(--input-bg)'" onmouseout="this.style.background='transparent'">
-                    <td style="padding: 15px; font-weight: 500; color: var(--text-primary);"><i class="fa-regular fa-calendar" style="color: var(--text-secondary); margin-right: 8px;"></i> ${entry.month}</td>
-                    <td style="padding: 15px; color: var(--text-secondary); font-weight: 600;">₹${entry.expectedAmount}</td>
-                    <td style="padding: 15px;">${statusBadge}</td>
-                    <td style="padding: 15px; text-align: right;">${actionBtn}</td>
-                </tr>
-            `;
+                                                        <tr style="border-bottom: 1px dashed var(--card-border); transition: background 0.2s;" onmouseover="this.style.background='var(--input-bg)'" onmouseout="this.style.background='transparent'">
+                                                            <td style="padding: 15px; font-weight: 500; color: var(--text-primary);"><i class="fa-regular fa-calendar" style="color: var(--text-secondary); margin-right: 8px;"></i> ${entry.month}</td>
+                                                            <td style="padding: 15px; color: var(--text-secondary); font-weight: 600;">₹${entry.expectedAmount}</td>
+                                                            <td style="padding: 15px;">${statusBadge}</td>
+                                                            <td style="padding: 15px; text-align: right;">${actionBtn}</td>
+                                                        </tr>
+                                                    `;
                                                 }).join('');
 
                                             } catch (error) {
                                                 tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--error-color); padding: 20px;">Error loading timeline: ${error.message}</td></tr>`;
                                             }
+                                        }
+
+                                        // --- Pending Fees Logic ---
+                                        let currentPendingFees = [];
+                                        let filteredPendingFees = [];
+                                        let pendingFeesPage = 1;
+                                        const pendingFeesPerPage = 10;
+                                        let pendingFeesSearchTimeout = null;
+
+                                        window.loadPendingFees = async function() {
+                                            const list = document.getElementById('pendingFeesList');
+                                            if (!list) return;
+                                            list.innerHTML = '<p style="text-align: center; padding: 20px;">Loading unpaid/pending fees...</p>';
+
+                                            try {
+                                                if (currentStudents.length === 0) {
+                                                    const stuData = await apiFetch('/admin/students');
+                                                    currentStudents = stuData || [];
+                                                }
+                                                
+                                                const allFees = await apiFetch('/fees') || [];
+
+                                                const currentDate = new Date();
+                                                const maxDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+
+                                                const activeStudents = currentStudents.filter(s => s.AccountStatus === 'Active');
+
+                                                currentPendingFees = [];
+
+                                                activeStudents.forEach(student => {
+                                                    const joinDate = new Date(student.JoiningDate || student.createdAt || new Date());
+                                                    let iterDate = new Date(joinDate.getFullYear(), joinDate.getMonth(), 1);
+
+                                                    while (iterDate <= maxDate) {
+                                                        const monthName = iterDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).replace(/\s+/g, ' ').trim();
+
+                                                        const studentFeeThisMonth = allFees.find(f => 
+                                                            (f.StudentId && f.StudentId._id === student._id || f.StudentId === student._id) && 
+                                                            (f.Month || '').toLowerCase() === monthName.toLowerCase()
+                                                        );
+
+                                                        let status = 'Unpaid';
+                                                        if (studentFeeThisMonth) {
+                                                            status = studentFeeThisMonth.Status;
+                                                        }
+
+                                                        // Only include if they haven't paid AND haven't submitted for verification yet
+                                                        if (status !== 'Paid' && status !== 'Approved' && status !== 'Pending') {
+                                                            currentPendingFees.push({
+                                                                student: student,
+                                                                month: monthName,
+                                                                expectedAmount: student.amount || 0,
+                                                                status: status
+                                                            });
+                                                        }
+                                                        
+                                                        iterDate.setMonth(iterDate.getMonth() + 1);
+                                                    }
+                                                });
+
+                                                filterPendingFees(true);
+                                            } catch (error) {
+                                                list.innerHTML = `<p style="color: red; text-align: center;">Error: ${error.message}</p>`;
+                                            }
+                                        }
+
+                                        window.filterPendingFees = function(immediate = false) {
+                                            const searchInput = document.getElementById('pendingFeeSearch');
+                                            const query = searchInput ? searchInput.value.toLowerCase() : '';
+
+                                            if (pendingFeesSearchTimeout) clearTimeout(pendingFeesSearchTimeout);
+
+                                            const executeFilter = () => {
+                                                filteredPendingFees = currentPendingFees.filter(item => {
+                                                    const name = (item.student.FullName || item.student.FirstName + ' ' + (item.student.LastName || '')).toLowerCase();
+                                                    const libId = (item.student.LibraryID || '').toLowerCase();
+                                                    return name.includes(query) || libId.includes(query);
+                                                });
+                                                pendingFeesPage = 1;
+                                                renderPendingFees();
+                                            };
+
+                                            if (immediate) executeFilter();
+                                            else pendingFeesSearchTimeout = setTimeout(executeFilter, 300);
+                                        }
+
+                                        window.renderPendingFees = function() {
+                                            const list = document.getElementById('pendingFeesList');
+                                            if (!list) return;
+
+                                            const startIndex = (pendingFeesPage - 1) * pendingFeesPerPage;
+                                            const endIndex = startIndex + pendingFeesPerPage;
+                                            const paginated = filteredPendingFees.slice(startIndex, endIndex);
+
+                                            if (paginated.length === 0) {
+                                                list.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary);">No unpaid fees found.</p>';
+                                                document.getElementById('pendingFeesPagination').innerHTML = '';
+                                                return;
+                                            }
+
+                                            list.innerHTML = paginated.map(item => `
+                                                <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
+                                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                                                        <div>
+                                                            <strong style="color: var(--primary-color); font-size: 1.1em;">${item.student.FullName || item.student.FirstName + ' ' + (item.student.LastName || '')}</strong>
+                                                            <div style="font-size: 0.85em; color: var(--text-secondary);">ID: ${item.student.LibraryID || 'N/A'} | Plan: ${item.student.planDuration || 'N/A'} (${item.student.batchType || 'N/A'})</div>
+                                                        </div>
+                                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                                            <span style="font-size: 0.85em; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--error-color); background: rgba(239, 68, 68, 0.1); color: var(--error-color); font-weight: 600;">
+                                                                <i class="fa-solid fa-xmark"></i> Unpaid
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div style="font-size: 0.95em; color: var(--text-secondary); margin-bottom: 15px; display: flex; gap: 15px;">
+                                                        <span><strong>Month:</strong> ${item.month}</span>
+                                                        <span><strong>Amount:</strong> ₹${item.expectedAmount}</span>
+                                                    </div>
+                                                    
+                                                    <div style="display: flex; gap: 10px;">
+                                                        <button onclick="overrideMarkPaid('${item.student._id}', '${item.month}', ${item.expectedAmount})" class="btn" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px;">
+                                                            <i class="fa-solid fa-money-bill-wave"></i> Mark Paid
+                                                        </button>
+                                                        <button onclick="sendFeeReminder('${item.student._id}', '${item.month}')" class="btn-outline" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px;">
+                                                            <i class="fa-solid fa-bell"></i> Remind
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            `).join('');
+
+                                            renderPendingFeesPagination();
+                                        }
+
+                                        window.renderPendingFeesPagination = function() {
+                                            const pagination = document.getElementById('pendingFeesPagination');
+                                            if (!pagination) return;
+
+                                            const totalPages = Math.ceil(filteredPendingFees.length / pendingFeesPerPage);
+
+                                            const totalCountDisplay = `<div style="font-size: 0.9em; color: var(--text-secondary);">Page ${pendingFeesPage} of ${totalPages}</div>`;
+
+                                            if (totalPages <= 1) {
+                                                pagination.innerHTML = filteredPendingFees.length > 0 ? totalCountDisplay : '';
+                                                return;
+                                            }
+
+                                            let buttonsHtml = '';
+                                            // Prev button
+                                            buttonsHtml += `<button class="btn-outline" style="padding: 0.3rem 0.6rem;" ${pendingFeesPage === 1 ? 'disabled' : `onclick="changePendingFeesPage(${pendingFeesPage - 1})"`}>Prev</button>`;
+
+                                            // Page numbers
+                                            for (let i = 1; i <= totalPages; i++) {
+                                                if (i === 1 || i === totalPages || (i >= pendingFeesPage - 1 && i <= pendingFeesPage + 1)) {
+                                                    if (i === pendingFeesPage) {
+                                                        buttonsHtml += `<button class="btn" style="padding: 0.3rem 0.8rem;">${i}</button>`;
+                                                    } else {
+                                                        buttonsHtml += `<button onclick="changePendingFeesPage(${i})" class="btn-outline" style="padding: 0.3rem 0.8rem;">${i}</button>`;
+                                                    }
+                                                } else if (i === pendingFeesPage - 2 || i === pendingFeesPage + 2) {
+                                                    buttonsHtml += `<span style="padding: 0.3rem; color: var(--text-secondary); align-self: center;">...</span>`;
+                                                }
+                                            }
+
+                                            // Next button
+                                            buttonsHtml += `<button class="btn-outline" style="padding: 0.3rem 0.6rem;" ${pendingFeesPage === totalPages ? 'disabled' : `onclick="changePendingFeesPage(${pendingFeesPage + 1})"`}>Next</button>`;
+
+                                            pagination.innerHTML = `<div style="display: flex; gap: 5px;">${buttonsHtml}</div>` + totalCountDisplay;
+                                        }
+
+                                        window.changePendingFeesPage = function(page) {
+                                            if (page < 1 || page > Math.ceil(filteredPendingFees.length / pendingFeesPerPage)) return;
+                                            pendingFeesPage = page;
+                                            renderPendingFees();
                                         }
 
                                         window.overrideMarkPaid = async function (studentId, month, expectedAmount) {
@@ -3415,7 +3588,15 @@ function handleBulkStudentUpload(input) {
                                                     body: JSON.stringify({ Month: month, Amount: expectedAmount })
                                                 });
                                                 showToast(`Successfully marked ${month} as Paid!`, 'success');
-                                                selectTimelineStudent(studentId);
+                                                
+                                                // Refresh whichever view triggered this
+                                                if (document.getElementById('feeTabTimelineContent') && document.getElementById('feeTabTimelineContent').style.display === 'block') {
+                                                    selectTimelineStudent(studentId);
+                                                }
+                                                if (document.getElementById('feeTabPendingContent') && document.getElementById('feeTabPendingContent').style.display === 'block') {
+                                                    if (typeof loadPendingFees === 'function') loadPendingFees();
+                                                }
+                                                loadDashboardStats();
                                             } catch (error) {
                                                 showToast('Error marking fee as paid: ' + error.message, 'error');
                                             }
@@ -3449,13 +3630,15 @@ function handleBulkStudentUpload(input) {
                                             const timelineBtn = document.getElementById('feeTabTimelineBtn');
                                             const verifyBtn = document.getElementById('feeTabVerifyBtn');
                                             const historyBtn = document.getElementById('feeTabHistoryBtn');
+                                            const pendingBtn = document.getElementById('feeTabPendingBtn');
 
                                             const timelineContent = document.getElementById('feeTabTimelineContent');
                                             const verifyContent = document.getElementById('feeTabVerifyContent');
                                             const historyContent = document.getElementById('feeTabHistoryContent');
+                                            const pendingContent = document.getElementById('feeTabPendingContent');
 
                                             // Reset all buttons
-                                            [timelineBtn, verifyBtn, historyBtn].forEach(btn => {
+                                            [timelineBtn, verifyBtn, historyBtn, pendingBtn].forEach(btn => {
                                                 if (btn) {
                                                     btn.className = 'btn-outline';
                                                     btn.style.color = 'var(--text-secondary)';
@@ -3464,7 +3647,7 @@ function handleBulkStudentUpload(input) {
                                             });
 
                                             // Hide all contents
-                                            [timelineContent, verifyContent, historyContent].forEach(content => {
+                                            [timelineContent, verifyContent, historyContent, pendingContent].forEach(content => {
                                                 if (content) content.style.display = 'none';
                                             });
 
@@ -3477,6 +3660,7 @@ function handleBulkStudentUpload(input) {
                                                     const searchInput = document.getElementById('timelineSearch');
                                                     if (searchInput) searchInput.focus();
                                                 }, 100);
+                                                populateTimelineDropdown();
                                             } else if (tab === 'verify') {
                                                 if (verifyBtn) { verifyBtn.className = 'btn'; verifyBtn.style.color = ''; }
                                                 if (verifyContent) verifyContent.style.display = 'block';
@@ -3485,6 +3669,10 @@ function handleBulkStudentUpload(input) {
                                                 if (historyBtn) { historyBtn.className = 'btn'; historyBtn.style.color = ''; }
                                                 if (historyContent) historyContent.style.display = 'block';
                                                 loadPaymentHistory();
+                                            } else if (tab === 'pending') {
+                                                if (pendingBtn) { pendingBtn.className = 'btn'; pendingBtn.style.color = ''; }
+                                                if (pendingContent) pendingContent.style.display = 'block';
+                                                if (typeof loadPendingFees === 'function') loadPendingFees();
                                             }
                                         };
 

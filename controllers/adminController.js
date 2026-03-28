@@ -79,7 +79,7 @@ const addStudent = async (req, res) => {
 // @access  Private/Admin
 const getStudents = async (req, res) => {
     try {
-        const students = await Student.find({}).select('-Password');
+        const students = await Student.find({}).sort({ JoiningDate: -1 }).select('-Password');
         res.json(students);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching students', error: error.message });

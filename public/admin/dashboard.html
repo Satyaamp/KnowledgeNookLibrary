@@ -306,7 +306,7 @@
                 <div id="view-students" class="view-section" style="display: none;">
                     <div class="card">
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <h3 style="margin:0;"><i class="fa-solid fa-users"></i> Manage Students</h3>
+
 
                             <a href="#search" onclick="closeSidebar()" style="text-decoration:none;">
                                 <u><i class="fa-solid fa-magnifying-glass"></i> Quick Search</a></u>
@@ -496,6 +496,10 @@
                         <button id="feeTabHistoryBtn" class="btn-outline" style="padding: 8px 15px; white-space: nowrap; border-radius: 8px; border: none; color: var(--text-secondary); font-weight: 600; flex-shrink: 0;" onclick="switchFeeTab('history')">
                             <i class="fa-solid fa-clock-rotate-left"></i> Verified History
                         </button>
+                        <button id="feeTabPendingBtn" class="btn-outline" style="padding: 8px 15px; white-space: nowrap; border-radius: 8px; border: none; color: var(--text-secondary); font-weight: 600; flex-shrink: 0;" onclick="switchFeeTab('pending')">
+                            <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> Unpaid Fees
+                            <span id="tab-badge-pending" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; margin-left: 5px;">0</span>
+                        </button>
                     </div>
 
                     <!-- Fee Timeline Tab Content -->
@@ -549,9 +553,7 @@
                                 onkeyup="filterFees()" style="padding: 10px; flex: 1; min-width: 200px;">
                             <select id="filterFeeStatus" onchange="filterFees()"
                                 style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg);">
-                                <option value="">All Statuses</option>
                                 <option value="Pending">Pending</option>
-                                <option value="Paid">Paid</option>
                                 <option value="Rejected">Rejected</option>
                             </select>
                         </div>
@@ -561,11 +563,51 @@
                     </div>
                 </div>
 
+
+                <!-- Unpaid Fees History (Active Students) -->
+                <div id="feeTabPendingContent" style="display: none;">
+                    <div class="card">
+
+                        <!-- Heading -->
+                        <h3>
+                            <i class="fa-solid fa-triangle-exclamation" style="margin-right:5px; color: var(--error-color);"></i>
+                            Unpaid Fees
+                        </h3>
+
+                        <!-- Filter Section (Same Style as Verify Fees) -->
+                        <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+
+                            <!-- Search -->
+                            <input type="text" id="pendingFeeSearch"
+                                placeholder="Search by Student Name or Library ID..."
+                                onkeyup="if(typeof filterPendingFees === 'function') filterPendingFees()"
+                                style="padding: 10px; flex: 1; min-width: 200px;">
+
+                            <!-- Month Filter -->
+                            <input type="month" id="pendingFeeMonthFilter"
+                                onchange="if(typeof filterPendingFees === 'function') filterPendingFees()"
+                                style="padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg);">
+
+                        </div>
+
+                        <!-- Data -->
+                        <div id="pendingFeesList">Loading...</div>
+
+                        <!-- Pagination -->
+                        <div id="pendingFeesPagination"
+                            style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;">
+                        </div>
+
+                    </div>
+                </div>
+
+
                 <!-- Payment History Tab Content -->
                 <div id="feeTabHistoryContent" style="display: none;">
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-                            <h3 style="margin: 0;"><i class="fa-solid fa-indian-rupee-sign" style="color: var(--success-color); margin-right: 8px;"></i> Verified Payment History</h3>
+                            <h3 style="margin: 0;"><i class="fa-solid fa-indian-rupee-sign" style="color: var(--success-color); margin-right: 8px;"></i> Verified Fees History</h3>
+                            <div style="font-size: 1.1em; font-weight: bold; color: var(--text-primary);">Total: <span id="paymentHistoryTotalAmount" style="color: var(--success-color);">₹0</span></div>
                             <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
                                 <button onclick="exportPaymentHistoryCSV()" class="btn-outline" style="padding: 8px 15px; font-size: 0.9em; border-color: var(--primary-color); color: var(--primary-color); height: 40px;">
                                     <i class="fa-solid fa-download"></i> Export CSV
@@ -608,6 +650,10 @@
                         <div id="requestsPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;"></div>
                     </div>
                 </div>
+
+
+
+                
 
                 <!-- Announcements View -->
                 <div id="view-announcements" class="view-section" style="display: none;">
