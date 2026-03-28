@@ -842,6 +842,12 @@ const getStudentFeeTimeline = async (req, res) => {
         let iterDate = new Date(joinDate.getFullYear(), joinDate.getMonth(), 1);
         const endDate = maxDate;
         
+        const planDuration = student.planDuration || 'Monthly';
+        let monthIncrement = 1;
+        if (planDuration === 'Quarterly') monthIncrement = 3;
+        else if (planDuration === 'Half-Yearly') monthIncrement = 6;
+        else if (planDuration === 'Yearly') monthIncrement = 12;
+        
         while (iterDate <= endDate) {
             let rawMonthName = iterDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
             // For older node/OS that use invisible characters (like u202f), replace all whitespaces with a regular space
@@ -861,7 +867,7 @@ const getStudentFeeTimeline = async (req, res) => {
                 record: feeRecord || null
             });
             
-            iterDate.setMonth(iterDate.getMonth() + 1);
+            iterDate.setMonth(iterDate.getMonth() + monthIncrement);
         }
         
         timeline.reverse();

@@ -79,7 +79,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Update first name
         const firstName = profile.FullName ? profile.FullName.split(' ')[0] : 'Student';
-        document.getElementById('studentName').textContent = firstName;
+        
+        // Fetch fees to display Next Due Date next to name
+        const headerFees = await apiFetch('/fees/status').catch(() => []);
+        const joinDateHeader = new Date(profile.JoiningDate || profile.createdAt || new Date());
+        let iterDateHeader = new Date(joinDateHeader.getFullYear(), joinDateHeader.getMonth(), 1);
+        const planDurationHeader = profile.planDuration || 'Monthly';
+        let monthIncHeader = 1;
+        if (planDurationHeader === 'Quarterly') monthIncHeader = 3;
+        else if (planDurationHeader === 'Half-Yearly') monthIncHeader = 6;
+        else if (planDurationHeader === 'Yearly') monthIncHeader = 12;
+        const maxIterDateHeader = new Date(new Date().getFullYear() + 5, new Date().getMonth(), 1);
+        let nextDueMonthHeader = 'N/A';
+        let dueMonthNamePlain = '';
+        let isPendingReview = false;
+
+        while (iterDateHeader <= maxIterDateHeader) {
+            const monthName = iterDateHeader.toLocaleString('en-US', { month: 'long', year: 'numeric' }).replace(/\s+/g, ' ').trim();
+            
+            const monthFees = headerFees.filter(f => f.Month && f.Month.toLowerCase() === monthName.toLowerCase());
+            let feeRecord = null;
+            if (monthFees.length > 0) {
+                feeRecord = monthFees.find(f => f.Status === 'Paid' || f.Status === 'Approved') || 
+                            monthFees.find(f => f.Status === 'Pending') || 
+                            monthFees[0];
+            }
+
+            if (!feeRecord || (feeRecord.Status !== 'Paid' && feeRecord.Status !== 'Approved')) {
+                dueMonthNamePlain = monthName;
+                if (feeRecord && feeRecord.Status === 'Pending') {
+                    isPendingReview = true;
+                    nextDueMonthHeader = `${monthName} <span style="color: var(--warning-color);" title="Pending"><i class="fa-solid fa-clock"></i></span>`;
+                }
+                else nextDueMonthHeader = monthName;
+                break;
+            }
+            iterDateHeader.setMonth(iterDateHeader.getMonth() + monthIncHeader);
+        }
+
+        document.getElementById('studentName').innerHTML = `${firstName} <span style="font-size: 0.5em; font-weight: 600; background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-secondary); padding: 4px 10px; border-radius: 12px; margin-left: 10px; vertical-align: middle; letter-spacing: normal; text-transform: none; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-calendar-check" style="color: var(--primary-color);"></i> Due: <span style="color: var(--text-primary);">${nextDueMonthHeader}</span></span>`;
 
         // Update profile picture
         if (profile.ProfilePictureURL) {
@@ -124,6 +162,57 @@ document.addEventListener('DOMContentLoaded', async () => {
             subscribeToPushNotifications();
             if (typeof checkPushStatus === 'function') checkPushStatus();
         }, 2000); 
+
+        // Auto-prompt for fee upload if due within 3 days
+        if (dueMonthNamePlain && !isPendingReview && !sessionStorage.getItem('feePromptShown')) {
+            const dueDate = new Date(iterDateHeader.getFullYear(), iterDateHeader.getMonth(), joinDateHeader.getDate());
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); 
+            dueDate.setHours(0, 0, 0, 0);
+            
+            const diffTime = dueDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= 3) {
+                sessionStorage.setItem('feePromptShown', 'true');
+                
+                setTimeout(() => {
+                    const daysText = diffDays < 0 ? 'is overdue!' : (diffDays === 0 ? 'is due today!' : `is due in ${diffDays} days!`);
+                    showToast(`Reminder: Your fee for ${dueMonthNamePlain} ${daysText} Please upload your receipt.`, 'warning');
+                    
+                    window.location.hash = '#fees';
+                    
+                    setTimeout(() => {
+                        const feeMonthInput = document.getElementById('feeMonth');
+                        if (feeMonthInput) {
+                            const y = iterDateHeader.getFullYear();
+                            const m = String(iterDateHeader.getMonth() + 1).padStart(2, '0');
+                            feeMonthInput.value = `${y}-${m}`;
+                        }
+
+                        if (window.innerWidth <= 768) {
+                            const container = document.getElementById('feeFormContainer');
+                            if (container && !container.classList.contains('expanded')) {
+                                container.classList.add('expanded');
+                            }
+                        }
+
+                        const feeFormContainer = document.getElementById('feeFormContainer') || document.getElementById('feeForm');
+                        if (feeFormContainer) {
+                            feeFormContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            feeFormContainer.style.transition = 'box-shadow 0.5s ease-in-out, transform 0.5s ease-in-out';
+                            feeFormContainer.style.boxShadow = '0 0 20px var(--warning-color)';
+                            feeFormContainer.style.transform = 'scale(1.02)';
+                            setTimeout(() => {
+                                feeFormContainer.style.boxShadow = '';
+                                feeFormContainer.style.transform = 'scale(1)';
+                                validateFeeForm();
+                            }, 1500);
+                        }
+                    }, 300); // Wait for tab switch rendering
+                }, 2500); // Trigger 2.5 seconds after app load
+            }
+        }
         
         fetchNotificationCount();
         loadAnnouncements(); // Fetch announcements immediately to update unread badge globally
@@ -187,7 +276,13 @@ function validateFeeForm() {
 
         // Dynamic validation against history
         if (enteredMonth && currentFees) {
-            const existing = currentFees.find(f => f.Month.toLowerCase() === enteredMonth);
+            const monthFees = currentFees.filter(f => f.Month && f.Month.toLowerCase() === enteredMonth);
+            let existing = null;
+            if (monthFees.length > 0) {
+                existing = monthFees.find(f => f.Status === 'Paid' || f.Status === 'Approved') || 
+                           monthFees.find(f => f.Status === 'Pending') || 
+                           monthFees[0];
+            }
             if (existing) {
                 if (existing.Status === 'Paid' || existing.Status === 'Approved') {
                     if (feeMsg) { feeMsg.innerHTML = `<div style="padding: 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success-color); color: var(--success-color); font-weight: 500;"><i class="fa-solid fa-circle-check"></i> Fee for <strong>${existing.Month}</strong> is already Paid.</div>`; }
@@ -302,7 +397,48 @@ async function loadProfile() {
                 hall2: { title: "Hall 02 + Premium Rooms", network: "Airtel_KNLibrary", password: "Air73411" }
             }));
         const attData = await apiFetch('/students/attendance/today').catch(() => null);
+        currentFees = await apiFetch('/fees/status').catch(() => []); // Fetch fees to calculate due date
         originalProfileData = data; // Keep a copy for the update modal
+
+        // Calculate Next Due Month
+        const joinDate = new Date(data.JoiningDate || data.createdAt || new Date());
+        let iterDate = new Date(joinDate.getFullYear(), joinDate.getMonth(), 1);
+        
+        const planDuration = data.planDuration || 'Monthly';
+        let monthIncrement = 1;
+        if (planDuration === 'Quarterly') monthIncrement = 3;
+        else if (planDuration === 'Half-Yearly') monthIncrement = 6;
+        else if (planDuration === 'Yearly') monthIncrement = 12;
+
+        const currentDate = new Date();
+        const maxIterDate = new Date(currentDate.getFullYear() + 5, currentDate.getMonth(), 1); // Look ahead up to 5 years
+        let nextDueMonth = 'N/A';
+
+        while (iterDate <= maxIterDate) {
+            const monthName = iterDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).replace(/\s+/g, ' ').trim();
+            
+            const monthFees = currentFees.filter(f => f.Month && f.Month.toLowerCase() === monthName.toLowerCase());
+            let feeRecord = null;
+            if (monthFees.length > 0) {
+                feeRecord = monthFees.find(f => f.Status === 'Paid' || f.Status === 'Approved') || 
+                            monthFees.find(f => f.Status === 'Pending') || 
+                            monthFees[0];
+            }
+            
+            if (!feeRecord || (feeRecord.Status !== 'Paid' && feeRecord.Status !== 'Approved')) {
+                if (feeRecord && feeRecord.Status === 'Pending') nextDueMonth = `${monthName} <span style="color: var(--warning-color);" title="Pending"><i class="fa-solid fa-clock"></i></span>`;
+                else nextDueMonth = monthName;
+                break;
+            }
+            iterDate.setMonth(iterDate.getMonth() + monthIncrement);
+        }
+
+        // Keep header synced when they navigate to Profile tab
+        const firstName = data.FullName ? data.FullName.split(' ')[0] : 'Student';
+        const studentNameEl = document.getElementById('studentName');
+        if (studentNameEl) {
+            studentNameEl.innerHTML = `${firstName} <span style="font-size: 0.5em; font-weight: 600; background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-secondary); padding: 4px 10px; border-radius: 12px; margin-left: 10px; vertical-align: middle; letter-spacing: normal; text-transform: none; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-calendar-check" style="color: var(--primary-color);"></i> Due: <span style="color: var(--text-primary);">${nextDueMonth}</span></span>`;
+        }
 
         let elapsedHrsText = '00:00 hrs';
         if (attData) {

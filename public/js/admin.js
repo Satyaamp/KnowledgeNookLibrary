@@ -2818,7 +2818,8 @@ window.shareReceipt = async function (feeId) {
         paymentDate = dtMatch  ? dtMatch[1].trim()  : "N/A";
     }
 
-    const receiptNo   = fee.ReceiptNo || (student.SeatNo ? `KNL-${student.SeatNo}` : `KNL-${Date.now().toString().slice(-4)}`);
+    // const receiptNo   = fee.ReceiptNo || (student.SeatNo ? `KNL-${student.SeatNo}` : `KNL-${Date.now().toString().slice(-4)}`);
+    const receiptNo   = fee.ReceiptNo || `Marked by Admin`;
     const generatedOn = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'2-digit', year:'2-digit' });
 
     // OVERLAY
@@ -2837,7 +2838,7 @@ window.shareReceipt = async function (feeId) {
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
     <div style="flex:1;"></div>
     <div style="text-align:center;flex:2;">
-      <div style="font-size:13px;font-weight:700;text-decoration:underline;letter-spacing:1px;color:#222;">MONEY RECEIPT</div>
+      <div style="font-size:13px;font-weight:700;text-decoration:underline;letter-spacing:1px;color:#222;">FEE RECEIPT</div>
     </div>
     <div style="flex:2;text-align:right;font-size:11px;color:#333;line-height:1.6;">
       <div>Mob. : 8102003094</div>
@@ -2966,7 +2967,7 @@ window.shareReceipt = async function (feeId) {
             html2canvas(receiptDiv, {
                 scale: 2,
                 useCORS: true,
-                backgroundColor: '#fce8e8',
+                backgroundColor: '#EE959E',
                 width: rW, height: rH,
                 windowWidth: rW, windowHeight: rH,
                 x: 0, y: 0, scrollX: 0, scrollY: 0,
@@ -3688,6 +3689,12 @@ window.shareReceipt = async function (feeId) {
                                                 activeStudents.forEach(student => {
                                                     const joinDate = new Date(student.JoiningDate || student.createdAt || new Date());
                                                     let iterDate = new Date(joinDate.getFullYear(), joinDate.getMonth(), 1);
+                                                    
+                                                    const planDuration = student.planDuration || 'Monthly';
+                                                    let monthIncrement = 1;
+                                                    if (planDuration === 'Quarterly') monthIncrement = 3;
+                                                    else if (planDuration === 'Half-Yearly') monthIncrement = 6;
+                                                    else if (planDuration === 'Yearly') monthIncrement = 12;
 
                                                     while (iterDate <= maxDate) {
                                                         const monthName = iterDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).replace(/\s+/g, ' ').trim();
@@ -3712,7 +3719,7 @@ window.shareReceipt = async function (feeId) {
                                                             });
                                                         }
                                                         
-                                                        iterDate.setMonth(iterDate.getMonth() + 1);
+                                                        iterDate.setMonth(iterDate.getMonth() + monthIncrement);
                                                     }
                                                 });
 
