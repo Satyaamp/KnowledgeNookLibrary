@@ -1760,7 +1760,8 @@ function handleBulkStudentUpload(input) {
                 loadFees();
                 return;
             }
-            const transDate = await showPrompt('Please enter the Payment Date:');
+            const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+            let transDate = await showPrompt('Please select the Payment Date:', true, todayStr, 'date');
             if (transDate === null) {
                 loadFees();
                 return;
@@ -1770,7 +1771,25 @@ function handleBulkStudentUpload(input) {
                 loadFees();
                 return;
             }
-            const receiptNo = await showPrompt('Please enter the receipt number:');
+            
+            if (transDate.includes('-')) {
+                const [yyyy, mm, dd] = transDate.split('-');
+                transDate = `${dd}-${mm}-${yyyy}`;
+            }
+
+            // Fetch next available receipt number to pre-fill the prompt
+            let nextReceipt = '';
+            try {
+                showToast('Fetching next receipt number...', 'info');
+                const data = await apiFetch('/admin/next-receipt-number');
+                if (data && data.nextReceiptNumber) {
+                    nextReceipt = data.nextReceiptNumber;
+                }
+            } catch (e) {
+                console.warn("Could not fetch next receipt number, leaving prompt empty.", e);
+            }
+
+            const receiptNo = await showPrompt('Please enter the receipt number:', true, nextReceipt);
             if (receiptNo === null) {
                 loadFees();
                 return;
@@ -2559,7 +2578,7 @@ function handleBulkStudentUpload(input) {
                 }
 
 
-                function showPrompt(message, isPrompt = true, defaultValue = '') {
+                function showPrompt(message, isPrompt = true, defaultValue = '', inputType = 'text') {
                     return new Promise((resolve) => {
                         const overlay = document.getElementById('customModalOverlay');
                         const inputContainer = document.getElementById('customModalInputContainer');
@@ -2569,6 +2588,7 @@ function handleBulkStudentUpload(input) {
                         document.getElementById('customModalTitle').textContent = isPrompt ? 'Input Required' : 'Confirm';
                         document.getElementById('customModalMessage').textContent = message;
                         inputContainer.style.display = isPrompt ? 'block' : 'none';
+                        if (isPrompt) input.type = inputType;
                         input.value = '';
                         input.value = defaultValue;
 
@@ -3002,6 +3022,10 @@ window.shareReceipt = async function (feeId) {
 
                 const fileName = `KNL_Receipt_${studentName.replace(/\s+/g,'_')}_${feeMonth.replace(/\s+/g,'_')}.pdf`;
                 pdf.save(fileName);
+
+                // Ping backend to track the admin download
+                apiFetch(`/fees/${feeId}/track-download`, { method: 'POST' }).catch(e => console.error('Tracking failed', e));
+
 
                 document.body.removeChild(overlay);
                 showToast('Receipt saved! ✓', 'success');
@@ -3783,12 +3807,22 @@ window.shareReceipt = async function (feeId) {
                                                     </div>
                                                     
                                                     <div style="display: flex; gap: 10px;">
-                                                        <button onclick="overrideMarkPaid('${item.student._id}', '${item.month}', ${item.expectedAmount})" class="btn" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px;">
+                                                        <button onclick="overrideMarkPaid('${item.student._id}', '${item.month}', ${item.expectedAmount}, '${item.student.LibraryID || ''}', '${item.student.batchType || ''}')" class="btn" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px;">
                                                             <i class="fa-solid fa-money-bill-wave"></i> Mark Paid
                                                         </button>
                                                         <button onclick="sendFeeReminder('${item.student._id}', '${item.month}')" class="btn-outline" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px;">
                                                             <i class="fa-solid fa-bell"></i> Remind
                                                         </button>
+                                                        <button onclick="sendWhatsAppFeeReminder('${item.student._id}', '${item.month}', ${item.expectedAmount})" class="btn-outline" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px; color: #25D366; border-color: #25D366;">
+                                                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                                                        </button>
+                                                        <a href="tel:${item.student.Contact}" class="btn-outline" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px; color: #3b82f6; border-color: #3b82f6; text-decoration: none;">
+                                                            <i class="fa-solid fa-phone"></i> Call
+                                                        </a>
+
+
+
+                                                        
                                                     </div>
                                                 </div>
                                             `).join('');
@@ -3838,13 +3872,18 @@ window.shareReceipt = async function (feeId) {
                                             renderPendingFees();
                                         }
 
-                                        window.overrideMarkPaid = async function (studentId, month, expectedAmount) {
+                                        window.overrideMarkPaid = async function (studentId, month, expectedAmount, libraryId, batch) {
                                             if (!await showConfirm(`Are you sure you want to mark ${month} as Paid? This will bypass image upload and instantly verify the student.`)) return;
 
                                             try {
                                                 await apiFetch(`/admin/students/${studentId}/mark-fee-paid`, {
                                                     method: 'POST',
-                                                    body: JSON.stringify({ Month: month, Amount: expectedAmount })
+                                                    body: JSON.stringify({ 
+                                                        Month: month, 
+                                                        Amount: expectedAmount,
+                                                        LibraryID: libraryId,
+                                                        Batch: batch
+                                                    })
                                                 });
                                                 showToast(`Successfully marked ${month} as Paid!`, 'success');
                                                 
@@ -3874,6 +3913,24 @@ window.shareReceipt = async function (feeId) {
                                             } catch (error) {
                                                 showToast('Error sending reminder: ' + error.message, 'error');
                                             }
+                                        }
+
+                                        window.sendWhatsAppFeeReminder = function(studentId, month, amount) {
+                                            const student = currentStudents.find(s => s._id === studentId);
+                                            if (!student) return;
+
+                                            const name = student.FirstName || 'Student';
+                                            const contact = student.Contact;
+                                            
+                                            if (!contact) {
+                                                showToast('Student contact number is missing.', 'error');
+                                                return;
+                                            }
+
+                                            const msg = `Hello ${name},\n\nThis is a gentle reminder from *Knowledge Nook Library*.\n\nYour library fee for the month of *${month}* (Amount: Rs. ${amount}) is currently pending.\n\nPlease clear your dues at the earliest or upload your receipt in the student portal if already paid.\n\nThank you!\n— Knowledge Nook Library`;
+                                            
+                                            const url = `https://wa.me/91${contact}?text=${encodeURIComponent(msg)}`;
+                                            window.open(url, "_blank");
                                         }
 
                                         document.addEventListener('click', (e) => {
@@ -4144,64 +4201,404 @@ window.shareReceipt = async function (feeId) {
                                             link.remove();
                                         }
 
-                                        window.exportStudentsCSV = function () {
-                                            if (filteredStudents.length === 0) {
-                                                showToast('No students matched current filter.', 'warning');
-                                                return;
-                                            }
-                                            const headers = ["Library ID", "Name", "Contact", "Email", "Gender", "Aadhar No", "Account Status", "Batch", "Plan", "Seat No", "Joining Date"];
-                                            const rows = [headers];
-                                            filteredStudents.forEach(s => {
-                                                rows.push([
-                                                    s.LibraryID || 'N/A',
-                                                    (s.FullName || `${s.FirstName} ${s.LastName}`).replace(/,/g, ''),
-                                                    s.Contact || 'N/A',
-                                                    s.Email || 'N/A',
-                                                    s.Gender || 'N/A',
-                                                    s.AadharNumber || 'N/A',
-                                                    s.AccountStatus || 'N/A',
-                                                    s.batchType || 'N/A',
-                                                    s.planDuration || 'N/A',
-                                                    s.SeatNo || 'N/A',
-                                                    s.JoiningDate ? new Date(s.JoiningDate).toLocaleDateString() : 'N/A'
-                                                ]);
-                                            });
-                                            exportToCSV(`students_export_${new Date().toISOString().split('T')[0]}.csv`, rows);
-                                        }
+                                        window.exportStudentsCSV = async function () {
+    if (filteredStudents.length === 0) {
+        showToast('No students matched current filter.', 'warning');
+        return;
+    }
 
-                                    window.exportPaymentHistoryCSV = function () {
-                                            if (filteredPaymentHistory.length === 0) {
-                                                showToast('No payment history matched current filter.', 'warning');
-                                                return;
-                                            }
-                                            const headers = ["Library ID", "Student Name", "Month", "Amount", "Batch", "Plan", "Payment Date", "Transaction ID/Note", "Status"];
-                                            const rows = [headers];
-                                            filteredPaymentHistory.forEach(fee => {
-                                                let txnId = 'N/A';
-                                                let actDate = 'N/A';
-                                                if (fee.AdminNote) {
-                                                    const lines = fee.AdminNote.split('\\n');
-                                                    if (lines.length >= 2) {
-                                                        txnId = lines[0].replace('TXN ID: ', '').trim();
-                                                        actDate = lines[1].replace('Date: ', '').trim();
-                                                    } else {
-                                                        txnId = fee.AdminNote.replace(/,/g, '');
-                                                    }
-                                                }
+    // ── Color palette ──────────────────────────────────────────────
+    const DARK_NAVY  = "1A3557";
+    const MID_BLUE   = "2563A8";
+    const ROW_ODD    = "EBF2FB";
+    const WHITE      = "FFFFFF";
+    const TEXT_DARK  = "1E293B";
+    const TEXT_GRAY  = "64748B";
+    const BORDER_CLR = "CBD5E1";
+    const SPACER_BG  = "F1F5F9";
+    const SLATE_BG   = "F8FAFC";
 
-                                                rows.push([
-                                                    fee.StudentId ? (fee.StudentId.LibraryID || 'N/A') : 'N/A',
-                                                    fee.StudentId ? (fee.StudentId.FullName || '').replace(/,/g, '') : 'Deleted Student',
-                                                    fee.Month || 'N/A',
-                                                    fee.Amount || '0',
-                                                    fee.Batch || (fee.StudentId ? fee.StudentId.batchType : 'N/A'),
-                                                    fee.StudentId ? fee.StudentId.planDuration : 'N/A',
-                                                    actDate,
-                                                    txnId,
-                                                    fee.Status || 'N/A'
-                                                ]);
-                                            });
-                                            exportToCSV(`payment_history_export_${new Date().toISOString().split('T')[0]}.csv`, rows);
-                                        }
+    // Status badge colors
+    const STATUS_COLORS = {
+        active:    { bg: "DCFCE7", text: "166534" },
+        inactive:  { bg: "FEE2E2", text: "991B1B" },
+        expired:   { bg: "FEF3C7", text: "92400E" },
+        default:   { bg: "F1F5F9", text: "475569" }
+    };
 
-                                    
+    // ── Helpers ────────────────────────────────────────────────────
+    const solidFill  = (rgb) => ({ type: "pattern", pattern: "solid", fgColor: { argb: "FF" + rgb } });
+    const thinBorder = (rgb = BORDER_CLR) => ({ style: "thin", color: { argb: "FF" + rgb } });
+    const allBorders = (rgb = BORDER_CLR) => ({
+        top: thinBorder(rgb), bottom: thinBorder(rgb),
+        left: thinBorder(rgb), right: thinBorder(rgb)
+    });
+    const font = (opts) => ({ name: "Arial", ...opts });
+
+    const getStatusColor = (status = "") => {
+        const key = status.toLowerCase();
+        return STATUS_COLORS[key] || STATUS_COLORS.default;
+    };
+
+    // ── Build data rows ────────────────────────────────────────────
+    const rows = filteredStudents.map(s => [
+        s.LibraryID || "N/A",
+        (s.FullName || `${s.FirstName} ${s.LastName}`).replace(/,/g, ""),
+        s.Contact      || "N/A",
+        s.Email        || "N/A",
+        s.Gender       || "N/A",
+        s.AadharNumber || "N/A",
+        s.AccountStatus|| "N/A",
+        s.batchType    || "N/A",
+        s.planDuration || "N/A",
+        s.SeatNo       || "N/A",
+        s.JoiningDate  ? new Date(s.JoiningDate).toLocaleDateString("en-IN") : "N/A"
+    ]);
+
+    const totalStudents = rows.length;
+    const activeCount   = filteredStudents.filter(s => s.AccountStatus?.toLowerCase() === "active").length;
+    const today = new Date().toLocaleDateString("en-IN", {
+        day: "2-digit", month: "long", year: "numeric"
+    });
+
+    const COLS     = 11;
+    const colRange = `A1:K1`;
+
+    // ── Workbook & sheet ───────────────────────────────────────────
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Knowledge Nook Library";
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet("Students", {
+        views: [{ showGridLines: false }],
+        pageSetup: { fitToPage: true, fitToWidth: 1 }
+    });
+
+    // ── Column widths ──────────────────────────────────────────────
+    ws.columns = [
+        { width: 13 }, // Library ID
+        { width: 24 }, // Name
+        { width: 14 }, // Contact
+        { width: 26 }, // Email
+        { width: 10 }, // Gender
+        { width: 16 }, // Aadhar No
+        { width: 15 }, // Account Status
+        { width: 14 }, // Batch
+        { width: 12 }, // Plan
+        { width: 10 }, // Seat No
+        { width: 14 }, // Joining Date
+    ];
+
+    // ── Row 1: Title ───────────────────────────────────────────────
+    const r1 = ws.addRow(["KNOWLEDGE NOOK LIBRARY"]);
+    r1.height = 36;
+    ws.mergeCells("A1:K1");
+    const c1 = r1.getCell(1);
+    c1.value     = "KNOWLEDGE NOOK LIBRARY";
+    c1.font      = font({ bold: true, size: 18, color: { argb: "FF" + WHITE } });
+    c1.fill      = solidFill(DARK_NAVY);
+    c1.alignment = { horizontal: "center", vertical: "middle" };
+
+    // ── Row 2: Subtitle ────────────────────────────────────────────
+    const r2 = ws.addRow(["Student Directory Report"]);
+    r2.height = 20;
+    ws.mergeCells("A2:K2");
+    const c2 = r2.getCell(1);
+    c2.value     = "Student Directory Report";
+    c2.font      = font({ italic: true, size: 11, color: { argb: "FFA0AEC0" } });
+    c2.fill      = solidFill(DARK_NAVY);
+    c2.alignment = { horizontal: "center", vertical: "middle" };
+
+    // ── Row 3: Spacer ──────────────────────────────────────────────
+    const r3 = ws.addRow([]);
+    r3.height = 8;
+    ws.mergeCells("A3:K3");
+    r3.getCell(1).fill = solidFill(SPACER_BG);
+
+    // ── Row 4: Summary Stats ───────────────────────────────────────
+    // Box 1: Total Students (A4:D4)
+    // Box 2: Active Students (E4:H4)
+    // Box 3: Export Date (I4:K4)
+    const r4 = ws.addRow([]);
+    r4.height = 30;
+    ws.mergeCells("A4:D4");
+    ws.mergeCells("E4:H4");
+    ws.mergeCells("I4:K4");
+
+    const statsStyle = (bgRgb, textRgb, borderRgb) => ({
+        fill:      solidFill(bgRgb),
+        font:      font({ bold: true, size: 11, color: { argb: "FF" + textRgb } }),
+        alignment: { horizontal: "center", vertical: "middle" },
+        border:    allBorders(borderRgb)
+    });
+
+    const totalCell = r4.getCell(1);
+    totalCell.value     = `👥  Total Students: ${totalStudents}`;
+    totalCell.font      = font({ bold: true, size: 11, color: { argb: "FF1E3A5F" } });
+    totalCell.fill      = solidFill("DBEAFE");
+    totalCell.alignment = { horizontal: "center", vertical: "middle" };
+    totalCell.border    = allBorders("93C5FD");
+
+    const activeCell = r4.getCell(5);
+    activeCell.value     = `✅  Active: ${activeCount}`;
+    activeCell.font      = font({ bold: true, size: 11, color: { argb: "FF166534" } });
+    activeCell.fill      = solidFill("DCFCE7");
+    activeCell.alignment = { horizontal: "center", vertical: "middle" };
+    activeCell.border    = allBorders("86EFAC");
+
+    const dateCell = r4.getCell(9);
+    dateCell.value     = `📅  ${today}`;
+    dateCell.font      = font({ bold: true, size: 10, color: { argb: "FF92400E" } });
+    dateCell.fill      = solidFill("FEF3C7");
+    dateCell.alignment = { horizontal: "center", vertical: "middle" };
+    dateCell.border    = allBorders("F59E0B");
+
+    // ── Row 5: Spacer ──────────────────────────────────────────────
+    const r5 = ws.addRow([]);
+    r5.height = 8;
+    ws.mergeCells("A5:K5");
+    r5.getCell(1).fill = solidFill(SPACER_BG);
+
+    // ── Row 6: Headers ─────────────────────────────────────────────
+    const headers = ["Library ID","Name","Contact","Email","Gender","Aadhar No","Account Status","Batch","Plan","Seat No","Joining Date"];
+    const r6 = ws.addRow(headers);
+    r6.height = 26;
+    r6.eachCell((cell) => {
+        cell.font      = font({ bold: true, size: 10, color: { argb: "FF" + WHITE } });
+        cell.fill      = solidFill(MID_BLUE);
+        cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+        cell.border    = allBorders(WHITE);
+    });
+
+    // ── Data Rows ──────────────────────────────────────────────────
+    rows.forEach((row, i) => {
+        const wr    = ws.addRow(row);
+        wr.height   = 21;
+        const bgClr = i % 2 === 0 ? ROW_ODD : WHITE;
+
+        wr.eachCell({ includeEmpty: true }, (cell, colNum) => {
+            const isStatus = colNum === 7;   // Account Status
+            const isName   = colNum === 2;   // Name (left-align)
+            const isEmail  = colNum === 4;   // Email (left-align)
+
+            if (isStatus) {
+                const sc = getStatusColor(cell.value);
+                cell.font      = font({ bold: true, size: 10, color: { argb: "FF" + sc.text } });
+                cell.fill      = solidFill(sc.bg);
+            } else {
+                cell.font      = font({ size: 10, color: { argb: "FF" + TEXT_DARK } });
+                cell.fill      = solidFill(bgClr);
+            }
+
+            cell.alignment = {
+                horizontal: (isName || isEmail) ? "left" : "center",
+                vertical: "middle"
+            };
+            cell.border = allBorders(BORDER_CLR);
+        });
+    });
+
+    // ── Footer ─────────────────────────────────────────────────────
+    const footerRowNum = 7 + rows.length;
+    const rf = ws.addRow([`Generated on ${today}  •  Knowledge Nook Library  •  Total ${totalStudents} students`]);
+    rf.height = 16;
+    ws.mergeCells(`A${footerRowNum}:K${footerRowNum}`);
+    const fc = rf.getCell(1);
+    fc.value     = `Generated on ${today}  •  Knowledge Nook Library  •  Total ${totalStudents} students`;
+    fc.font      = font({ italic: true, size: 9, color: { argb: "FF" + TEXT_GRAY } });
+    fc.fill      = solidFill(SLATE_BG);
+    fc.alignment = { horizontal: "right", vertical: "middle" };
+    fc.border    = { top: thinBorder(BORDER_CLR) };
+
+    // ── Download ───────────────────────────────────────────────────
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob   = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    });
+    saveAs(blob, `Students_Report_${new Date().toISOString().split("T")[0]}.xlsx`);
+};
+
+                                
+                                       
+
+                                        window.exportPaymentHistoryCSV = async function () {
+    if (filteredPaymentHistory.length === 0) {
+        showToast('No payment history matched current filter.', 'warning');
+        return;
+    }
+
+    // ── Color palette ──────────────────────────────────────────────
+    const DARK_NAVY  = "1A3557";
+    const MID_BLUE   = "2563A8";
+    const LIGHT_GOLD = "FEF3C7";
+    const GOLD_BDR   = "F59E0B";
+    const ROW_ODD    = "EBF2FB";
+    const WHITE      = "FFFFFF";
+    const TEXT_DARK  = "1E293B";
+    const TEXT_GRAY  = "64748B";
+    const BORDER_CLR = "CBD5E1";
+    const GREEN_TEXT = "166534";
+    const GREEN_BG   = "DCFCE7";
+    const SPACER_BG  = "F1F5F9";
+    const SLATE_BG   = "F8FAFC";
+
+    // ── Helpers ────────────────────────────────────────────────────
+    const solidFill  = (rgb) => ({ type: "pattern", pattern: "solid", fgColor: { argb: "FF" + rgb } });
+    const thinBorder = (rgb = BORDER_CLR) => ({ style: "thin", color: { argb: "FF" + rgb } });
+    const allBorders = (rgb = BORDER_CLR) => ({
+        top: thinBorder(rgb), bottom: thinBorder(rgb),
+        left: thinBorder(rgb), right: thinBorder(rgb)
+    });
+    const font = (opts) => ({ name: "Arial", ...opts });
+
+    // ── Build data rows ────────────────────────────────────────────
+    let totalAmount = 0;
+    const rows = filteredPaymentHistory.map(fee => {
+        let txnId = "N/A", actDate = "N/A";
+        if (fee.AdminNote) {
+            const parts = fee.AdminNote.split("|");
+            txnId   = parts.length >= 2 ? parts[0].replace(/Txn ID:/i, "").trim() : fee.AdminNote;
+            actDate = parts.length >= 2 ? parts[1].replace(/Date:/i,   "").trim() : "N/A";
+        }
+        const amount = Number(fee.Amount) || 0;
+        totalAmount += amount;
+        return [
+            fee.ReceiptNo                     || "N/A",
+            fee.StudentId?.LibraryID          || "N/A",
+            fee.StudentId?.FullName           || "Deleted Student",
+            fee.Month                         || "N/A",
+            amount,
+            fee.Batch || fee.StudentId?.batchType || "N/A",
+            fee.StudentId?.planDuration       || "N/A",
+            actDate,
+            txnId,
+            fee.Status                        || "N/A"
+        ];
+    });
+
+    const today = new Date().toLocaleDateString("en-IN", {
+        day: "2-digit", month: "long", year: "numeric"
+    });
+
+    // ── Workbook & sheet ───────────────────────────────────────────
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Knowledge Nook Library";
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet("Payments", {
+        views: [{ showGridLines: false }],
+        pageSetup: { fitToPage: true, fitToWidth: 1 }
+    });
+
+    // ── Column widths ──────────────────────────────────────────────
+    ws.columns = [
+        { width: 13 }, { width: 14 }, { width: 24 }, { width: 14 },
+        { width: 14 }, { width: 15 }, { width: 12 }, { width: 15 },
+        { width: 26 }, { width: 11 }
+    ];
+
+    // ── Row 1: Library Title ───────────────────────────────────────
+    const r1 = ws.addRow(["KNOWLEDGE NOOK LIBRARY"]);
+    r1.height = 36;
+    ws.mergeCells("A1:J1");
+    const c1 = r1.getCell(1);
+    c1.value     = "KNOWLEDGE NOOK LIBRARY";
+    c1.font      = font({ bold: true, size: 18, color: { argb: "FF" + WHITE } });
+    c1.fill      = solidFill(DARK_NAVY);
+    c1.alignment = { horizontal: "center", vertical: "middle" };
+
+    // ── Row 2: Subtitle ────────────────────────────────────────────
+    const r2 = ws.addRow(["Payment History Report"]);
+    r2.height = 20;
+    ws.mergeCells("A2:J2");
+    const c2 = r2.getCell(1);
+    c2.value     = "Payment History Report";
+    c2.font      = font({ italic: true, size: 11, color: { argb: "FFA0AEC0" } });
+    c2.fill      = solidFill(DARK_NAVY);
+    c2.alignment = { horizontal: "center", vertical: "middle" };
+
+    // ── Row 3: Spacer ──────────────────────────────────────────────
+    const r3 = ws.addRow([]);
+    r3.height = 8;
+    ws.mergeCells("A3:J3");
+    r3.getCell(1).fill = solidFill(SPACER_BG);
+
+    // ── Row 4: Total Collection ────────────────────────────────────
+    const r4 = ws.addRow(["💰  Total Collection (₹)", "", "", "", "", totalAmount]);
+    r4.height = 30;
+    ws.mergeCells("A4:E4");
+    ws.mergeCells("F4:J4");
+
+    const labelCell = r4.getCell(1);
+    labelCell.value     = "💰  Total Collection (₹)";
+    labelCell.font      = font({ bold: true, size: 12, color: { argb: "FF92400E" } });
+    labelCell.fill      = solidFill(LIGHT_GOLD);
+    labelCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+    labelCell.border    = allBorders(GOLD_BDR);
+
+    const totalCell = r4.getCell(6);
+    totalCell.value          = totalAmount;
+    totalCell.numFmt         = '₹#,##0';
+    totalCell.font           = font({ bold: true, size: 14, color: { argb: "FF92400E" } });
+    totalCell.fill           = solidFill(LIGHT_GOLD);
+    totalCell.alignment      = { horizontal: "right", vertical: "middle", indent: 1 };
+    totalCell.border         = allBorders(GOLD_BDR);
+
+    // ── Row 5: Spacer ──────────────────────────────────────────────
+    const r5 = ws.addRow([]);
+    r5.height = 8;
+    ws.mergeCells("A5:J5");
+    r5.getCell(1).fill = solidFill(SPACER_BG);
+
+    // ── Row 6: Headers ─────────────────────────────────────────────
+    const headers = ["Receipt No","Library ID","Student Name","Month","Amount (₹)","Batch","Plan","Payment Date","Transaction ID","Status"];
+    const r6 = ws.addRow(headers);
+    r6.height = 26;
+    r6.eachCell((cell) => {
+        cell.font      = font({ bold: true, size: 10, color: { argb: "FF" + WHITE } });
+        cell.fill      = solidFill(MID_BLUE);
+        cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+        cell.border    = allBorders(WHITE);
+    });
+
+    // ── Data Rows ──────────────────────────────────────────────────
+    rows.forEach((row, i) => {
+        const wr = ws.addRow(row);
+        wr.height = 21;
+        const bgClr = i % 2 === 0 ? ROW_ODD : WHITE;
+
+        wr.eachCell({ includeEmpty: true }, (cell, colNum) => {
+            const isStatus = colNum === 10;
+            const isAmount = colNum === 5;
+            const isName   = colNum === 3;
+
+            cell.font      = isStatus
+                ? font({ bold: true, size: 10, color: { argb: "FF" + GREEN_TEXT } })
+                : font({ size: 10, color: { argb: "FF" + TEXT_DARK } });
+            cell.fill      = solidFill(isStatus ? GREEN_BG : bgClr);
+            cell.alignment = { horizontal: isName ? "left" : "center", vertical: "middle" };
+            cell.border    = allBorders(BORDER_CLR);
+
+            if (isAmount) cell.numFmt = "₹#,##0";
+        });
+    });
+
+    // ── Footer ─────────────────────────────────────────────────────
+    const footerRowNum = 7 + rows.length;
+    const rf = ws.addRow([`Generated on ${today}  •  Knowledge Nook Library`]);
+    rf.height = 16;
+    ws.mergeCells(`A${footerRowNum}:J${footerRowNum}`);
+    const fc = rf.getCell(1);
+    fc.value     = `Generated on ${today}  •  Knowledge Nook Library`;
+    fc.font      = font({ italic: true, size: 9, color: { argb: "FF" + TEXT_GRAY } });
+    fc.fill      = solidFill(SLATE_BG);
+    fc.alignment = { horizontal: "right", vertical: "middle" };
+    fc.border    = { top: thinBorder(BORDER_CLR) };
+
+    // ── Download ───────────────────────────────────────────────────
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob   = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    });
+    saveAs(blob, `Payment_Report_${new Date().toISOString().split("T")[0]}.xlsx`);
+};

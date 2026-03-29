@@ -127,6 +127,11 @@ const verifyFee = async (req, res) => {
             }
 
             if (req.body.ReceiptNo !== undefined) {
+                // Check for uniqueness before saving the manual input
+                const existing = await Fee.findOne({ ReceiptNo: req.body.ReceiptNo, _id: { $ne: fee._id } });
+                if (existing) {
+                    return res.status(400).json({ message: `Receipt No '${req.body.ReceiptNo}' is already in use. Please enter a unique number.` });
+                }
                 fee.ReceiptNo = req.body.ReceiptNo;
             }
 
@@ -204,4 +209,28 @@ const deleteReceiptImage = async (req, res) => {
     }
 };
 
-module.exports = { uploadFee, getMyFees, getAllFees, verifyFee, deleteReceiptImage };
+
+// @desc    Track receipt download
+// @route   POST /api/fees/:id/track-download
+// @access  Private (Student & Admin)
+const trackDownload = async (req, res) => {
+    try {
+        const fee = await Fee.findById(req.params.id);
+        if (!fee) return res.status(404).json({ message: 'Fee record not found' });
+
+        fee.downloadHistory = fee.downloadHistory || [];
+        fee.downloadHistory.push({
+            downloadedAt: new Date(),
+            downloadedByRole: req.user.role || 'unknown'
+        });
+        
+        await fee.save({ validateBeforeSave: false });
+        res.json({ message: 'Download tracked successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error tracking download', error: error.message });
+    }
+};
+
+
+
+module.exports = { uploadFee, getMyFees, getAllFees, verifyFee, deleteReceiptImage, trackDownload };

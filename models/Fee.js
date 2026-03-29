@@ -37,8 +37,14 @@ const feeSchema = new mongoose.Schema({
         default: false
     },
     ReceiptNo: {
-        type: String
-    }
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    downloadHistory: [{
+        downloadedAt: { type: Date, default: Date.now },
+        downloadedByRole: { type: String } // e.g., 'student' or 'admin'
+    }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Fee', feeSchema);

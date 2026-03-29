@@ -882,9 +882,25 @@ const getStudentFeeTimeline = async (req, res) => {
 // @access  Private/Admin
 const markStudentFeePaid = async (req, res) => {
     try {
-        const { Month, Amount, AdminNote } = req.body;
+        const { Month, Amount, AdminNote, LibraryID, Batch } = req.body;
         const student = await Student.findById(req.params.id);
         if (!student) return res.status(404).json({ message: 'Student not found' });
+        
+        // Auto-generate unique ReceiptNo starting from 3000
+        let nextReceiptNum = 3000;
+        const config = await SystemConfig.findOne({ key: 'receipt_counter' });
+        if (config && config.value && config.value.current) {
+            nextReceiptNum = Math.max(3000, config.value.current);
+        }
+        // Ensure no collision with manually entered receipts from "Verify Fees"
+        while (await Fee.findOne({ ReceiptNo: String(nextReceiptNum) })) {
+            nextReceiptNum++;
+        }
+        await SystemConfig.findOneAndUpdate(
+            { key: 'receipt_counter' },
+            { value: { current: nextReceiptNum + 1 } },
+            { upsert: true }
+        );
         
         const existingFee = await Fee.findOne({ StudentId: student._id, Month });
         if (existingFee && existingFee.Status === 'Paid') {
@@ -895,15 +911,21 @@ const markStudentFeePaid = async (req, res) => {
             existingFee.Status = 'Paid';
             existingFee.AdminNote = AdminNote || 'Marked paid by Admin';
             existingFee.Amount = Amount || student.amount || 0;
+            existingFee.LibraryID = LibraryID || student.LibraryID;
+            existingFee.Batch = Batch || student.batchType;
+            existingFee.ReceiptNo = String(nextReceiptNum);
             await existingFee.save();
         } else {
             await Fee.create({
                 StudentId: student._id,
+                LibraryID: LibraryID || student.LibraryID,
                 Month,
                 Amount: Amount || student.amount || 0,
+                Batch: Batch || student.batchType,
                 Status: 'Paid',
                 ProofImageURL: 'N/A',
-                AdminNote: AdminNote || 'Marked paid by Admin'
+                AdminNote: AdminNote || 'Marked paid by Admin',
+                ReceiptNo: String(nextReceiptNum)
             });
         }
         res.json({ message: 'Fee marked as paid successfully' });
@@ -923,6 +945,26 @@ const getAllNotifications = async (req, res) => {
         res.json(notifications);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching global notifications', error: error.message });
+    }
+};
+
+// @desc    Get next available receipt number
+// @route   GET /api/admin/next-receipt-number
+// @access  Private/Admin
+const getNextReceiptNumber = async (req, res) => {
+    try {
+        let nextReceiptNum = 3000;
+        const config = await SystemConfig.findOne({ key: 'receipt_counter' });
+        if (config && config.value && config.value.current) {
+            nextReceiptNum = Math.max(3000, config.value.current);
+        }
+        // Ensure no collision with manually entered receipts
+        while (await Fee.findOne({ ReceiptNo: String(nextReceiptNum) })) {
+            nextReceiptNum++;
+        }
+        res.json({ nextReceiptNumber: nextReceiptNum });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching next receipt number', error: error.message });
     }
 };
 
@@ -951,5 +993,6 @@ module.exports = {
     updateSeatConfig,
     getStudentFeeTimeline,
     markStudentFeePaid,
-    getAllNotifications
+    getAllNotifications,
+    getNextReceiptNumber
 };

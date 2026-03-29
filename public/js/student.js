@@ -773,19 +773,20 @@ function renderStudentFees() {
         const feesToShow = filteredStudentFees.slice(startIndex, endIndex);
 
         list.innerHTML = feesToShow.map(fee => `
-            <div style="border-bottom: 2px solid black; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="border-bottom: 2px solid black; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <strong>${fee.Month.charAt(0).toUpperCase() + fee.Month.slice(1)}</strong>
                         ${fee.isResubmitted && fee.Status === 'Pending' ? `<span style="font-size: 0.75em; padding: 2px 8px; border-radius: 12px; background: var(--primary-light); color: var(--primary-color); font-weight: 600;"><i class="fa-solid fa-rotate-right"></i> Resubmitted</span>` : ''}
                     </div>
 
-                    <div style="font-size: 1.1em; color: var(--text-primary);">₹${fee.Amount}</div>
+   
 
                     <div style="font-size: 0.95em; color: var(--text-secondary); margin-top: 4px;">
                     
                     ${new Date(fee.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ /g, '-')}
                     </div>
+
 
                     ${fee.Status === 'Rejected' && fee.AdminNote ? `
                     <div style="margin-top:8px;">
@@ -797,25 +798,40 @@ function renderStudentFees() {
                         </div>
                     </div>` : ''}
 
-                    ${fee.Status === 'Paid' && fee.AdminNote ? `
+                    ${(fee.Status === 'Paid' || fee.Status === 'Approved') ? `
                     <div style="margin-top:8px;">
                         <span onclick="const el = document.getElementById('stu-details-${fee._id}'); el.style.display = el.style.display === 'none' ? 'block' : 'none';" style="cursor: pointer; font-size: 0.85em; color: var(--success-color); display: inline-flex; align-items: center; gap: 5px; font-weight: 600;">
                             <i class="fa-solid fa-circle-info"></i> Payment Details
                         </span>
-                        <div id="stu-details-${fee._id}" style="display: none; margin-top: 5px; background:var(--bg-color); padding:10px 12px; border-left:3px solid var(--success-color); border-radius:6px; font-size:0.9em; color:var(--text-primary);">
-                            ${fee.AdminNote}
+                        <div id="stu-details-${fee._id}" style="display: none; margin-top: 5px; background:var(--bg-color); padding:10px 12px; border-left:3px solid var(--success-color); border-radius:6px; font-size:0.9em; color:var(--text-primary); line-height: 1.5;">
+                            ${fee.Amount ? `<div><strong>Amount:</strong> ₹${fee.Amount}</div>` : ''}
+                            ${fee.ReceiptNo ? `<div><strong>Receipt No:</strong> <span style="font-family: monospace;">${fee.ReceiptNo}</span></div>` : ''}
+                            ${fee.AdminNote ? `
+                                <div>
+                                    <strong>Txn ID:</strong> ${fee.AdminNote.split('|')[0].replace('Txn ID:', '').trim()}
+                                </div>
+                                <div>
+                                    <strong>Date:</strong> ${fee.AdminNote.split('|')[1].replace('Date:', '').trim()}
+                                </div>
+                                ` : ''}
                         </div>
                     </div>` : ''}
 
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
                     <span style="font-size: 0.95em; padding: 4px 10px; border-radius: 12px; border: 1px solid currentColor; background: var(--bg-color); color: ${fee.Status === 'Approved' || fee.Status === 'Paid'
                 ? 'var(--success-color)'
                 : (fee.Status === 'Pending' ? 'var(--warning-color)' : 'var(--error-color)')
             }; font-weight: 600;">
                         ${fee.Status}
                     </span>
+
+                    ${(fee.Status === 'Paid' || fee.Status === 'Approved') ? `
+                        <button onclick="downloadReceipt('${fee._id}')" class="btn-outline" style="padding: 4px 10px; font-size: 0.85em; border-color: var(--success-color); color: var(--success-color); border-radius: 6px;" title="Download PDF Receipt">
+                            <i class="fa-solid fa-file-pdf"></i> Receipt
+                        </button>
+                    ` : ''}
 
                     ${fee.ProofImageURL && fee.ProofImageURL !== 'N/A' ? `
                     <svg onclick="openImagePreview('${fee.ProofImageURL}')"
@@ -866,6 +882,174 @@ function changeFeesPage(page) {
     feesCurrentPage = page;
     renderStudentFees();
 }
+
+window.downloadReceipt = async function (feeId) {
+    const fee = currentFees.find(f => f._id === feeId);
+    if (!fee) return showToast('Fee record not found', 'error');
+
+    const student        = originalProfileData || {};
+    const studentName    = student.FullName      || "Student";
+    const studentContact = student.Contact       || "";
+    const studentAddress = student.FullAddress   || student.Area || "";
+    const libraryId      = student.LibraryID     || fee.LibraryID || "N/A";
+    const seatNo         = student.SeatNo        || "N/A";
+    const feeMonth       = fee.Month             || "N/A";
+    const batchName      = fee.Batch             || student.batchType || "Fundamental";
+    const planDuration   = fee.planDuration      || student.planDuration || "Monthly";
+
+    let txnId = "N/A", paymentDate = "N/A";
+    if (fee.AdminNote) {
+        const note     = fee.AdminNote;
+        const txnMatch = note.match(/Txn\s*ID:\s*([^|]+)/i);
+        const dtMatch  = note.match(/Date:\s*([^|]+)/i);
+        txnId       = txnMatch ? txnMatch[1].trim() : "N/A";
+        paymentDate = dtMatch  ? dtMatch[1].trim()  : "N/A";
+    }
+
+    const receiptNo   = fee.ReceiptNo || `Marked by Admin`;
+    const generatedOn = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'2-digit', year:'2-digit' });
+
+    // OVERLAY
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px 0 40px;overflow-y:auto;font-family:'Segoe UI',Arial,sans-serif;`;
+    overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+
+    // RECEIPT — pink paper style matching physical receipt
+    const receiptDiv = document.createElement('div');
+    receiptDiv.style.cssText = `width:100%;max-width:520px;background:#fce8e8;flex-shrink:0;overflow:hidden;color:#1a0a0a;font-family:'Times New Roman',serif;`;
+
+    receiptDiv.innerHTML = `
+<div style="padding:24px 28px 20px;background:#fce8e8;border:2px solid #c0a0a0;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+    <div style="flex:1;"></div>
+    <div style="text-align:center;flex:2;">
+      <div style="font-size:13px;font-weight:700;text-decoration:underline;letter-spacing:1px;color:#222;">FEE RECEIPT</div>
+    </div>
+    <div style="flex:2;text-align:right;font-size:11px;color:#333;line-height:1.6;">
+      <div>Mob. : 8102003094</div>
+      <div>7903547986</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-bottom:4px;">
+    <div style="font-size:26px;font-weight:900;color:#1a0a0a;letter-spacing:1px;line-height:1.1;font-family:'Arial Black',Arial,sans-serif;">KNOWLEDGE NOOK LIBRARY</div>
+    <div style="font-size:11px;font-weight:700;color:#333;margin-top:3px;letter-spacing:0.3px;">B.M.P.-16, NEAR PNB BANK, PHULWARI SHARIF, PATNA</div>
+    <div style="font-size:11px;font-weight:600;color:#333;margin-top:1px;">Director : ROHIT KUMAR</div>
+  </div>
+  <div style="border-top:2px solid #333;border-bottom:1px solid #333;margin:10px 0;height:3px;"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div style="font-size:13px;font-weight:700;color:#222;">
+      No. &nbsp;<span style="font-size:18px;font-weight:900;font-family:'Arial Black',Arial;">${receiptNo}</span>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:#222;">
+      Date: <span style="font-size:15px;font-weight:900;border-bottom:1px solid #555;padding-bottom:1px;">${paymentDate !== 'N/A' ? paymentDate : generatedOn}</span>
+    </div>
+  </div>
+  <div style="margin-bottom:12px;border-bottom:1px dotted #888;padding-bottom:8px;">
+    <span style="font-size:12px;font-weight:700;color:#333;">Name of Candidate........</span>
+    <span style="font-size:15px;font-weight:900;color:#1a0a0a;font-family:'Arial Black',Arial;letter-spacing:0.3px;">${studentName}</span>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;border-bottom:1px dotted #888;padding-bottom:8px;">
+    <div style="flex:2;font-size:12px;color:#333;">
+      <span style="font-weight:700;">Address........</span>
+      <span style="font-weight:600;color:#1a0a0a;">${studentAddress || '—'}</span>
+    </div>
+    <div style="flex:1;font-size:12px;color:#333;text-align:right;">
+      <span style="font-weight:700;">Mob. </span>
+      <span style="font-weight:600;color:#1a0a0a;">${studentContact || '—'}</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;border-bottom:1px dotted #888;padding-bottom:8px;align-items:flex-end;">
+    <div style="flex:1.5;font-size:12px;color:#333;">
+      <span style="font-weight:700;">Batch........</span>
+      <span style="font-weight:900;color:#1a0a0a;">${batchName}</span>
+    </div>
+    <div style="flex:1;font-size:12px;color:#333;">
+      <span style="font-weight:700;">Seat No. </span>
+      <span style="font-weight:900;color:#1a0a0a;">${seatNo}</span>
+    </div>
+    <div style="flex:1.5;font-size:12px;color:#333;">
+      <span style="font-weight:700;">Month : </span>
+      <span style="font-weight:900;color:#1a0a0a;">${feeMonth}</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px dotted #888;padding-bottom:8px;align-items:center;">
+    <div style="flex:2;font-size:12px;color:#333;">
+      <span style="font-weight:700;">Total Amount : </span>
+      <span style="font-weight:900;color:#1a0a0a;font-size:14px;">&#8377;${fee.Amount}</span>
+    </div>
+    <div style="flex:1.5;font-size:12px;color:#333;">
+      <span style="font-weight:700;">Paid : </span>
+      <span style="font-weight:900;color:#1a0a0a;">&#8377;${fee.Amount}</span>
+    </div>
+    <div style="flex:1;font-size:12px;color:#333;">
+      <span style="font-weight:700;">Dues : </span>
+      <span style="font-weight:900;color:#1a0a0a;">0</span>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div style="width:72px;height:72px;border:3px solid #1a0a0a;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fce8e8;">
+        <div style="font-size:16px;font-weight:900;color:#1a0a0a;">&#8377;</div>
+        <div style="font-size:17px;font-weight:900;color:#1a0a0a;line-height:1;">${fee.Amount}</div>
+      </div>
+    </div>
+    <div style="text-align:center;flex:1;padding:0 12px;">
+      <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Transaction ID</div>
+      <div style="font-size:12px;font-weight:900;color:#1a0a0a;font-family:monospace;">${txnId}</div>
+      <div style="font-size:10px;color:#555;margin-top:4px;">Plan: ${planDuration}</div>
+    </div>
+    <div style="text-align:center;min-width:80px;">
+      <div style="border-top:1px solid #333;padding-top:4px;font-size:11px;font-weight:700;color:#333;">-Signature</div>
+    </div>
+  </div>
+  <div style="border-top:1px solid #888;padding-top:8px;">
+    <div style="font-size:10px;color:#444;font-weight:600;">नोट:- किसी भी स्थिति में फीस वापस नहीं होगा।</div>
+    <div style="font-size:9px;color:#888;margin-top:3px;text-align:right;">Lib. ID: ${libraryId} &nbsp;|&nbsp; Computer Generated Receipt</div>
+  </div>
+</div>`;
+
+    overlay.appendChild(receiptDiv);
+    document.body.appendChild(overlay);
+    showToast('Generating Receipt…', 'info');
+
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        const rW = receiptDiv.scrollWidth || 520;
+        const captureWrap = document.createElement('div');
+        captureWrap.style.cssText = `position:fixed;top:0;left:0;width:${rW}px;background:#fce8e8;z-index:99998;`;
+        captureWrap.appendChild(receiptDiv);
+        document.body.appendChild(captureWrap);
+
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            const rH = receiptDiv.scrollHeight || receiptDiv.offsetHeight || 700;
+            if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+                document.body.removeChild(captureWrap);
+                document.body.removeChild(overlay);
+                return showToast('Receipt generation libraries not loaded!', 'error');
+            }
+            html2canvas(receiptDiv, { scale: 2, useCORS: true, backgroundColor: '#EE959E', width: rW, height: rH }).then(rawCanvas => {
+                document.body.removeChild(captureWrap);
+                const imgData = rawCanvas.toDataURL('image/jpeg', 0.93);
+                const pdf = new jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+                const pageW = 210, pageH = 297, margin = 10;
+                let imgW = pageW - margin * 2; let imgH = (rawCanvas.height * imgW) / rawCanvas.width;
+                if (imgH > pageH - margin * 2) { imgH = pageH - margin * 2; imgW = (rawCanvas.width * imgH) / rawCanvas.height; }
+                pdf.addImage(imgData, 'JPEG', (pageW - imgW) / 2, (pageH - imgH) / 2, imgW, imgH);
+                pdf.save(`KNL_Receipt_${studentName.replace(/\s+/g,'_')}_${feeMonth.replace(/\s+/g,'_')}.pdf`);
+                document.body.removeChild(overlay);
+                                
+                // Ping backend to track the download
+                apiFetch(`/fees/${feeId}/track-download`, { method: 'POST' }).catch(e => console.error('Tracking failed', e));
+                
+
+                showToast('Receipt downloaded! ✓', 'success');
+            }).catch(() => {
+                document.body.removeChild(captureWrap); document.body.removeChild(overlay);
+                showToast('Failed to generate receipt', 'error');
+            });
+        }));
+    }, 800);
+};
 
 let currentIssues = [];
 let filteredStudentIssues = [];
