@@ -13,6 +13,9 @@ const feeSchema = new mongoose.Schema({
         type: String, // e.g., "October 2026"
         required: true,
     },
+    CoveredMonths: [{
+        type: String // e.g. ["March 2026", "April 2026", "May 2026"]
+    }],
     Batch: {
         type: String, // Stored as a snapshot, e.g., "Standard"
         required: false,

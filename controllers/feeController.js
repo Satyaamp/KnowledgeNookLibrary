@@ -32,19 +32,42 @@ const uploadFee = async (req, res) => {
         const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const escapedMonth = escapeRegExp(formattedMonth);
 
-        // Check if ANY fee already exists for this month
+        // Calculate Covered Months based on plan
+        let monthInc = 1;
+        if (student.planDuration === 'Quarterly') monthInc = 3;
+        else if (student.planDuration === 'Half-Yearly') monthInc = 6;
+        else if (student.planDuration === 'Yearly') monthInc = 12;
+
+        const coveredMonths = [];
+        const baseDate = new Date(formattedMonth);
+        if (!isNaN(baseDate.getTime())) {
+            for (let i = 0; i < monthInc; i++) {
+                const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
+                coveredMonths.push(d.toLocaleString('en-US', { month: 'long', year: 'numeric' }));
+            }
+        } else {
+            coveredMonths.push(formattedMonth);
+        }
+
+        // Create regex array for case-insensitive Month match
+        const regexMonths = coveredMonths.map(m => new RegExp(`^${escapeRegExp(m)}$`, 'i'));
+
+        // Check if ANY fee already exists covering ANY of the months in this new upload
         let fee = await Fee.findOne({
             StudentId: req.user.id,
-            Month: { $regex: new RegExp(`^${escapedMonth}$`, 'i') }
+            $or: [
+                { Month: { $in: regexMonths } },
+                { CoveredMonths: { $in: coveredMonths } } // Protects against overlapping plan payments
+            ]
         });
 
         if (fee) {
             // Prevent re-uploading if it's already Paid or Pending
             if (fee.Status === 'Paid' || fee.Status === 'Approved') {
-                return res.status(400).json({ message: `Fee for ${formattedMonth} has already been marked as Paid.` });
+                return res.status(400).json({ message: `Conflict: A fee covering part or all of these months (${fee.Month}) is already marked as Paid.` });
             }
             if (fee.Status === 'Pending') {
-                return res.status(400).json({ message: `Receipt for ${formattedMonth} is already under review. Please wait for admin action.` });
+                return res.status(400).json({ message: `Conflict: A receipt covering part or all of these months (${fee.Month}) is already under review.` });
             }
 
             // If it is 'Rejected', proceed with overwriting the image and marking it 'Pending' again
@@ -68,6 +91,7 @@ const uploadFee = async (req, res) => {
             fee.Amount = Amount;
             fee.Batch = Batch;
             fee.isResubmitted = true; // Mark as a resubmission!
+            fee.CoveredMonths = coveredMonths;
             await fee.save();
         } else {
             // Create a brand new record if none exists
@@ -77,6 +101,7 @@ const uploadFee = async (req, res) => {
                 Month: formattedMonth,
                 Amount,
                 Batch,
+                CoveredMonths: coveredMonths,
                 ProofImageURL: result.secure_url,
                 Status: 'Pending'
             });

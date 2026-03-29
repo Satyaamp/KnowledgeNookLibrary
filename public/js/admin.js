@@ -1625,7 +1625,24 @@ function handleBulkStudentUpload(input) {
         const endIndex = startIndex + feesPerPage;
         const paginatedFees = filteredFees.slice(startIndex, endIndex);
 
-        list.innerHTML = paginatedFees.map(fee => `
+        list.innerHTML = paginatedFees.map(fee => {
+            let displayMonth = (fee.Month || 'N/A').charAt(0).toUpperCase() + (fee.Month || '').slice(1);
+            const plan = fee.StudentId ? fee.StudentId.planDuration : 'Monthly';
+            let monthInc = 1;
+            if (plan === 'Quarterly') monthInc = 3;
+            else if (plan === 'Half-Yearly') monthInc = 6;
+            else if (plan === 'Yearly') monthInc = 12;
+
+            if (monthInc > 1 && fee.Month) {
+                const d = new Date(fee.Month);
+                if (!isNaN(d.getTime())) {
+                    const dEnd = new Date(d.getFullYear(), d.getMonth() + monthInc - 1, 1);
+                    const startStr = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+                    const endStr = dEnd.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+                    displayMonth = `${startStr} to ${endStr}`;
+                }
+            }
+            return `
                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <strong>${fee.StudentId ? `${fee.StudentId.FullName} (ID: ${fee.StudentId.LibraryID || 'N/A'})` : 'Unknown Student'}</strong>
@@ -1637,19 +1654,14 @@ function handleBulkStudentUpload(input) {
                         </div>
                     </div>
                     <div style="font-size: 0.95em; color: var(--text-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 15px; padding-top: 10px; border-top: 1px solid var(--card-border);">
-                        <div><strong>Month:</strong> ${(fee.Month || 'N/A').charAt(0).toUpperCase() + (fee.Month || '').slice(1)}</div>
-                        <div><strong>Batch:</strong> ${fee.Batch ||
-            (fee.StudentId
-                ? `${fee.StudentId.planDuration || 'N/A'} (${fee.StudentId.batchType || 'N/A'})`
-                : 'N/A'
-            )
-            }</div>
-                        <div><strong>Batch:</strong> ${fee.Batch ||
-            (fee.StudentId
-                ? `${fee.StudentId.planDuration || 'N/A'} (${fee.StudentId.batchType || 'N/A'})`
-                : 'N/A'
-            )
-            }</div>
+                        <div><strong>Month:</strong> ${displayMonth}</div>
+                       
+                        <div><u><strong>Plan:</strong> ${fee.planDuration ||
+                        (fee.StudentId
+                            ? `${fee.StudentId.planDuration || 'N/A'} (${fee.StudentId.batchType || 'N/A'})`
+                            : 'N/A'
+                        )
+                        }</u></div>
                         <div><strong>Amount:</strong> ₹${fee.Amount || 0}</div>
                     </div>
                     <div style="margin-bottom: 15px;">
@@ -1703,7 +1715,7 @@ function handleBulkStudentUpload(input) {
                         </select>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
 
         renderFeesPagination();
     }
@@ -2722,6 +2734,23 @@ function handleBulkStudentUpload(input) {
                             }
 
                             list.innerHTML = paginatedHistory.map(fee => {
+                                let displayMonth = fee.Month || 'N/A';
+                                const planDuration = fee.StudentId ? fee.StudentId.planDuration : 'Monthly';
+                                let monthInc = 1;
+                                if (planDuration === 'Quarterly') monthInc = 3;
+                                else if (planDuration === 'Half-Yearly') monthInc = 6;
+                                else if (planDuration === 'Yearly') monthInc = 12;
+
+                                if (monthInc > 1 && fee.Month) {
+                                    const d = new Date(fee.Month);
+                                    if (!isNaN(d.getTime())) {
+                                        const dEnd = new Date(d.getFullYear(), d.getMonth() + monthInc - 1, 1);
+                                        const startStr = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+                                        const endStr = dEnd.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+                                        displayMonth = `${startStr} to ${endStr}`;
+                                    }
+                                }
+
                                 const studentName = fee.StudentId ? fee.StudentId.FullName : 'Unknown';
                                 const libId = fee.StudentId ? (fee.StudentId.LibraryID || 'N/A') : 'N/A';
                                 const plan = fee.StudentId ? (fee.StudentId.planDuration || 'N/A') : 'N/A';
@@ -2756,7 +2785,7 @@ function handleBulkStudentUpload(input) {
                     <div style="font-size: 0.85em; color: var(--text-secondary);">ID: ${libId}</div>
                     <div style="font-size: 0.85em; color: var(--text-secondary); font-weight: 600; margin-top: 4px;">Receipt: ${fee.ReceiptNo || 'N/A'}</div>
                 </td>
-                <td style="padding: 12px 15px; color: var(--text-primary);">${fee.Month}</td>
+                <td style="padding: 12px 15px; color: var(--text-primary);">${displayMonth}</td>
                 <td style="padding: 12px 15px; color: var(--text-secondary);">${plan} <br><span style="font-size: 0.9em;">(${batch})</span></td>
                 <td style="padding: 12px 15px; font-weight: 600; color: var(--text-primary);">₹${fee.Amount}</td>
                 <td style="padding: 12px 15px;">
@@ -2828,6 +2857,22 @@ window.shareReceipt = async function (feeId) {
     const feeMonth       = fee.Month             || "N/A";
     const batchName      = fee.Batch             || student.batchType || "Fundamental";
     const planDuration   = fee.planDuration      || student.planDuration || "Monthly";
+
+    let displayMonth = feeMonth;
+    let monthInc = 1;
+    if (planDuration === 'Quarterly') monthInc = 3;
+    else if (planDuration === 'Half-Yearly') monthInc = 6;
+    else if (planDuration === 'Yearly') monthInc = 12;
+
+    if (monthInc > 1 && fee.Month && fee.Month !== "N/A") {
+        const d = new Date(fee.Month);
+        if (!isNaN(d.getTime())) {
+            const dEnd = new Date(d.getFullYear(), d.getMonth() + monthInc - 1, 1);
+            const startStr = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+            const endStr = dEnd.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+            displayMonth = `${startStr} to ${endStr}`;
+        }
+    }
 
     let txnId = "N/A", paymentDate = "N/A";
     if (fee.AdminNote) {
@@ -3033,7 +3078,7 @@ window.shareReceipt = async function (feeId) {
                 if (studentContact) {
                     setTimeout(() => {
                         const msg = encodeURIComponent(
-                            `Hello ${studentName},\n\nYour receipt for *${feeMonth}* is ready.\n\n` +
+                            `Hello ${studentName},\n\nYour receipt for *${displayMonth}* is ready.\n\n` +
                             `Receipt No: ${receiptNo}\nTxn ID: ${txnId}\nDate: ${paymentDate}\nAmount: Rs.${fee.Amount}\n\n` +
                             `Thank you for choosing Knowledge Nook Library!`
                         );
@@ -3787,7 +3832,24 @@ window.shareReceipt = async function (feeId) {
                                                 return;
                                             }
 
-                                            list.innerHTML = paginated.map(item => `
+                                            list.innerHTML = paginated.map(item => {
+                                                let displayMonth = item.month;
+                                                const planDuration = item.student.planDuration || 'Monthly';
+                                                let monthInc = 1;
+                                                if (planDuration === 'Quarterly') monthInc = 3;
+                                                else if (planDuration === 'Half-Yearly') monthInc = 6;
+                                                else if (planDuration === 'Yearly') monthInc = 12;
+
+                                                if (monthInc > 1 && item.month) {
+                                                    const d = new Date(item.month);
+                                                    if (!isNaN(d.getTime())) {
+                                                        const dEnd = new Date(d.getFullYear(), d.getMonth() + monthInc - 1, 1);
+                                                        const startStr = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+                                                        const endStr = dEnd.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+                                                        displayMonth = `${startStr} to ${endStr}`;
+                                                    }
+                                                }
+                                                return `
                                                 <div style="border: 1px solid var(--card-border); padding: 15px; margin-bottom: 10px; border-radius: 8px; background: var(--input-bg);">
                                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
                                                         <div>
@@ -3802,11 +3864,11 @@ window.shareReceipt = async function (feeId) {
                                                     </div>
                                                     
                                                     <div style="font-size: 0.95em; color: var(--text-secondary); margin-bottom: 15px; display: flex; gap: 15px;">
-                                                        <span><strong>Month:</strong> ${item.month}</span>
+                                                        <span><strong>Month:</strong> ${displayMonth}</span>
                                                         <span><strong>Amount:</strong> ₹${item.expectedAmount}</span>
                                                     </div>
                                                     
-                                                    <div style="display: flex; gap: 10px;">
+                                                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                                                         <button onclick="overrideMarkPaid('${item.student._id}', '${item.month}', ${item.expectedAmount}, '${item.student.LibraryID || ''}', '${item.student.batchType || ''}')" class="btn" style="padding: 6px 15px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px;">
                                                             <i class="fa-solid fa-money-bill-wave"></i> Mark Paid
                                                         </button>
@@ -3825,7 +3887,7 @@ window.shareReceipt = async function (feeId) {
                                                         
                                                     </div>
                                                 </div>
-                                            `).join('');
+                                            `}).join('');
 
                                             renderPendingFeesPagination();
                                         }

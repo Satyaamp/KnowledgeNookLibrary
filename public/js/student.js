@@ -141,6 +141,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (feeBatchField) feeBatchField.value = profile.batchType || 'N/A';
         if (feeAmountField) feeAmountField.value = profile.amount || 0;
 
+        // Auto-fill Next Due Month in Fee Form
+        const globalFeeMonthField = document.getElementById('feeMonth');
+        if (globalFeeMonthField && iterDateHeader) {
+            const y = iterDateHeader.getFullYear();
+            const m = String(iterDateHeader.getMonth() + 1).padStart(2, '0');
+            globalFeeMonthField.value = `${y}-${m}`;
+            if (typeof validateFeeForm === 'function') validateFeeForm();
+        }
+
         // Update Plan in header
         const planText = profile.planDuration
             ? `${profile.planDuration} (${profile.batchType || 'N/A'}) | ${profile.assignedHall || 'N/A'}_${profile.SeatNo || 'N/A'}`
@@ -438,6 +447,15 @@ async function loadProfile() {
         const studentNameEl = document.getElementById('studentName');
         if (studentNameEl) {
             studentNameEl.innerHTML = `${firstName} <span style="font-size: 0.5em; font-weight: 600; background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-secondary); padding: 4px 10px; border-radius: 12px; margin-left: 10px; vertical-align: middle; letter-spacing: normal; text-transform: none; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-calendar-check" style="color: var(--primary-color);"></i> Due: <span style="color: var(--text-primary);">${nextDueMonth}</span></span>`;
+        }
+
+        // Auto-fill Fee Month
+        const profileFeeMonthField = document.getElementById('feeMonth');
+        if (profileFeeMonthField && iterDate) {
+            const y = iterDate.getFullYear();
+            const m = String(iterDate.getMonth() + 1).padStart(2, '0');
+            profileFeeMonthField.value = `${y}-${m}`;
+            if (typeof validateFeeForm === 'function') validateFeeForm();
         }
 
         let elapsedHrsText = '00:00 hrs';
@@ -772,11 +790,41 @@ function renderStudentFees() {
         const endIndex = startIndex + FEES_PER_PAGE;
         const feesToShow = filteredStudentFees.slice(startIndex, endIndex);
 
-        list.innerHTML = feesToShow.map(fee => `
+        list.innerHTML = feesToShow.map(fee => {
+            let displayMonth = fee.Month.charAt(0).toUpperCase() + fee.Month.slice(1);
+            const plan = originalProfileData.planDuration || 'Monthly';
+            let monthInc = 1;
+            if (plan === 'Quarterly') monthInc = 3;
+            else if (plan === 'Half-Yearly') monthInc = 6;
+            else if (plan === 'Yearly') monthInc = 12;
+
+            if (monthInc > 1) {
+                const d = new Date(fee.Month);
+                if (!isNaN(d.getTime())) {
+                    const dEnd = new Date(d.getFullYear(), d.getMonth() + monthInc - 1, 1);
+                    const startStr = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+                    const endStr = dEnd.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+                    displayMonth = `${startStr} to ${endStr}`;
+                }
+            }
+
+            let adminNoteHtml = '';
+            if (fee.AdminNote) {
+                if (fee.AdminNote.includes('|')) {
+                    const parts = fee.AdminNote.split('|');
+                    const txnId = (parts[0] || '').replace(/Txn ID:/i, '').trim();
+                    const date = (parts[1] || '').replace(/Date:/i, '').trim();
+                    adminNoteHtml = `<div><strong>Txn ID:</strong> ${txnId}</div><div><strong>Date:</strong> ${date}</div>`;
+                } else {
+                    adminNoteHtml = `<div><strong>Note:</strong> ${fee.AdminNote}</div>`;
+                }
+            }
+            
+            return `
             <div style="border-bottom: 2px solid black; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <strong>${fee.Month.charAt(0).toUpperCase() + fee.Month.slice(1)}</strong>
+                        <strong>${displayMonth}</strong>
                         ${fee.isResubmitted && fee.Status === 'Pending' ? `<span style="font-size: 0.75em; padding: 2px 8px; border-radius: 12px; background: var(--primary-light); color: var(--primary-color); font-weight: 600;"><i class="fa-solid fa-rotate-right"></i> Resubmitted</span>` : ''}
                     </div>
 
@@ -806,14 +854,7 @@ function renderStudentFees() {
                         <div id="stu-details-${fee._id}" style="display: none; margin-top: 5px; background:var(--bg-color); padding:10px 12px; border-left:3px solid var(--success-color); border-radius:6px; font-size:0.9em; color:var(--text-primary); line-height: 1.5;">
                             ${fee.Amount ? `<div><strong>Amount:</strong> ₹${fee.Amount}</div>` : ''}
                             ${fee.ReceiptNo ? `<div><strong>Receipt No:</strong> <span style="font-family: monospace;">${fee.ReceiptNo}</span></div>` : ''}
-                            ${fee.AdminNote ? `
-                                <div>
-                                    <strong>Txn ID:</strong> ${fee.AdminNote.split('|')[0].replace('Txn ID:', '').trim()}
-                                </div>
-                                <div>
-                                    <strong>Date:</strong> ${fee.AdminNote.split('|')[1].replace('Date:', '').trim()}
-                                </div>
-                                ` : ''}
+                            ${adminNoteHtml}
                         </div>
                     </div>` : ''}
 
@@ -855,7 +896,7 @@ function renderStudentFees() {
                     ` : ''}
                 </div>
             </div>
-        `).join('');
+        `}).join('');
 
         const totalPages = Math.ceil(filteredStudentFees.length / FEES_PER_PAGE);
         const paginationContainer = document.getElementById('feesPagination');
@@ -896,6 +937,22 @@ window.downloadReceipt = async function (feeId) {
     const feeMonth       = fee.Month             || "N/A";
     const batchName      = fee.Batch             || student.batchType || "Fundamental";
     const planDuration   = fee.planDuration      || student.planDuration || "Monthly";
+
+    let displayMonth = feeMonth;
+    let monthInc = 1;
+    if (planDuration === 'Quarterly') monthInc = 3;
+    else if (planDuration === 'Half-Yearly') monthInc = 6;
+    else if (planDuration === 'Yearly') monthInc = 12;
+
+    if (monthInc > 1 && fee.Month && fee.Month !== "N/A") {
+        const d = new Date(fee.Month);
+        if (!isNaN(d.getTime())) {
+            const dEnd = new Date(d.getFullYear(), d.getMonth() + monthInc - 1, 1);
+            const startStr = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+            const endStr = dEnd.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+            displayMonth = `${startStr} to ${endStr}`;
+        }
+    }
 
     let txnId = "N/A", paymentDate = "N/A";
     if (fee.AdminNote) {
@@ -969,7 +1026,7 @@ window.downloadReceipt = async function (feeId) {
     </div>
     <div style="flex:1.5;font-size:12px;color:#333;">
       <span style="font-weight:700;">Month : </span>
-      <span style="font-weight:900;color:#1a0a0a;">${feeMonth}</span>
+      <span style="font-weight:900;color:#1a0a0a;">${displayMonth}</span>
     </div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px dotted #888;padding-bottom:8px;align-items:center;">

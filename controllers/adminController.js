@@ -902,9 +902,35 @@ const markStudentFeePaid = async (req, res) => {
             { upsert: true }
         );
         
-        const existingFee = await Fee.findOne({ StudentId: student._id, Month });
+        // Calculate Covered Months based on plan
+        let monthInc = 1;
+        if (student.planDuration === 'Quarterly') monthInc = 3;
+        else if (student.planDuration === 'Half-Yearly') monthInc = 6;
+        else if (student.planDuration === 'Yearly') monthInc = 12;
+
+        const coveredMonths = [];
+        const baseDate = new Date(Month);
+        if (!isNaN(baseDate.getTime())) {
+            for (let i = 0; i < monthInc; i++) {
+                const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
+                coveredMonths.push(d.toLocaleString('en-US', { month: 'long', year: 'numeric' }));
+            }
+        } else {
+            coveredMonths.push(Month);
+        }
+
+        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regexMonths = coveredMonths.map(m => new RegExp(`^${escapeRegExp(m)}$`, 'i'));
+
+        const existingFee = await Fee.findOne({ 
+            StudentId: student._id, 
+            $or: [
+                { Month: { $in: regexMonths } },
+                { CoveredMonths: { $in: coveredMonths } }
+            ]
+        });
         if (existingFee && existingFee.Status === 'Paid') {
-            return res.status(400).json({ message: 'Fee already paid for this month' });
+            return res.status(400).json({ message: `Conflict: A fee covering part or all of these months (${existingFee.Month}) is already paid.` });
         }
         
         if (existingFee) {
@@ -914,12 +940,14 @@ const markStudentFeePaid = async (req, res) => {
             existingFee.LibraryID = LibraryID || student.LibraryID;
             existingFee.Batch = Batch || student.batchType;
             existingFee.ReceiptNo = String(nextReceiptNum);
+            existingFee.CoveredMonths = coveredMonths;
             await existingFee.save();
         } else {
             await Fee.create({
                 StudentId: student._id,
                 LibraryID: LibraryID || student.LibraryID,
                 Month,
+                CoveredMonths: coveredMonths,
                 Amount: Amount || student.amount || 0,
                 Batch: Batch || student.batchType,
                 Status: 'Paid',
