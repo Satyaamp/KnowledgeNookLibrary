@@ -803,14 +803,11 @@ function handleBulkStudentUpload(input) {
             return;
         }
 
-        let html = '';
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentStudentsPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeStudentsPage(${currentStudentsPage - 1})"`}>Prev</button>`;
-
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentStudentsPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeStudentsPage(${i})">${i}</button>`;
-        }
-
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentStudentsPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeStudentsPage(${currentStudentsPage + 1})"`}>Next</button>`;
+        let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${currentStudentsPage === 1 ? 'disabled' : `onclick="changeStudentsPage(${currentStudentsPage - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
+        html += `<span style="font-weight: 600; color: var(--text-secondary); padding: 0 5px;">Page ${currentStudentsPage} of ${totalPages}</span>`;
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${currentStudentsPage === totalPages ? 'disabled' : `onclick="changeStudentsPage(${currentStudentsPage + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
+        html += '</div>';
 
         pagination.innerHTML = html;
     }
@@ -942,12 +939,11 @@ function handleBulkStudentUpload(input) {
             pagination.innerHTML = '';
             return;
         }
-        let html = '';
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${interestedPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeInterestedPage(${interestedPage - 1})"`}>Prev</button>`;
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${interestedPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeInterestedPage(${i})">${i}</button>`;
-        }
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${interestedPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeInterestedPage(${interestedPage + 1})"`}>Next</button>`;
+        let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${interestedPage === 1 ? 'disabled' : `onclick="changeInterestedPage(${interestedPage - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
+        html += `<span style="font-weight: 600; color: var(--text-secondary); padding: 0 5px;">Page ${interestedPage} of ${totalPages}</span>`;
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${interestedPage === totalPages ? 'disabled' : `onclick="changeInterestedPage(${interestedPage + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
+        html += '</div>';
         pagination.innerHTML = html;
     }
 
@@ -1729,12 +1725,11 @@ function handleBulkStudentUpload(input) {
             return;
         }
 
-        let html = '';
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentFeesPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeFeesPage(${currentFeesPage - 1})"`}>Prev</button>`;
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentFeesPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeFeesPage(${i})">${i}</button>`;
-        }
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentFeesPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeFeesPage(${currentFeesPage + 1})"`}>Next</button>`;
+        let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${currentFeesPage === 1 ? 'disabled' : `onclick="changeFeesPage(${currentFeesPage - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
+        html += `<span style="font-weight: 600; color: var(--text-secondary); padding: 0 5px;">Page ${currentFeesPage} of ${totalPages}</span>`;
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${currentFeesPage === totalPages ? 'disabled' : `onclick="changeFeesPage(${currentFeesPage + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
+        html += '</div>';
         pagination.innerHTML = html;
     }
 
@@ -1954,12 +1949,11 @@ function handleBulkStudentUpload(input) {
             pagination.innerHTML = '';
             return;
         }
-        let html = '';
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${requestsPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeRequestsPage(${requestsPage - 1})"`}>Prev</button>`;
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${requestsPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeRequestsPage(${i})">${i}</button>`;
-        }
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${requestsPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeRequestsPage(${requestsPage + 1})"`}>Next</button>`;
+        let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${requestsPage === 1 ? 'disabled' : `onclick="changeRequestsPage(${requestsPage - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
+        html += `<span style="font-weight: 600; color: var(--text-secondary); padding: 0 5px;">Page ${requestsPage} of ${totalPages}</span>`;
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${requestsPage === totalPages ? 'disabled' : `onclick="changeRequestsPage(${requestsPage + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
+        html += '</div>';
         pagination.innerHTML = html;
     }
 
@@ -2117,12 +2111,11 @@ function handleBulkStudentUpload(input) {
             pagination.innerHTML = '';
             return;
         }
-        let html = '';
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${announcementsAdminPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAnnouncementsPage(${announcementsAdminPage - 1})"`}>Prev</button>`;
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${announcementsAdminPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeAnnouncementsPage(${i})">${i}</button>`;
-        }
-        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${announcementsAdminPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAnnouncementsPage(${announcementsAdminPage + 1})"`}>Next</button>`;
+        let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${announcementsAdminPage === 1 ? 'disabled' : `onclick="changeAnnouncementsPage(${announcementsAdminPage - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
+        html += `<span style="font-weight: 600; color: var(--text-secondary); padding: 0 5px;">Page ${announcementsAdminPage} of ${totalPages}</span>`;
+        html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${announcementsAdminPage === totalPages ? 'disabled' : `onclick="changeAnnouncementsPage(${announcementsAdminPage + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
+        html += '</div>';
         pagination.innerHTML = html;
     }
 
@@ -2342,12 +2335,11 @@ function handleBulkStudentUpload(input) {
                 return;
             }
 
-            let html = '';
-            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentAadharPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAadharPage(${currentAadharPage - 1})"`}>Prev</button>`;
-            for (let i = 1; i <= totalPages; i++) {
-                html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentAadharPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeAadharPage(${i})">${i}</button>`;
-            }
-            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentAadharPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeAadharPage(${currentAadharPage + 1})"`}>Next</button>`;
+            let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${currentAadharPage === 1 ? 'disabled' : `onclick="changeAadharPage(${currentAadharPage - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
+            html += `<span style="font-weight: 600; color: var(--text-secondary); padding: 0 5px;">Page ${currentAadharPage} of ${totalPages}</span>`;
+            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${currentAadharPage === totalPages ? 'disabled' : `onclick="changeAadharPage(${currentAadharPage + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
+            html += '</div>';
             pagination.innerHTML = html;
         }
 
@@ -2476,12 +2468,11 @@ function handleBulkStudentUpload(input) {
                     return;
                 }
 
-                let html = '';
-                html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentIssuesPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeIssuesPage(${currentIssuesPage - 1})"`}>Prev</button>`;
-                for (let i = 1; i <= totalPages; i++) {
-                    html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${currentIssuesPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changeIssuesPage(${i})">${i}</button>`;
-                }
-                html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${currentIssuesPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changeIssuesPage(${currentIssuesPage + 1})"`}>Next</button>`;
+                let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+                html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${currentIssuesPage === 1 ? 'disabled' : `onclick="changeIssuesPage(${currentIssuesPage - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
+                html += `<span style="font-weight: 600; color: var(--text-secondary); padding: 0 5px;">Page ${currentIssuesPage} of ${totalPages}</span>`;
+                html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${currentIssuesPage === totalPages ? 'disabled' : `onclick="changeIssuesPage(${currentIssuesPage + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
+                html += '</div>';
                 pagination.innerHTML = html;
             }
 
@@ -2825,12 +2816,11 @@ function handleBulkStudentUpload(input) {
                                 return;
                             }
 
-                            let html = '';
-                            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${paymentHistoryPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changePaymentHistoryPage(${paymentHistoryPage - 1})"`}>Prev</button>`;
-                            for (let i = 1; i <= totalPages; i++) {
-                                html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); cursor: pointer; ${paymentHistoryPage === i ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'color: var(--text-primary);'}" onclick="changePaymentHistoryPage(${i})">${i}</button>`;
-                            }
-                            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-color: var(--card-border); color: var(--text-primary); cursor: pointer;" ${paymentHistoryPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="changePaymentHistoryPage(${paymentHistoryPage + 1})"`}>Next</button>`;
+                            let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+                            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${paymentHistoryPage === 1 ? 'disabled' : `onclick="changePaymentHistoryPage(${paymentHistoryPage - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
+                            html += `<span style="font-weight: 600; color: var(--text-secondary); padding: 0 5px;">Page ${paymentHistoryPage} of ${totalPages}</span>`;
+                            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${paymentHistoryPage === totalPages ? 'disabled' : `onclick="changePaymentHistoryPage(${paymentHistoryPage + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
+                            html += '</div>';
                             pagination.innerHTML = html;
                         }
 
@@ -3292,18 +3282,14 @@ window.shareReceipt = async function (feeId) {
                                                 if (t === tab) {
                                                     if (btn) {
                                                         btn.className = 'btn';
-                                                        btn.style.cssText = 'padding:8px 16px; border-radius:8px; font-size:0.95em; display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;';
+                                                        btn.style.cssText = 'padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; display:flex; align-items:center; gap:6px; white-space:nowrap; font-weight:600; flex-shrink:0;';
                                                     }
-                                                    if (content) content.style.display = 'block';
-                                                    if (btn) btn.classList.replace('btn-outline', 'btn');
                                                     if (content) content.style.display = 'block';
                                                 } else {
                                                     if (btn) {
                                                         btn.className = 'btn-outline';
-                                                        btn.style.cssText = 'padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;';
+                                                        btn.style.cssText = 'padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; font-weight:600; flex-shrink:0;';
                                                     }
-                                                    if (content) content.style.display = 'none';
-                                                    if (btn) btn.classList.replace('btn', 'btn-outline');
                                                     if (content) content.style.display = 'none';
                                                 }
                                             });
@@ -3898,34 +3884,18 @@ window.shareReceipt = async function (feeId) {
 
                                             const totalPages = Math.ceil(filteredPendingFees.length / pendingFeesPerPage);
 
-                                            const totalCountDisplay = `<div style="font-size: 0.9em; color: var(--text-secondary);">Page ${pendingFeesPage} of ${totalPages}</div>`;
-
                                             if (totalPages <= 1) {
-                                                pagination.innerHTML = filteredPendingFees.length > 0 ? totalCountDisplay : '';
+                                                pagination.innerHTML = '';
                                                 return;
                                             }
 
-                                            let buttonsHtml = '';
-                                            // Prev button
-                                            buttonsHtml += `<button class="btn-outline" style="padding: 0.3rem 0.6rem;" ${pendingFeesPage === 1 ? 'disabled' : `onclick="changePendingFeesPage(${pendingFeesPage - 1})"`}>Prev</button>`;
+                                            let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+                                            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${pendingFeesPage === 1 ? 'disabled' : `onclick="changePendingFeesPage(${pendingFeesPage - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
+                                            html += `<span style="font-weight: 600; color: var(--text-secondary); padding: 0 5px;">Page ${pendingFeesPage} of ${totalPages}</span>`;
+                                            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${pendingFeesPage === totalPages ? 'disabled' : `onclick="changePendingFeesPage(${pendingFeesPage + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
+                                            html += '</div>';
 
-                                            // Page numbers
-                                            for (let i = 1; i <= totalPages; i++) {
-                                                if (i === 1 || i === totalPages || (i >= pendingFeesPage - 1 && i <= pendingFeesPage + 1)) {
-                                                    if (i === pendingFeesPage) {
-                                                        buttonsHtml += `<button class="btn" style="padding: 0.3rem 0.8rem;">${i}</button>`;
-                                                    } else {
-                                                        buttonsHtml += `<button onclick="changePendingFeesPage(${i})" class="btn-outline" style="padding: 0.3rem 0.8rem;">${i}</button>`;
-                                                    }
-                                                } else if (i === pendingFeesPage - 2 || i === pendingFeesPage + 2) {
-                                                    buttonsHtml += `<span style="padding: 0.3rem; color: var(--text-secondary); align-self: center;">...</span>`;
-                                                }
-                                            }
-
-                                            // Next button
-                                            buttonsHtml += `<button class="btn-outline" style="padding: 0.3rem 0.6rem;" ${pendingFeesPage === totalPages ? 'disabled' : `onclick="changePendingFeesPage(${pendingFeesPage + 1})"`}>Next</button>`;
-
-                                            pagination.innerHTML = `<div style="display: flex; gap: 5px;">${buttonsHtml}</div>` + totalCountDisplay;
+                                            pagination.innerHTML = html;
                                         }
 
                                         window.changePendingFeesPage = function(page) {
@@ -4223,22 +4193,11 @@ window.shareReceipt = async function (feeId) {
                                                 return;
                                             }
 
-                                            let html = '';
-                                            html += `<button onclick="changeGlobalNotificationsPage(${globalNotificationsPage - 1})" ${globalNotificationsPage === 1 ? 'disabled' : ''} class="btn-outline" style="padding: 5px 10px; border-radius: 6px;"><i class="fa-solid fa-chevron-left"></i></button>`;
-
-                                            for (let i = 1; i <= totalPages; i++) {
-                                                if (i === 1 || i === totalPages || (i >= globalNotificationsPage - 1 && i <= globalNotificationsPage + 1)) {
-                                                    if (i === globalNotificationsPage) {
-                                                        html += `<button class="btn" style="padding: 5px 10px; border-radius: 6px;">${i}</button>`;
-                                                    } else {
-                                                        html += `<button onclick="changeGlobalNotificationsPage(${i})" class="btn-outline" style="padding: 5px 10px; border-radius: 6px;">${i}</button>`;
-                                                    }
-                                                } else if (i === globalNotificationsPage - 2 || i === globalNotificationsPage + 2) {
-                                                    html += `<span style="padding: 5px; color: var(--text-secondary);">...</span>`;
-                                                }
-                                            }
-
-                                            html += `<button onclick="changeGlobalNotificationsPage(${globalNotificationsPage + 1})" ${globalNotificationsPage === totalPages ? 'disabled' : ''} class="btn-outline" style="padding: 5px 10px; border-radius: 6px;"><i class="fa-solid fa-chevron-right"></i></button>`;
+                                            let html = '<div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9em;">';
+                                            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${globalNotificationsPage === 1 ? 'disabled' : `onclick="changeGlobalNotificationsPage(${globalNotificationsPage - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
+                                            html += `<span style="font-weight: 600; color: var(--text-secondary); padding: 0 5px;">Page ${globalNotificationsPage} of ${totalPages}</span>`;
+                                            html += `<button class="btn-outline" style="padding: 0.3rem 0.6rem; border-radius: 6px;" ${globalNotificationsPage === totalPages ? 'disabled' : `onclick="changeGlobalNotificationsPage(${globalNotificationsPage + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
+                                            html += '</div>';
                                             pagination.innerHTML = html;
                                         }
 

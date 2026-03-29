@@ -19,7 +19,17 @@
         <link rel="stylesheet" href="../css/admin.css">
         <link rel="stylesheet" href="../css/admin-mobile.css">
 
-        
+        <style>
+            /* Modern Scrollable Tabs for Mobile */
+            .custom-tabs::-webkit-scrollbar { display: none; }
+            .custom-tabs { 
+                -ms-overflow-style: none; 
+                scrollbar-width: none; 
+                -webkit-overflow-scrolling: touch; 
+                scroll-snap-type: x mandatory; 
+            }
+            .custom-tabs button { scroll-snap-align: start; }
+        </style>
     </head>
 
     <body>
@@ -487,25 +497,27 @@
 
                 <!-- Fee Management View (Combined) -->
                 <div id="view-fee-management" class="view-section" style="display: none;">
-                    <div style="margin-bottom: 15px; display: flex; gap: 10px; overflow-x: auto; background: var(--card-bg); padding: 10px; border-radius: 12px; border: 1px solid var(--card-border);" class="custom-tabs">
-                        <button id="feeTabTimelineBtn" class="btn" style="padding: 8px 15px; white-space: nowrap; border-radius: 8px; font-weight: 600; border: none; flex-shrink: 0;" onclick="switchFeeTab('timeline')">
-                            <i class="fa-solid fa-timeline"></i> Fee Timeline
-                        </button>
-                        <button id="feeTabVerifyBtn" class="btn-outline" style="padding: 8px 15px; white-space: nowrap; border-radius: 8px; border: none; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; flex-shrink: 0;" onclick="switchFeeTab('verify')">
-                            <i class="fa-solid fa-indian-rupee-sign" style="margin-right: 5px;"></i> Verify Uploads
-                            <span id="tab-badge-fees" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; margin-left: 5px;">0</span>
-                        </button>
-                        <button id="feeTabHistoryBtn" class="btn-outline" style="padding: 8px 15px; white-space: nowrap; border-radius: 8px; border: none; color: var(--text-secondary); font-weight: 600; flex-shrink: 0;" onclick="switchFeeTab('history')">
+                    <div style="margin-bottom: 15px; display: flex; gap: 6px; overflow-x: auto; background: var(--input-bg); padding: 6px; border-radius: 12px; border: 1px solid var(--card-border);" class="custom-tabs">
+                        
+                        <button id="feeTabHistoryBtn" class="btn" style="padding: 8px 16px; white-space: nowrap; border-radius: 8px; border: none; font-weight: 600; flex-shrink: 0; display: flex; align-items: center; gap: 6px; font-size: 0.95em;" onclick="switchFeeTab('history')">
                             <i class="fa-solid fa-clock-rotate-left"></i> Verified History
                         </button>
-                        <button id="feeTabPendingBtn" class="btn-outline" style="padding: 8px 15px; white-space: nowrap; border-radius: 8px; border: none; color: var(--text-secondary); font-weight: 600; flex-shrink: 0;" onclick="switchFeeTab('pending')">
-                            <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> Unpaid Fees
-                            <span id="tab-badge-pending" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold; margin-left: 5px;">0</span>
+                        <button id="feeTabVerifyBtn" class="btn-outline" style="padding: 8px 16px; white-space: nowrap; border-radius: 8px; border: none; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; flex-shrink: 0; font-size: 0.95em;" onclick="switchFeeTab('verify')">
+                            <i class="fa-solid fa-indian-rupee-sign"></i> Verify Uploads
+                            <span id="tab-badge-fees" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
+                        </button>
+
+                        <button id="feeTabPendingBtn" class="btn-outline" style="padding: 8px 16px; white-space: nowrap; border-radius: 8px; border: none; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; flex-shrink: 0; font-size: 0.95em;" onclick="switchFeeTab('pending')">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Unpaid Fees
+                            <span id="tab-badge-pending" style="display: none; background: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75em; font-weight: bold;">0</span>
+                        </button>
+                        <button id="feeTabTimelineBtn" class="btn-outline" style="padding: 8px 16px; white-space: nowrap; border-radius: 8px; border: none; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; flex-shrink: 0; font-size: 0.95em;" onclick="switchFeeTab('timeline')">
+                            <i class="fa-solid fa-timeline"></i> Fee Timeline
                         </button>
                     </div>
 
                     <!-- Fee Timeline Tab Content -->
-                    <div id="feeTabTimelineContent" style="display: block;">
+                    <div id="feeTabTimelineContent" style="display: none;">
                     <div class="card">
                         <h3><i class="fa-solid fa-timeline" style="margin-right:5px; color: var(--primary-color);"></i> Student Fee Timeline</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 15px;">Search for any active student to view their complete month-by-month fee history since their joining date.</p>
@@ -605,7 +617,7 @@
 
 
                 <!-- Payment History Tab Content -->
-                <div id="feeTabHistoryContent" style="display: none;">
+                <div id="feeTabHistoryContent" style="display: block;">
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                             <h3 style="margin: 0;"><i class="fa-solid fa-indian-rupee-sign" style="color: var(--success-color); margin-right: 8px;"></i> Verified Fees History</h3>
@@ -778,14 +790,14 @@
                         <h2 style="margin: 0;"><i class="fa-solid fa-gear"></i> Library Settings</h2>
                         
                         <!-- Settings Tabs -->
-                        <div style="display:flex; gap:4px; background:var(--input-bg); padding:4px; border-radius:12px; border:1px solid var(--card-border); flex-shrink:0; overflow-x: auto; max-width: 100%;">
-                            <button id="tabBtnWifi" onclick="switchSettingsTab('wifi')" class="btn" style="padding:8px 16px; border-radius:8px; font-size:0.95em; display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;">
+                        <div style="display:flex; gap:6px; background:var(--input-bg); padding:6px; border-radius:12px; border:1px solid var(--card-border); flex-shrink:0; overflow-x: auto; max-width: 100%;" class="custom-tabs">
+                            <button id="tabBtnWifi" onclick="switchSettingsTab('wifi')" class="btn" style="padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; display:flex; align-items:center; gap:6px; white-space:nowrap; font-weight:600; flex-shrink:0;">
                                 <i class="fa-solid fa-wifi"></i> Wi-Fi Settings
                             </button>
-                            <button id="tabBtnAttendance" onclick="switchSettingsTab('attendance')" class="btn-outline" style="padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;">
+                            <button id="tabBtnAttendance" onclick="switchSettingsTab('attendance')" class="btn-outline" style="padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; font-weight:600; flex-shrink:0;">
                                 <i class="fa-solid fa-location-dot"></i> Attendance
                             </button>
-                            <button id="tabBtnSeats" onclick="switchSettingsTab('seats')" class="btn-outline" style="padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; transition: all 0.2s;">
+                            <button id="tabBtnSeats" onclick="switchSettingsTab('seats')" class="btn-outline" style="padding:8px 16px; border-radius:8px; font-size:0.95em; border:none; color:var(--text-secondary); display:flex; align-items:center; gap:6px; white-space:nowrap; font-weight:600; flex-shrink:0;">
                                 <i class="fa-solid fa-chair"></i> Seats Mapping
                             </button>
                         </div>
@@ -1210,7 +1222,11 @@
                     if (currentStudents.length === 0) loadStudents();
                     loadFees();
                     loadPaymentHistory();
-                    setTimeout(() => document.getElementById('timelineSearch').focus(), 100);
+                    switchFeeTab('history');
+                    setTimeout(() => {
+                        const searchEl = document.getElementById('paymentHistorySearch');
+                        if (searchEl) searchEl.focus();
+                    }, 100);
                 }
                 if (hash === '#issues') loadIssues();
                 if (hash === '#requests') loadRequests();
